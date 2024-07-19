@@ -21,9 +21,9 @@ const ActiveSheetsComp = () => {
     <div className="py-10">
      <div className='flex justify-between  items-center mb-4 '>
      <h2 className="font-bold text-lg ">Active Sheets</h2>
-     <button className='bg-blue-200 rounded-full px-4 py-2 mr-6 text-sm text-blue-900 font-semibold'>View all Sheets</button>
+     <button className='bg-blue-200 rounded-full px-6 py-3 mr-6 text-sm text-blue-900 font-semibold'>View all Sheets</button>
      </div>
-    <div className="relative">
+    <div className="relative w-[99%] px-4">
       <div className="flex space-x-4 pb-2 overflow-x-auto custom-scrollbar">
         {sheets.map((floor) => (
           <Link key={floor.id} href={``}>

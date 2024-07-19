@@ -19,8 +19,10 @@ const LatestCaptureComp = () => {
 
   return (
     <div className="p-4 w-full">
-      <h2 className="font-bold text-lg mb-4">Latest Captures</h2>
-      <div className="relative w-full">
+<div className='flex justify-between  items-center mb-4 '>
+     <h2 className="font-bold text-lg ">Latest Captures</h2>
+     <button className='bg-blue-200 rounded-full px-6 py-3 mr-6 text-sm text-blue-900 font-semibold'>View Captures</button>
+     </div>      <div className="relative w-[99%] px-4">
         <div className="flex space-x-4 pb-2 overflow-x-auto custom-scrollbar">
           {sheets.map((sheet) => (
             <div key={sheet.id} className="flex flex-col text-gray-700 bg-white shadow-md bg-clip-border rounded-xl flex-shrink-0" style={{ width: '350px' }}>
