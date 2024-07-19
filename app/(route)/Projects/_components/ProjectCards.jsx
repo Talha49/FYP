@@ -1,3 +1,4 @@
+import Link from "next/link";
 import React from "react";
 import {
   FaGlobe,
@@ -52,7 +53,7 @@ const ProjectCards = () => {
 
       <div className="grid sm:grid-cols-3 grid-cols-1 gap-4 mx-4">
         {projects.map((project) => (
-          <div
+          <Link href={`/Projects/${project.id}`}
             key={project.id}
             className="border rounded-lg overflow-hidden shadow-lg "
           >
@@ -71,6 +72,7 @@ const ProjectCards = () => {
             </div>
             <div className="p-4">
               <h3 className="font-semibold">{project.title}</h3>
+
 
               <p className="text-sm text-gray-500">
                 {project.noCaptures ? (
@@ -92,7 +94,7 @@ const ProjectCards = () => {
                 </p>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
