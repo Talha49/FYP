@@ -4,6 +4,9 @@ import { IoMdSearch } from "react-icons/io";
 import ProjectCards from "./_components/ProjectCards";
 
 const Projects = () => {
+ 
+
+
   return (
     /***Main Section */
     <section className="w-[95%] sm:w-full mt-10 md:ml-0 ml-5">

@@ -20,3 +20,19 @@
     background: #f1f1f1;
   }
   
+  .transformed img {
+    transform: rotate3d(1, -1, 1, 90deg);
+    width: 100%;
+    transition: transform 0.6s ease, width 0.6s ease;
+  }
+  
+  .transformed {
+    transform: rotate3d(1, -1, 1, 90deg);
+    transition: transform 0.6s ease;
+  }
+  
+  /* Add this to your global CSS file or Tailwind CSS configuration */
+.rotate-3d {
+  transform: rotate3d(1, -1, 1, 90deg);
+  transition: transform 0.6s ease-in-out;
+}

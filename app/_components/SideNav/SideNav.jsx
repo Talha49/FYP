@@ -7,15 +7,12 @@ import { IoPricetagsOutline } from "react-icons/io5";
 import { TbArrowRoundaboutLeft } from "react-icons/tb";
 import { RiAdminLine } from "react-icons/ri";
 import { PiRadioactive } from "react-icons/pi";
-
-
-
 import Link from 'next/link';
-
 const SideNav = () => {
   const [isOpen, setIsOpen] = useState(false);
+  
 
-  const handleMouseEnter = () => {
+   const handleMouseEnter = () => {
     setIsOpen(true);
   };
 
@@ -30,23 +27,23 @@ const SideNav = () => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <ul className="list-none p-0">
+      <ul className="list-none p-0 ">
         
-          <Link href="/" className="flex items-center">
-          <li className="flex items-center p-4  cursor-pointer">
+          <Link href="/" className="flex items-center hover:bg-blue-200">
+          <li className='flex items-center p-4  cursor-pointer'>
             <FaHome className="text-blue-400 text-xl" />
             {isOpen && <span className="ml-4 text-black hidden md:inline">Home</span>}
         </li>
         </Link>
-          <Link href="/Projects" className="flex items-center">
-          <li className="flex items-center p-4  cursor-pointer">
+          <Link href="/Projects" className='flex items-center hover:bg-blue-200 '>
+          <li className="flex items-center p-4  cursor-pointer ">
             <GoProjectSymlink className="text-blue-400 text-xl" />
             {isOpen && <span className="ml-4 text-black hidden md:inline">Projects</span>}
             </li>
           </Link>
         
         
-          <Link href="/Admin" className="flex items-center">
+          <Link href="/Admin" className="flex items-center hover:bg-blue-200">
           <li className="flex items-center p-4  cursor-pointer">
             <RiAdminLine className="text-blue-400 text-xl" />
             {isOpen && <span className="ml-4 text-black hidden md:inline">Admin</span>}
@@ -55,7 +52,7 @@ const SideNav = () => {
         
         <hr/>
         
-          <Link href="/Active" className="flex items-center">
+          <Link href="/Active" className="flex items-center hover:bg-blue-200">
           <li className="flex items-center p-4  cursor-pointer">
             <PiRadioactive className="text-blue-400 text-xl" />
             {isOpen && <span className="ml-4 text-black hidden md:inline">Active</span>}
@@ -63,7 +60,7 @@ const SideNav = () => {
           </Link>
        
         
-          <Link href="/settings" className="flex items-center">
+          <Link href="/settings" className="flex items-center hover:bg-blue-200">
           <li className="flex items-center p-4  cursor-pointer">
             <IoPricetagsOutline className="text-blue-400 text-xl" />
             {isOpen && <span className="ml-4 text-black hidden md:inline">Settings</span>}
@@ -71,7 +68,7 @@ const SideNav = () => {
         </li>
        </Link>
        
-          <Link href="/settings" className="flex items-center">
+          <Link href="/settings" className="flex items-center hover:bg-blue-200">
           <li className="flex items-center p-4 cursor-pointer">
             <TbArrowRoundaboutLeft className="text-blue-400 text-xl" />
             {isOpen && <span className="ml-4 text-black hidden md:inline">About</span>}
