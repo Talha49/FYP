@@ -1,6 +1,6 @@
 import Link from "next/link";
 import React, { useState, useRef } from "react";
-import { Dialog } from "@headlessui/react";
+import { Dialog, Transition } from "@headlessui/react";
 import { SlLayers } from "react-icons/sl";
 import { IoGridOutline } from "react-icons/io5";
 import { CiZoomOut, CiZoomIn } from "react-icons/ci";
@@ -103,49 +103,74 @@ const NestedActiveComp = () => {
             </div>
           </div>
           
-<div  className={`px-4 pb-1 ${isTransformed ? 'flex justify-center items-center h-full' : ''}`}>
-<img
-src={sheets.image}
-alt="Floor Plan"
-className={`object-contain ${isTransformed ? 'w-full transform rotate-3d' : ''}`}
-onClick={() => openDialog(sheets.image)}
-/>
-</div>
+          <div  className={`px-4 pb-1 ${isTransformed ? 'flex justify-center items-center h-full' : ''}`}>
+            <img
+              src={sheets.image}
+              alt="Floor Plan"
+              className={`object-contain ${isTransformed ? 'w-full   rotate-3d' : ''}`}
+              onClick={() => openDialog(sheets.image)}
+            />
+          </div>
         </div>
       ))}
 
-      <Dialog open={isDialogOpen} onClose={closeDialog} className="fixed inset-0 z-10 flex items-center justify-center p-4 bg-black bg-opacity-50">
-        <div className="relative bg-white rounded-lg overflow-hidden max-w-full max-h-full">
-          
-          <div
-            className="relative"
-            style={{ cursor: 'grab', width: '100%', height: '100%' }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
+      <Transition show={isDialogOpen}>
+        <Dialog
+          onClose={closeDialog}
+          className="fixed inset-0 z-10 flex items-center justify-center p-4 bg-white bg-opacity-5"
+          as="div"
+        >
+          <Transition.Child
+            enter="transition-opacity ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="transition-opacity ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
           >
-            <img
-              ref={imageRef}
-              src={selectedImage}
-              alt="Zoomed Floor Plan"
-              className="object-contain max-w-[350px] md:max-w-[600px] lg:max-w-[800px]"
-              style={{ transform: `scale(${zoomLevel}) translate(${position.x}px, ${position.y}px)` }}
-            />
-          </div>
-          <div className="absolute md:top-4 md:right-4 top-1 right-1 flex ">
-            <button onClick={zoomIn} className=" text-black md:text-[2.5rem] text-md   px-2 py-1 rounded">
-              <CiZoomIn />
-            </button>
-            <button onClick={zoomOut} className="text-black md:text-[2.5rem] text-md px-2 py-1 rounded">
-              <CiZoomOut />
-            </button>
-            <button onClick={closeDialog} className="text-black md:text-[1.5rem] text-sm px-2 py-1 rounded">
-            X
-          </button>
-          </div>
-        </div>
-      </Dialog>
+            <div className="fixed inset-0 bg-white bg-opacity-50"></div>
+          </Transition.Child>
+
+          <Transition.Child
+            enter="transition-transform ease-out duration-300"
+            enterFrom="scale-95"
+            enterTo="scale-100"
+            leave="transition-transform ease-in duration-200"
+            leaveFrom="scale-100"
+            leaveTo="scale-95"
+          >
+            <div className="relative bg-white rounded-lg overflow-hidden max-w-full max-h-full">
+              <div
+                className="relative"
+                style={{ cursor: 'grab', width: '100%', height: '100%' }}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              >
+                <img
+                  ref={imageRef}
+                  src={selectedImage}
+                  alt="Zoomed Floor Plan"
+                  className="object-contain max-w-[350px] md:max-w-[600px] lg:max-w-[800px]"
+                  style={{ transform: `scale(${zoomLevel}) translate(${position.x}px, ${position.y}px)` }}
+                />
+              </div>
+              <div className="absolute md:top-4 md:right-4 top-1 right-1 flex ">
+                <button onClick={zoomIn} className=" text-black md:text-[2.5rem] text-md   px-2 py-1 rounded">
+                  <CiZoomIn />
+                </button>
+                <button onClick={zoomOut} className="text-black md:text-[2.5rem] text-md px-2 py-1 rounded">
+                  <CiZoomOut />
+                </button>
+                <button onClick={closeDialog} className="text-black md:text-[1.5rem] text-sm px-2 py-1 rounded">
+                  X
+                </button>
+              </div>
+            </div>
+          </Transition.Child>
+        </Dialog>
+      </Transition>
 
       <button 
         onClick={transformLayout} 

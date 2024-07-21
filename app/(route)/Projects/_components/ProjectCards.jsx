@@ -9,7 +9,7 @@ import {
 } from "react-icons/fa";
 import { IoIosArrowDown } from "react-icons/io";
 
-const projects = [
+export const projects = [
   {
     id: 1,
     image: "/floor.jpg",

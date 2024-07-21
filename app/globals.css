@@ -4,35 +4,40 @@
 
 /* Custom scrollbar styling */
 .custom-scrollbar::-webkit-scrollbar {
-    height: 6px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #888;
-    border-radius: 10px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: #555;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f1f1;
-  }
-  
-  .transformed img {
-    transform: rotate3d(1, -1, 1, 90deg);
-    width: 100%;
-    transition: transform 0.6s ease, width 0.6s ease;
-  }
-  
-  .transformed {
-    transform: rotate3d(1, -1, 1, 90deg);
-    transition: transform 0.6s ease;
-  }
-  
-  /* Add this to your global CSS file or Tailwind CSS configuration */
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* Add this to your global CSS file or Tailwind CSS configuration */
 .rotate-3d {
-  transform: rotate3d(1, -1, 1, 90deg);
+  /* transform: rotate3d(1, -1, 1, 90deg); */
+  /* transform: scaleX(0.9) scaleY(0.8)  rotateX(40deg) rotateY(2deg)
+    rotateZ(1deg) translateX(0px) translateY(13px) translateZ(2px) skewX(0deg)
+    skewY(1deg); */
+  /* transform: 
+  rotateZ(5deg)
+  perspective(2300px)
+  scale(0.5)
+  translate(20px,-10px)
+  skew(16deg,0deg); */
+  /* transform: rotateX(20deg) rotateY(-11deg) rotateZ(16deg) scale(0.6); */
+  /* transform: rotate(9deg) scale(0.7) skew(-13deg, -5deg); */
+  transform-style: preserve-3d;
+  transform: rotateY(30deg)  rotateX(-50deg);
+ max-width: 672px;
+ width: 80%;
   transition: transform 0.6s ease-in-out;
 }
+
