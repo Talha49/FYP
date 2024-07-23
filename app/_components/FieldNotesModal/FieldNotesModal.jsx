@@ -50,7 +50,7 @@ const FieldNotesModal = ({ title }) => {
       {/***Hedaer Field Notes */}
       {/***SEarch bar Row */}
       
-      <div className="bg-white border-b sticky top-0 p-4">
+      <div className="border-b bg-white sticky top-0 p-4">
       <h1 className="text-xl font-bold mx-2 mb-4">{title}</h1>
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <input
@@ -68,34 +68,34 @@ const FieldNotesModal = ({ title }) => {
         </div>
         <div className="flex flex-wrap items-center  ">
           <div className="flex flex-wrap gap-1 text-xs">
-            <button className="bg-transparent border border-black/15 p-2 rounded-full">
+            <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
               For me
             </button>
             <button className="border border-black/15  hover:bg-slate-200 p-2 rounded-full">
               Tags
             </button>
-            <button className="border border-black/15 p-2 rounded-full">
+            <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
               Status
             </button>
-            <button className="border border-black/15 p-2 rounded-full">
+            <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
               Due date
             </button>
-            <button className="border border-black/15 p-2 rounded-full">
+            <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
               Assignee
             </button>
-            <button className="border border-black/15 p-2 rounded-full">
+            <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
               Date created
             </button>
-            <button className="border border-black/15 p-2 rounded-full">
+            <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
               Sheets
             </button>
-            <button className="border border-black/15 p-2 rounded-full">
+            <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
               Zones
             </button>
-            <button className="border border-black/15 p-2 rounded-full">
+            <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
               Creator
             </button>
-            <button className="border border-black/15 p-2 rounded-full">
+            <button className="border border-black/15 p-2 hover:bg-slate-200 rounded-full">
               Tags
             </button>
           </div>
@@ -111,7 +111,7 @@ const FieldNotesModal = ({ title }) => {
 
       <div className="mt-3">
       <div className="p-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
         {notes.map(note => (
           <div key={note.id} className="bg-white shadow-md rounded-md p-4">
             <div className="flex justify-between items-center">

@@ -8,8 +8,9 @@ import { TbArrowRoundaboutLeft } from "react-icons/tb";
 import { RiAdminLine } from "react-icons/ri";
 import { PiRadioactive } from "react-icons/pi";
 import Link from "next/link";
-import Dialog from "../CaptureModal/CaptureModal";
+import Dialog from "../Dialog/Dialog";
 import FieldNotesModal from "../FieldNotesModal/FieldNotesModal";
+import CaptureModal from "../CaptureModal/CaptureModal";
 const SideNav = () => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -106,8 +107,9 @@ const SideNav = () => {
         onClose={() => {
           setopenCaptures(false);
         }}
+        widthClass="w-[450px]"
       >
-        <h1>Settings</h1>
+        <div><CaptureModal title={"Captures"}/></div>
       </Dialog>
       <Dialog
         isOpen={openFieldnote}
@@ -116,7 +118,7 @@ const SideNav = () => {
         }}
         widthClass="w-[600px]"
       >
-        <h1><FieldNotesModal title={"Field Notes"}/></h1>
+        <div><FieldNotesModal title={"Field Notes"}/></div>
       </Dialog>
     </div>
   );
