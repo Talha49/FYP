@@ -1,16 +1,18 @@
 import React from "react";
 
-const Dialog = ({ isOpen, onClose, children, widthClass = "w-[300px]" }) => {
+const Dialog = ({ isOpen, onClose, children, widthClass = "w-[300px]", isLeft = true }) => {
+
   if (!isOpen) return null;
+  
 
   return (
     <div className="fixed inset-0 z-50 overflow-auto ty-40 flex pl-12 pt-16">
       <div
-        className={`relative  bg-white text-black mr-auto flex-col flex border ${widthClass} h-full overflow-y-auto`}
+        className={`relative bg-white text-black ${isLeft ? "mr-auto" : "m-auto"}  flex-col flex border ${widthClass} h-full overflow-y-auto`}
       >
         {/* Close Button */}
         <button
-          className=" z-10 top-3 sticky right-3 text-black bg-transparent hover:bg-gray-200 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center"
+          className=" z-50 top-3 sticky right-3 text-black bg-transparent hover:bg-gray-200 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center"
           onClick={onClose}
         >
           <svg
@@ -27,7 +29,7 @@ const Dialog = ({ isOpen, onClose, children, widthClass = "w-[300px]" }) => {
           </svg>
         </button>
         {/* Content */}
-        <div className="py-4 text-left">{children}</div>
+        <div className="absolute text-left">{children}</div>
       </div>
     </div>
   );

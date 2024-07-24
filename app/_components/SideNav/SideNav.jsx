@@ -107,7 +107,7 @@ const SideNav = () => {
         onClose={() => {
           setopenCaptures(false);
         }}
-        widthClass="w-[450px]"
+        widthClass="w-[400px]"
       >
         <div><CaptureModal title={"Captures"}/></div>
       </Dialog>
