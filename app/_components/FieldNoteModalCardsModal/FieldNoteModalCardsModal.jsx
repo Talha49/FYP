@@ -1,11 +1,15 @@
-import React from 'react'
-import { AiOutlineBold } from 'react-icons/ai'
-import { useState } from 'react';
-import { FaRegBell, FaFileUpload } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { FaHandLizard, FaFileUpload } from 'react-icons/fa';
+import { ImBold } from 'react-icons/im';
+import { TbWorld, TbCapture } from 'react-icons/tb';
 import { MdOutlinePersonAddAlt1, MdOutlineMarkEmailUnread } from 'react-icons/md';
-const FieldNoteModalCardsModal = () => {
+import { IoEllipsisHorizontalOutline } from 'react-icons/io5';
+import { SiSquare } from 'react-icons/si';
+import { VscClose } from "react-icons/vsc";
 
-    const [tags, setTags] = useState(['Fire alarm']);
+const FieldNoteModalCardsModal = ({ onClose }) => {
+
+  const [tags, setTags] = useState(['Fire alarm']);
 
   const handleAddTag = (event) => {
     if (event.key === 'Enter' && event.target.value) {
@@ -14,24 +18,28 @@ const FieldNoteModalCardsModal = () => {
     }
   };
 
+
   return (
     <div>
-                <div className='bg-slate-400 flex justify-around items-center w-full'>
-                      <div>
-                        <h1>Muhammad Waseem</h1>
-                        <p>3-12 | <span>Dec 8,2022</span></p>
-                      </div>
-                      <div className='flex '> 
-                         <p><AiOutlineBold /></p>
-                         <p><AiOutlineBold /></p>
-                         <p><AiOutlineBold /></p>
-                         <p><AiOutlineBold /></p>
-                         <p><AiOutlineBold /></p>
-                         <p><AiOutlineBold /></p>
-                      </div>
-                </div>
+      <div className='bg-white border-b-2 flex sticky top-0 z-10 justify-between px-4 py-2 items-center w-full'>
+        <div>
+          <h1>Muhammad Waseem</h1>
+          <p>3-12 | <span>Dec 8, 2022</span></p>
+        </div>
+        <div className='flex items-center gap-x-2'>
+          <p className='hover:bg-gray-200 p-2 rounded-md'><FaHandLizard size={15} /></p>
+          <p className='hover:bg-gray-200 p-2 rounded-md'><ImBold size={15} /></p>
+          <p className='hover:bg-gray-200 p-2 rounded-md'><TbCapture size={15} /></p>
+          <p className='hover:bg-gray-200 p-2 rounded-md'><SiSquare size={15} /></p>
+          <p className='hover:bg-gray-200 p-2 rounded-md'><TbWorld size={15} /></p>
+          <p className='hover:bg-gray-200 p-2 rounded-md'><IoEllipsisHorizontalOutline size={15} /></p>
+          <p className='bg-slate-300 h-6 w-[1px]'></p>
+          <button className="hover:bg-gray-200 p-2 rounded-md" onClick={onClose}><VscClose size={20}/></button>
+        </div>
+      </div>
 
-                <div className="w-full  p-4">
+
+      <div className="w-full  p-4">
       <div className="grid sm:grid-cols-2  gap-4">
         {/* Left Section */}
         <div className="space-y-4">
@@ -146,9 +154,8 @@ const FieldNoteModalCardsModal = () => {
         </div>
       </div>
     </div>
-        
     </div>
-  )
-}
+  );
+};
 
-export default FieldNoteModalCardsModal
+export default FieldNoteModalCardsModal;

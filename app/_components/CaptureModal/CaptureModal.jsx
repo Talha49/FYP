@@ -3,10 +3,12 @@
 import React, { useState } from "react";
 import { FaSortAmountDown } from "react-icons/fa";
 import { GoPencil } from "react-icons/go";
+import { IoVideocamOutline } from "react-icons/io5";
 import { LuFolderInput } from "react-icons/lu";
 import { RiDeleteBin6Line } from "react-icons/ri";
+import { VscClose } from "react-icons/vsc";
 
-const CaptureModal = ({ title }) => {
+const CaptureModal = ({ onClose }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sheetFilter, setSheetFilter] = useState("");
   const [captureTypeFilter, setCaptureTypeFilter] = useState("");
@@ -54,7 +56,16 @@ const CaptureModal = ({ title }) => {
   return (
     <div className="px-2 mx-auto">
       <div className="border-b p-2 sticky top-0 bg-white z-10 ">
-        <h1 className="text-xl font-bold mx-2 mb-4">{title}</h1>
+        <div className="flex items-center justify-between py-4">
+          <h1 className="text-xl font-bold ">Captures</h1>
+          <button
+            className="hover:bg-gray-200 p-2 rounded-md"
+            onClick={onClose}
+          >
+            <VscClose size={20} />
+          </button>{" "}
+        </div>
+
         <div className="mb-4 flex space-x-2">
           <div className="relative flex-grow">
             <input
@@ -66,7 +77,7 @@ const CaptureModal = ({ title }) => {
             />
           </div>
           <button className="bg-gray-200 p-2 rounded">
-           <FaSortAmountDown/>
+            <FaSortAmountDown />
           </button>
         </div>
         <div className="flex space-x-2">
@@ -127,9 +138,11 @@ const CaptureModal = ({ title }) => {
                 </div>
                 <p className="text-xs text-gray-500">{card.floor}</p>
                 <div className="mt-2 flex items-center">
-                  <span className="bg-green-200 text-green-800 p-1 rounded text-xs">
-                    {card.captureType}
+                  <span className="bg-green-200 text-green-800 p-1 rounded text-xs flex gap-x-1 items-center">
+                     <IoVideocamOutline /> {card.captureType} 
+
                   </span>
+                  <span className="bg-gray-400 bg-opacity-30 h-[1px] sm:w-12 w-4"></span>
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="mt-2 text-xs text-gray-700">
@@ -138,14 +151,13 @@ const CaptureModal = ({ title }) => {
                   <button>
                     <GoPencil />
                   </button>
-                  
                 </div>
                 <div>
-                {selectedCardId !== card.id && (
-                  <span className=" bg-blue-500 text-white px-2 py-1 text-xs">
-                    View Capture
-                  </span>
-                )}
+                  {selectedCardId !== card.id && (
+                    <span className=" bg-blue-500 text-white px-2 py-1 text-xs">
+                      View Capture
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

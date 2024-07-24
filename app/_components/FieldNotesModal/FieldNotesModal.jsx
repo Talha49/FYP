@@ -5,8 +5,9 @@ import { FaGlobe, FaExpand } from "react-icons/fa";
 import Image from "next/image";
 import Dialog from "../Dialog/Dialog";
 import FieldNoteModalCardsModal from "../FieldNoteModalCardsModal/FieldNoteModalCardsModal";
+import { VscClose } from "react-icons/vsc";
 
-const FieldNotesModal = ({ title }) => {
+const FieldNotesModal = ({ onClose }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const notes = [
@@ -53,7 +54,15 @@ const FieldNotesModal = ({ title }) => {
         {/***SEarch bar Row */}
 
         <div className="border-b bg-white sticky top-0 p-4">
-          <h1 className="text-xl font-bold mx-2 mb-4">{title}</h1>
+        <div className="flex items-center justify-between py-4">
+          <h1 className="text-xl font-bold ">FieldNotes</h1>
+          <button
+            className="hover:bg-gray-200 p-2 rounded-md"
+            onClick={onClose}
+          >
+            <VscClose size={20} />
+          </button>{" "}
+        </div>
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <input
               type="text"
@@ -162,10 +171,12 @@ const FieldNotesModal = ({ title }) => {
       </div>
       {/* Dialog Middle */}
       {isOpen && 
-        <Dialog isOpen={isOpen} onClose={() => {setIsOpen(false)}} widthClass="w-[800px]" isLeft={false}>
-         <FieldNoteModalCardsModal/>
-        </Dialog>
-      }
+  <Dialog isOpen={isOpen} onClose={() => setIsOpen(false)} widthClass="w-[800px]" isLeft={false} withBlur={true} padding='p-4'    
+  >
+          <FieldNoteModalCardsModal onClose={() => setIsOpen(false)} />
+  </Dialog>
+}
+
     </>
   );
 };
