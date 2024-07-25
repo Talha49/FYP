@@ -171,7 +171,7 @@ const FieldNotesModal = ({ onClose }) => {
       </div>
       {/* Dialog Middle */}
       {isOpen && 
-  <Dialog isOpen={isOpen} onClose={() => setIsOpen(false)} widthClass="w-[800px]" isLeft={false} withBlur={true} padding='p-4'    
+  <Dialog isOpen={isOpen} onClose={() => setIsOpen(false)} widthClass="w-[900px]" isLeft={false} withBlur={true} padding='p-4'    
   >
           <FieldNoteModalCardsModal onClose={() => setIsOpen(false)} />
   </Dialog>
