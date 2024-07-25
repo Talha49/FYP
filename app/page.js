@@ -3,7 +3,7 @@ import About from "./_components/About/About";
 
 export default function Home() {
   return (
-    <main>
+    <main className="md:ml-0 ml-4">
      
      
        {/* <div className='w-[100%] flex gap-5'>

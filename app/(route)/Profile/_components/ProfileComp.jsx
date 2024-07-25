@@ -221,8 +221,8 @@ const ProfileComp = () => {
           <div className="md:w-1/2 w-full">
             <div>
               <p className="font-semibold mb-1">Profile Photo</p>
-              <div className="mb-4 flex items-center space-x-40">
-                <div className="w-24 h-24 bg-gray-300 text-gray-700 rounded-full flex items-center justify-center text-4xl font-semibold overflow-hidden">
+              <div className="mb-4 flex items-center space-x-4">
+                <div className="w-36 h-36 bg-gray-300 text-gray-700 rounded-full flex items-center justify-center text-4xl font-semibold overflow-hidden">
                   {profileImage ? (
                     <Image
                       src={profileImage}

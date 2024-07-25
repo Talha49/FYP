@@ -53,9 +53,9 @@ const FieldNotesModal = ({ onClose }) => {
         {/***Hedaer Field Notes */}
         {/***SEarch bar Row */}
 
-        <div className="border-b bg-white sticky top-0 p-4">
-        <div className="flex items-center justify-between py-4">
-          <h1 className="text-xl font-bold ">FieldNotes</h1>
+        <div className="border-b-2 bg-white sticky top-0 p-4">
+        <div className="flex items-center justify-between ">
+          <h1 className="text-xl  font-bold ">FieldNotes</h1>
           <button
             className="hover:bg-gray-200 p-2 rounded-md"
             onClick={onClose}
@@ -67,7 +67,7 @@ const FieldNotesModal = ({ onClose }) => {
             <input
               type="text"
               placeholder="Search Field Notes"
-              className="border border-gray-300 rounded-md p-2 w-full md:max-w-[70%]"
+              className="border border-gray-300 rounded-md p-2 w-full outline-none md:max-w-[70%]"
             />
             <button className="bg-transparent border p-2 rounded-md">
               <FaSortAmountDown />
@@ -110,7 +110,7 @@ const FieldNotesModal = ({ onClose }) => {
                 Tags
               </button>
             </div>
-            <div className="flex justify-end ml-auto">
+            <div className="flex justify-end ml-auto mt-1">
               <button className="text-black p-2 text-xs bg-slate-200 rounded-md">
                 Clear all
               </button>
@@ -119,6 +119,8 @@ const FieldNotesModal = ({ onClose }) => {
           <div className="text-gray-600">12 results</div>
         </div>
 
+
+   {/***Cards */}
         <div className="mt-3">
           <div className="p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">

@@ -25,7 +25,7 @@ const Header = () => {
             <Image src='/avatar.png' width={35} height={35} alt="Profile" />
           </div>    
           {showDialog && (
-          <div className='absolute top-12 right-0 w-[340px]  bg-white shadow-lg border py-2 border-gray-200 rounded-md px-4'>
+          <div className='absolute top-12 right-0 w-[340px]  z-[-10] bg-white shadow-lg border py-2 border-gray-200 rounded-md px-4'>
             <div className=' py-4'>
               <p className='font-semibold leading-tight'>Muhammad Saleem</p>
               <p className='text-gray-500 leading-tight'>saleem@peritus.ae</p>

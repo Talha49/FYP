@@ -99,44 +99,43 @@ const FieldNoteModalCardsModal = ({ onClose }) => {
   
   return (
     <div>
-      <div className="bg-white border-b-2 flex sticky top-0 z-10 justify-between px-4 py-2 items-center w-full">
-        <div>
-          <h1>Muhammad Waseem</h1>
-          <p>
-            3-12 | <span>Dec 8, 2022</span>
-          </p>
-        </div>
-        <div className="flex items-center gap-x-2">
-          <p className="hover:bg-gray-200 p-2 rounded-md">
-            <FaHandLizard size={15} />
-          </p>
-          <p className="hover:bg-gray-200 p-2 rounded-md">
-            <ImBold size={15} />
-          </p>
-          <p className="hover:bg-gray-200 p-2 rounded-md">
-            <TbCapture size={15} />
-          </p>
-          <p className="hover:bg-gray-200 p-2 rounded-md">
-            <SiSquare size={15} />
-          </p>
-          <p className="hover:bg-gray-200 p-2 rounded-md">
-            <TbWorld size={15} />
-          </p>
-          <p className="hover:bg-gray-200 p-2 rounded-md">
-            <IoEllipsisHorizontalOutline size={15} />
-          </p>
-          <p className="bg-slate-300 h-6 w-[1px]"></p>
-          <button
-            className="hover:bg-gray-200 p-2 rounded-md"
-            onClick={onClose}
-          >
-            <VscClose size={20} />
-          </button>
-        </div>
+
+
+         <div className="bg-white border-b-2 flex flex-col sm:flex-row sticky top-0 z-10 justify-between px-4 py-2 items-center w-full">
+      <div className="flex flex-col items-start sm:flex-row sm:items-center sm:justify-between w-full sm:w-auto">
+        <h1 className="text-sm sm:text-base md:text-lg">Muhammad Waseem</h1>
+        <p className="text-xs sm:text-sm md:text-base sm:ml-2">
+          3-12 | <span>Dec 8, 2022</span>
+        </p>
       </div>
+      <div className="flex  items-center gap-x-2 gap-y-1 mt-2 sm:mt-0">
+        <button className="hover:bg-gray-200 p-2 rounded-md">
+          <FaHandLizard size={15} />
+        </button>
+        <button className="hover:bg-gray-200 p-2 rounded-md">
+          <ImBold size={15} />
+        </button>
+        <button className="hover:bg-gray-200 p-2 rounded-md">
+          <TbCapture size={15} />
+        </button>
+        <button className="hover:bg-gray-200 p-2 rounded-md">
+          <SiSquare size={15} />
+        </button>
+        <button className="hover:bg-gray-200 p-2 rounded-md">
+          <TbWorld size={15} />
+        </button>
+        <button className="hover:bg-gray-200 p-2 rounded-md">
+          <IoEllipsisHorizontalOutline size={15} />
+        </button>
+        <div className="bg-slate-300 h-6 w-[1px]"></div>
+        <button className="hover:bg-gray-200 p-2 rounded-md" onClick={onClose}>
+          <VscClose size={20} />
+        </button>
+      </div>
+    </div>
 
       <div className="w-full p-4">
-        <div className="grid sm:grid-cols-5 gap-4">
+        <div className="grid sm:grid-cols-5 gap-4 justify-center">
           {/* Left Section */}
           <div className="col-span-3 p-2 space-y-4">
             {/* Image Pagination Card */}

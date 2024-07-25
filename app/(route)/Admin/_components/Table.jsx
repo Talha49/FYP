@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LiaSortSolid } from "react-icons/lia";
 
 const usersData = [
@@ -33,7 +33,7 @@ const usersData = [
   },
 ];
 
-const Table = () => {
+const Table = ({ searchQuery }) => {
   const [users, setUsers] = useState(usersData);
   const [sortOrder, setSortOrder] = useState(null);
 
@@ -48,6 +48,11 @@ const Table = () => {
     }
     setUsers(sortedUsers);
   };
+
+  const filteredUsers = users.filter(user => 
+    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className='mt-4'>
@@ -67,7 +72,7 @@ const Table = () => {
               </tr>
             </thead>
             <tbody className='text-sm'>
-              {users.map((user, index) => (
+              {filteredUsers.map((user, index) => (
                 <tr key={index} className="hover:bg-gray-50">
                   <td className="border p-2"><input type="checkbox" /></td>
                   <td className="border p-2">{user.name}</td>
