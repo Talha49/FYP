@@ -1,4 +1,5 @@
 "use client";
+import Image from 'next/image';
 import React, { useState, useEffect } from 'react';
 import { LiaSortSolid } from "react-icons/lia";
 
@@ -56,8 +57,9 @@ const Table = ({ searchQuery }) => {
 
   return (
     <div className='mt-4'>
-      <div className="overflow-x-auto">
-        <div className="min-w-full overflow-x-auto">
+    <div className="overflow-x-auto">
+      <div className="min-w-full overflow-x-auto">
+        {filteredUsers.length > 0 ? (
           <table className="w-full border-collapse border min-w-[800px]">
             <thead className="text-sm font-medium text-gray-600">
               <tr className="bg-gray-100">
@@ -84,9 +86,17 @@ const Table = ({ searchQuery }) => {
               ))}
             </tbody>
           </table>
-        </div>
+        ) : (
+          <div className="flex justify-center mt-4">
+  <div className="text-center flex flex-col justify-center max-w-md mx-auto">
+    <p className="text-md ">No Matches For Your Results !!</p>
+    <Image src='/svg.jpg' width={300} height={300} className="mx-auto md:w-[73%]" />
+  </div>
+</div>
+        )}
       </div>
     </div>
+  </div>
   );
 };
 

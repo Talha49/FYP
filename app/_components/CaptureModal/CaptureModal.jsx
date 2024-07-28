@@ -1,5 +1,6 @@
 // components/CaptureModal.js
 "use client";
+import Image from "next/image";
 import React, { useState } from "react";
 import { FaSortAmountDown } from "react-icons/fa";
 import { GoPencil } from "react-icons/go";
@@ -23,7 +24,7 @@ const CaptureModal = ({ onClose }) => {
       date: "Jan 16, 2019",
       floor: "Floor 2",
       captureType: "360° video",
-      captureName: "Unnamed capture",
+      captureName: "Ground Floor",
       imageUrl: "/floor2.jpg", // Replace with the correct image path
     },
     {
@@ -53,11 +54,16 @@ const CaptureModal = ({ onClose }) => {
     // Add more card objects as needed
   ];
 
+
+  const filterCardsData = cardsData.filter((cards) =>
+   cards.captureName.toLocaleLowerCase().includes(searchTerm.toLocaleLowerCase())
+  )
+
   return (
     <div className="px-2 mx-auto">
       <div className="border-b p-2 sticky top-0 bg-white z-10 ">
         <div className="flex items-center justify-between py-4">
-          <h1 className="text-xl font-bold ">Captures</h1>
+          <h1 className="text-xl font-bold flex flex-col ">Captures <span className="text-xs text-gray-400 font-sans">{filterCardsData.length} Captures</span></h1>
           <button
             className="hover:bg-gray-200 p-2 rounded-md"
             onClick={onClose}
@@ -65,6 +71,7 @@ const CaptureModal = ({ onClose }) => {
             <VscClose size={20} />
           </button>{" "}
         </div>
+        
 
         <div className="mb-4 flex space-x-2">
           <div className="relative flex-grow">
@@ -102,66 +109,78 @@ const CaptureModal = ({ onClose }) => {
 
       <div>
         <div className="mt-4">
-          {cardsData.map((card) => (
-            <div
-              key={card.id}
-              className={`border ${
-                selectedCardId === card.id
-                  ? "border-blue-500"
-                  : "border-gray-200"
-              } p-4 mb-4 cursor-pointer flex`}
-              onClick={() => handleCardClick(card.id)}
-            >
-              <div className="relative  w-1/2">
-                <img
-                  src={card.imageUrl}
-                  alt="Card"
-                  className="w-full h-full object-cover"
-                />
-                {selectedCardId === card.id && (
-                  <span className="absolute top-0 left-0 bg-blue-500 text-white px-2 py-1 text-xs">
-                    CURRENT
-                  </span>
-                )}
-              </div>
-              <div className="w-1/2 pl-4">
-                <div className="flex justify-between items-center">
-                  <p className="text-xs text-gray-500">{card.date}</p>
-                  <div className="flex gap-1">
-                    <button className=" ">
-                      <LuFolderInput size={20} />
-                    </button>
-                    <button className="">
-                      <RiDeleteBin6Line size={20} />
-                    </button>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500">{card.floor}</p>
-                <div className="mt-2 flex items-center">
-                  <span className="bg-green-200 text-green-800 p-1 rounded text-xs flex gap-x-1 items-center">
-                     <IoVideocamOutline /> {card.captureType} 
-
-                  </span>
-                  <span className="bg-gray-400 bg-opacity-30 h-[1px] sm:w-12 w-4"></span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="mt-2 text-xs text-gray-700">
-                    {card.captureName}
-                  </p>
-                  <button>
-                    <GoPencil />
-                  </button>
-                </div>
-                <div>
-                  {selectedCardId !== card.id && (
-                    <span className=" bg-blue-500 text-white px-2 py-1 text-xs">
-                      View Capture
+          {filterCardsData.length > 0 ? (
+            filterCardsData.map((card) => (
+              <div
+                key={card.id}
+                className={`border ${
+                  selectedCardId === card.id
+                    ? "border-blue-500"
+                    : "border-gray-200"
+                } p-4 mb-4 cursor-pointer flex`}
+                onClick={() => handleCardClick(card.id)}
+              >
+                <div className="relative  w-1/2">
+                  <img
+                    src={card.imageUrl}
+                    alt="Card"
+                    className="w-full h-full object-cover"
+                  />
+                  {selectedCardId === card.id && (
+                    <span className="absolute top-0 left-0 bg-blue-500 text-white px-2 py-1 text-xs">
+                      CURRENT
                     </span>
                   )}
                 </div>
+                <div className="w-1/2 pl-4">
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-gray-500">{card.date}</p>
+                    <div className="flex gap-1">
+                      <button className=" ">
+                        <LuFolderInput size={20} />
+                      </button>
+                      <button className="">
+                        <RiDeleteBin6Line size={20} />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500">{card.floor}</p>
+                  <div className="mt-2 flex items-center">
+                    <span className="bg-green-200 text-green-800 p-1 rounded text-xs flex gap-x-1 items-center">
+                       <IoVideocamOutline /> {card.captureType} 
+  
+                    </span>
+                    <span className="bg-gray-400 bg-opacity-30 h-[1px] sm:w-12 w-4"></span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="mt-2 text-xs text-gray-700">
+                      {card.captureName}
+                    </p>
+                    <button>
+                      <GoPencil />
+                    </button>
+                  </div>
+                  <div>
+                    {selectedCardId !== card.id && (
+                      <span className=" bg-blue-500 text-white px-2 py-1 text-xs">
+                        View Capture
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
+            ))
+          ) : (
+            <div className="flex justify-center mt-4">
+            <div className="text-center flex flex-col justify-center max-w-md mx-auto">
+              <p className="text-md ">No Matches For Your Results !!</p>
+              <Image src='/svg.jpg' width={300} height={300} className="mx-auto md:w-[73%]" />
             </div>
-          ))}
+          </div>
+          
+          )
+
+          }
         </div>
       </div>
     </div>

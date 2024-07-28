@@ -12,7 +12,7 @@ const Page = () => {
       <div className="flex justify-between sm:flex-row flex-col ml-5">
         <div className="text-left">
           <h2 className="font-semibold">Active Projects</h2>
-          <p>3 projects</p>
+          <p> 3 projects</p>
         </div>
         <div className="flex flex-wrap items-center mr-5">
           <div className="flex items-center border rounded px-4 py-2">
@@ -33,7 +33,12 @@ const Page = () => {
       </div>
 
       <div>
-        <ProjectCards searchQuery={searchQuery} />
+      <ProjectCards 
+      searchQuery={searchQuery} 
+      
+    />      
+        
+     
       </div>
     </section>
   );

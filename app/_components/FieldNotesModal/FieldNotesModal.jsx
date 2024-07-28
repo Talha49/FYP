@@ -9,6 +9,7 @@ import { VscClose } from "react-icons/vsc";
 
 const FieldNotesModal = ({ onClose }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchParam, setSearchParam] = useState("");
 
   const notes = [
     {
@@ -22,7 +23,6 @@ const FieldNotesModal = ({ onClose }) => {
       tag: "Fire alarm",
       description: "Fire Alarm is not connected to power source",
     },
-
     {
       id: 2,
       name: "Jane Doe",
@@ -34,40 +34,34 @@ const FieldNotesModal = ({ onClose }) => {
       tag: "Smoke detector",
       description: "Smoke detector needs maintenance",
     },
-    {
-      id: 2,
-      name: "Jane Doe",
-      room: "2-14",
-      date: "Jan 10, 2023",
-      floor: "Floor 3",
-      priority: "Priority 1",
-      imageUrl: "/floor.jpg",
-      tag: "Smoke detector",
-      description: "Smoke detector needs maintenance",
-    },
+    
   ];
+
+  const filterNotes = notes.filter(
+    (note) =>
+      note.name.toLowerCase().includes(searchParam.toLowerCase()) ||
+      note.description.toLowerCase().includes(searchParam.toLowerCase())
+  );
 
   return (
     <>
-      <div className="">
-        {/***Hedaer Field Notes */}
-        {/***SEarch bar Row */}
-
+      <div>
+        {/*** Header Field Notes */}
+        {/*** Search bar Row */}
         <div className="border-b-2 bg-white sticky top-0 p-4">
-        <div className="flex items-center justify-between ">
-          <h1 className="text-xl  font-bold ">FieldNotes</h1>
-          <button
-            className="hover:bg-gray-200 p-2 rounded-md"
-            onClick={onClose}
-          >
-            <VscClose size={20} />
-          </button>{" "}
-        </div>
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold">FieldNotes</h1>
+            <button className="hover:bg-gray-200 p-2 rounded-md" onClick={onClose}>
+              <VscClose size={20} />
+            </button>
+          </div>
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <input
               type="text"
               placeholder="Search Field Notes"
               className="border border-gray-300 rounded-md p-2 w-full outline-none md:max-w-[70%]"
+              value={searchParam}
+              onChange={(e) => setSearchParam(e.target.value)}
             />
             <button className="bg-transparent border p-2 rounded-md">
               <FaSortAmountDown />
@@ -77,12 +71,12 @@ const FieldNotesModal = ({ onClose }) => {
               Export
             </button>
           </div>
-          <div className="flex flex-wrap items-center  ">
+          <div className="flex flex-wrap items-center">
             <div className="flex flex-wrap gap-1 text-xs">
               <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
                 For me
               </button>
-              <button className="border border-black/15  hover:bg-slate-200 p-2 rounded-full">
+              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
                 Tags
               </button>
               <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
@@ -103,7 +97,7 @@ const FieldNotesModal = ({ onClose }) => {
               <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
                 Zones
               </button>
-              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
+              <button className="border border-black/15 p-2 hover:bg-slate-200 rounded-full">
                 Creator
               </button>
               <button className="border border-black/15 p-2 hover:bg-slate-200 rounded-full">
@@ -116,21 +110,20 @@ const FieldNotesModal = ({ onClose }) => {
               </button>
             </div>
           </div>
-          <div className="text-gray-600">12 results</div>
+          <div className="text-gray-600">{filterNotes.length} results</div>
         </div>
 
-
-   {/***Cards */}
+        {/*** Cards */}
         <div className="mt-3">
           <div className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
-              {notes.map((note) => (
+           {
+            filterNotes.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filterNotes.map((note) => (
                 <div
                   key={note.id}
                   className="bg-white shadow-md rounded-md p-4"
-                  onClick={() => {
-                    setIsOpen(true);
-                  }}
+                  onClick={() => setIsOpen(true)}
                 >
                   <div className="flex justify-between items-center">
                     <div>
@@ -168,17 +161,30 @@ const FieldNotesModal = ({ onClose }) => {
                 </div>
               ))}
             </div>
+            ) : (<div className="flex justify-center mt-4">
+            <div className="text-center flex flex-col justify-center max-w-md mx-auto">
+              <p className="text-md ">No Matches For Your Results !!</p>
+              <Image src='/svg.jpg' width={300} height={300} className="mx-auto md:w-[73%]" />
+            </div>
+          </div>)
+           }
           </div>
         </div>
       </div>
-      {/* Dialog Middle */}
-      {isOpen && 
-  <Dialog isOpen={isOpen} onClose={() => setIsOpen(false)} widthClass="w-[900px]" isLeft={false} withBlur={true} padding='p-4'    
-  >
-          <FieldNoteModalCardsModal onClose={() => setIsOpen(false)} />
-  </Dialog>
-}
 
+      {/* Dialog Middle */}
+      {isOpen && (
+        <Dialog
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          widthClass="w-[900px]"
+          isLeft={false}
+          withBlur={true}
+          padding="p-4"
+        >
+          <FieldNoteModalCardsModal onClose={() => setIsOpen(false)} />
+        </Dialog>
+      )}
     </>
   );
 };

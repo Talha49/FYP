@@ -28,11 +28,11 @@ const SideNav = () => {
   return (
     <div
       className={`bg-white shadow-lg h-screen fixed transition-all  duration-300 z-10
-                  ${isOpen ? "md:w-36 w-12" : "md:w-10 w-10"}`}
+                  ${isOpen ? "md:w-36 w-14" : "md:w-12 w-12"}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <ul className="list-none p-0 flex flex-col items-center justify-center ">
+      <ul className="list-none p-0 flex flex-col  justify-center ">
         <Link href="/" className="flex items-center hover:bg-blue-200">
           <li className="flex items-center p-4  cursor-pointer">
             <FaHome className="text-blue-400 text-xl" />

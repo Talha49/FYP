@@ -14,7 +14,7 @@ const Dialog = ({
 
   return (
     <div
-      className={`fixed inset-0 z-50 overflow-auto ty-40 flex pl-12 pt-16  ${padding} ${
+      className={`fixed inset-0 z-50 overflow-auto  ty-40 flex pl-12 pt-16  ${padding} ${
         isOpen ? "animate-fade-in" : "animate-fade-out"
       }`}
     >
@@ -27,7 +27,7 @@ const Dialog = ({
         ></div>
       )}
       <div
-        className={`relative bg-white text-black ${isLeft ? "mr-auto" : "m-auto"} flex-col flex border ${widthClass} h-full overflow-y-auto ${
+        className={`relative bg-white text-black ${isLeft ? "mr-auto" : "m-auto"} flex-col flex border ${widthClass} h-full overflow-y-auto custom-scrollbars ${
           isOpen ? "animate-slide-in" : "animate-slide-out"
         }`}
       >
