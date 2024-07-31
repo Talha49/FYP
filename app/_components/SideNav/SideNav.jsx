@@ -108,6 +108,7 @@ const SideNav = () => {
           setopenCaptures(false);
         }}
         widthClass="w-[400px]"
+        
       >
         <div><CaptureModal title={"Captures"} onClose={() =>setopenCaptures(false)}/></div>
       </Dialog> 
@@ -117,6 +118,7 @@ const SideNav = () => {
           setopenFieldnote(false);
         }}
         widthClass="w-[600px]"
+        minWidth="500"
       >
         <div><FieldNotesModal title={"Field Notes"} onClose={() =>setopenFieldnote(false)}  /></div>
       </Dialog>

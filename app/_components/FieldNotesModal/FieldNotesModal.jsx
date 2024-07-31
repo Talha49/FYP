@@ -181,6 +181,7 @@ const FieldNotesModal = ({ onClose }) => {
           isLeft={false}
           withBlur={true}
           padding="p-4"
+          
         >
           <FieldNoteModalCardsModal onClose={() => setIsOpen(false)} />
         </Dialog>
