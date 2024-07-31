@@ -144,11 +144,11 @@ const FieldNotesModal = ({ onClose }) => {
                     </span>
                   </div>
                   <div className="my-2">
-                    <Image
+                    <img
                       src={note.imageUrl}
                       alt="Note Image"
-                      width={400}
-                      height={300}
+                      // width={400}
+                      // height={300}
                       className="rounded-md"
                     />
                   </div>

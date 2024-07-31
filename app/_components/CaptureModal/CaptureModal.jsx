@@ -120,11 +120,12 @@ const CaptureModal = ({ onClose }) => {
                 } p-4 mb-4 cursor-pointer flex`}
                 onClick={() => handleCardClick(card.id)}
               >
-                <div className="relative  w-1/2">
+                
+                <div className="relative w-fit">
                   <img
                     src={card.imageUrl}
                     alt="Card"
-                    className="w-full h-full object-cover"
+                    className="max-w-[180px] min-w-[180px] h-full object-cover"
                   />
                   {selectedCardId === card.id && (
                     <span className="absolute top-0 left-0 bg-blue-500 text-white px-2 py-1 text-xs">
@@ -132,7 +133,7 @@ const CaptureModal = ({ onClose }) => {
                     </span>
                   )}
                 </div>
-                <div className="w-1/2 pl-4">
+                <div className="w-full pl-4 ">
                   <div className="flex justify-between items-center">
                     <p className="text-xs text-gray-500">{card.date}</p>
                     <div className="flex gap-1">
