@@ -1,6 +1,8 @@
-import { middleware } from '@/app/middleware';
-import pool from '@/lib/middlewares/connection';
+// pages/api/users/index.js
+import connectToDatabase from '@/lib/connectdb/connection';
+import User from '@/lib/models/User';
 import { NextResponse } from 'next/server';
+import { middleware } from '@/app/middleware';
 
 export async function GET(request) {
   try {
@@ -10,11 +12,13 @@ export async function GET(request) {
       return middlewareResponse;
     }
 
-    const [rows] = await pool.query(
-      `SELECT user_id, name, email, contact, address, city, created_at, updated_at, isSocialLogin 
-       FROM users`
-    );
-    return NextResponse.json(rows);
+    // Connect to the database
+    await connectToDatabase();
+
+    // Fetch all users from MongoDB
+    const users = await User.find({}, 'fullName email contact address city createdAt updatedAt isSocialLogin');
+
+    return NextResponse.json(users);
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

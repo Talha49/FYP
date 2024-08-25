@@ -11,11 +11,11 @@ const Auth = () => {
   };
 
   return (
-    <div className="w-[80%] mx-auto mt-10 p-6 rounded-lg">
-      <div className="flex justify-center mb-6">
+    <div className="w-full p-6 rounded-lg">
+      <div className="flex justify-center">
         <button
           onClick={() => handleTabClick('login')}
-          className={`w-[150px] px-4 py-2 font-semibold rounded-l-lg ${
+          className={`w-[150px] px-4 py-2 font-semibold rounded-tl-xl ${
             activeTab === 'login' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
           }`}
         >
@@ -23,7 +23,7 @@ const Auth = () => {
         </button>
         <button
           onClick={() => handleTabClick('register')}
-          className={`w-[150px] px-4 py-2 font-semibold rounded-r-lg ${
+          className={`w-[150px] px-4 py-2 font-semibold rounded-tr-xl ${
             activeTab === 'register' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
           }`}
         >

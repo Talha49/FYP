@@ -1,78 +1,82 @@
-import pool from "@/lib/middlewares/connection";
-import { NextResponse } from "next/server";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+// pages/api/login.js
+import mongoose from 'mongoose';
+import connectToDatabase from '@/lib/connectdb/connection';
+import User from '@/lib/models/User';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { NextResponse } from 'next/server';
 
 const JWT_SECRET = process.env.JWT_SECRET_KEY; // Ensure this is set in your .env file
 
 export async function POST(req) {
   try {
+    await connectToDatabase();
+
     const { email, password } = await req.json();
 
     // Validation
     if (!email || !password) {
       return NextResponse.json(
-        { error: "Please fill all the required fields" },
+        { error: 'Please fill all the required fields' },
         { status: 400 }
       );
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
     }
 
     // Fetch user from the database
-    const [user] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
+    const user = await User.findOne({ email }).exec();
 
-    if (user.length === 0) {
+    if (!user) {
       return NextResponse.json(
-        { error: "Invalid email or password" },
+        { error: 'Invalid email or password' },
         { status: 401 }
       );
     }
 
-    const foundUser = user[0];
-
     // Compare the provided password with the stored hashed password
-    const isPasswordValid = await bcrypt.compare(password, foundUser.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       return NextResponse.json(
-        { error: "Invalid email or password" },
+        { error: 'Invalid email or password' },
         { status: 401 }
       );
     }
 
     // Generate a JWT token
     const token = jwt.sign(
-      { userId: foundUser.user_id, email: foundUser.email },
+      { userId: user._id, email: user.email },
       JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: '1d' }
     );
 
     // Update the user's token in the database
-    await pool.query("UPDATE users SET token = ? WHERE user_id = ?", [token, foundUser.user_id]);
+    user.token = token;
+    await user.save();
 
     // Return the user details and token
     return NextResponse.json({
-      message: "Login successful",
+      message: 'Login successful',
       user: {
-        id: foundUser.user_id,
-        name: foundUser.name,
-        email: foundUser.email,
-        contact: foundUser.contact,
-        address: foundUser.address,
-        city: foundUser.city,
-        created_at: foundUser.created_at,
-        updated_at: foundUser.updated_at,
-        isSocialLogin: foundUser.isSocialLogin,
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        contact: user.contact,
+        address: user.address,
+        city: user.city,
+        created_at: user.created_at,
+        updated_at: user.updated_at,
+        isSocialLogin: user.isSocialLogin,
       },
       token,
     });
   } catch (error) {
-    console.error("Error during login:", error);
+    console.error('Error during login:', error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

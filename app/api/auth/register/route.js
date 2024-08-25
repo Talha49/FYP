@@ -1,16 +1,26 @@
-import pool from "@/lib/middlewares/connection";
-import { NextResponse } from "next/server";
+// pages/api/register.js
+import connectToDatabase from "@/lib/connectdb/connection";
+import User from "@/lib/models/User";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { NextResponse } from "next/server";
 
-const JWT_SECRET = process.env.JWT_SECRET_KEY; // Ensure this is set in your environment variables
+const JWT_SECRET = process.env.JWT_SECRET_KEY;
 
 export async function POST(request) {
   try {
-    const { fullName, email, password, contact, isSocialLogin = false } = await request.json();
+    await connectToDatabase();
+
+    const {
+      fullName,
+      email,
+      password,
+      contact,
+      isSocialLogin = false,
+    } = await request.json();
 
     // Validation
-    if (!fullName || !email || !contact || !password) {
+    if (!fullName || !email || !contact || (!isSocialLogin && !password)) {
       return NextResponse.json(
         { error: "Please fill all the required fields" },
         { status: 400 }
@@ -21,58 +31,63 @@ export async function POST(request) {
       return NextResponse.json({ error: "Invalid email" }, { status: 400 });
     }
 
+    // Check if the user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "Already have an account with this email." },
+        { status: 409 }
+      );
+    }
+
     let hashedPassword = null;
     if (!isSocialLogin) {
-      // Hash the password if it's not a social login
       hashedPassword = await bcrypt.hash(password, 10);
     }
 
-    // Start a transaction
-    const connection = await pool.getConnection();
-    await connection.beginTransaction();
+    // Create a new user document
+    const newUser = new User({
+      fullName,
+      email,
+      password: hashedPassword,
+      contact,
+      isSocialLogin,
+    });
 
-    try {
-      const [result] = await connection.query(
-        "INSERT INTO users (name, email, password, contact, isSocialLogin) VALUES (?, ?, ?, ?, ?)",
-        [fullName, email, hashedPassword, contact, isSocialLogin]
-      );
+    
 
-      const userId = result.insertId;
+    // Generate a JWT token
+    const token = jwt.sign(
+      { userId: newUser._id, email: newUser.email },
+      JWT_SECRET,
+      { expiresIn: "1d" }
+    );
 
-      // Commit the transaction
-      await connection.commit();
+    // Update the user document with the token
+    newUser.token = token;
 
-      // Generate a JWT token if needed
-      const token = jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: "1d" });
+    // Save the user to the database
+    await newUser.save();
 
-      // Update the token in the database
-      await connection.query("UPDATE users SET token = ? WHERE user_id = ?", [token, userId]);
-
-      return NextResponse.json({
-        message: "User created successfully",
-        status: 201,
-        user: {
-          id: userId,
-          name: fullName,
-          email,
-          contact,
-          isSocialLogin,
-          token,
-        },
-      });
-    } catch (error) {
-      await connection.rollback();
-      if (error.code === "ER_DUP_ENTRY") {
-        return NextResponse.json({ error: "Already have an account with this email." }, { status: 409 });
-      }
-      throw error;
-    } finally {
-      connection.release();
-    }
-  } catch (error) {
-    console.error("Error creating user:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        message: "User created successfully",
+        user: {
+          id: newUser._id,
+          fullName: newUser.fullName, // Changed from 'name' to 'fullName'
+          email: newUser.email,
+          contact: newUser.contact,
+          isSocialLogin: newUser.isSocialLogin,
+          token: newUser.token,
+        },
+      },
+      { status: 201 }
+    ); // Moved status to the options object
+  } catch (error) {
+    console.error("Error creating user:", error.message);
+    console.error(error.stack);
+    return NextResponse.json(
+      { error: "Internal server error", details: error.message },
       { status: 500 }
     );
   }

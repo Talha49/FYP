@@ -1,22 +1,30 @@
-import { middleware } from '@/app/middleware';
-import pool from '@/lib/middlewares/connection';
+// pages/api/users/[id].js
+import connectToDatabase from '@/lib/connectdb/connection';
+import User from '@/lib/models/User';
 import { NextResponse } from 'next/server';
+import { middleware } from '@/app/middleware';
 
 export async function GET(request, { params }) {
   try {
+    // Run the middleware
     const middlewareResponse = await middleware(request);
     if (middlewareResponse instanceof NextResponse) {
       return middlewareResponse;
     }
 
     const { id } = params;
-    const [result] = await pool.query('SELECT user_id, name, email, address, city, contact FROM users WHERE user_id = ?', [id]);
 
-    if (result.length === 0) {
+    // Connect to the database
+    await connectToDatabase();
+
+    // Fetch the user by ID from MongoDB
+    const user = await User.findById(id).select('fullName email address city contact');
+
+    if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    return NextResponse.json(result[0]); // Return the first (and only) user object
+    return NextResponse.json(user); // Return the user object
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
