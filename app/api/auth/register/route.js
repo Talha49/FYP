@@ -7,10 +7,10 @@ const JWT_SECRET = process.env.JWT_SECRET_KEY; // Ensure this is set in your env
 
 export async function POST(request) {
   try {
-    const { name, email, password, contact, isSocialLogin = false } = await request.json();
+    const { fullName, email, password, contact, isSocialLogin = false } = await request.json();
 
     // Validation
-    if (!fullName || !email || !contact || (!isSocialLogin || !password)) {
+    if (!fullName || !email || !contact || !password) {
       return NextResponse.json(
         { error: "Please fill all the required fields" },
         { status: 400 }
@@ -34,7 +34,7 @@ export async function POST(request) {
     try {
       const [result] = await connection.query(
         "INSERT INTO users (name, email, password, contact, isSocialLogin) VALUES (?, ?, ?, ?, ?)",
-        [name, email, hashedPassword, contact, isSocialLogin]
+        [fullName, email, hashedPassword, contact, isSocialLogin]
       );
 
       const userId = result.insertId;
@@ -53,7 +53,7 @@ export async function POST(request) {
         status: 201,
         user: {
           id: userId,
-          name,
+          name: fullName,
           email,
           contact,
           isSocialLogin,
@@ -63,7 +63,7 @@ export async function POST(request) {
     } catch (error) {
       await connection.rollback();
       if (error.code === "ER_DUP_ENTRY") {
-        return NextResponse.json({ error: "Email already in use" }, { status: 409 });
+        return NextResponse.json({ error: "Already have an account with this email." }, { status: 409 });
       }
       throw error;
     } finally {
