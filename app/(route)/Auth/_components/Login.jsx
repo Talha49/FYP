@@ -13,6 +13,8 @@ const Login = () => {
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  console.log(formData)
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
