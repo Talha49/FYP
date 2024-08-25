@@ -10,7 +10,7 @@ export async function POST(request) {
     const { name, email, password, contact, isSocialLogin = false } = await request.json();
 
     // Validation
-    if (!name || !email || !contact || (!isSocialLogin && !password)) {
+    if (!fullName || !email || !contact || (!isSocialLogin || !password)) {
       return NextResponse.json(
         { error: "Please fill all the required fields" },
         { status: 400 }
