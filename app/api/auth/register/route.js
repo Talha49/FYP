@@ -54,8 +54,6 @@ export async function POST(request) {
       isSocialLogin,
     });
 
-    
-
     // Generate a JWT token
     const token = jwt.sign(
       { userId: newUser._id, email: newUser.email },
@@ -71,7 +69,7 @@ export async function POST(request) {
 
     return NextResponse.json(
       {
-        message: "User created successfully",
+        message: "User registerd successfully",
         user: {
           id: newUser._id,
           fullName: newUser.fullName, // Changed from 'name' to 'fullName'
