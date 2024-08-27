@@ -11,7 +11,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="w-full p-6 rounded-lg">
+    <div className="w-full py-6 px-10 rounded-lg">
       <div className="flex justify-center">
         <button
           onClick={() => handleTabClick('login')}

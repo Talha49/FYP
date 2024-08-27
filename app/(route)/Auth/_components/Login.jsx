@@ -3,6 +3,7 @@ import { FaFacebook } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
+import { signIn } from "next-auth/react";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -12,8 +13,6 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  console.log(formData)
 
   const handleChange = (e) => {
     setFormData({
@@ -55,7 +54,7 @@ const Login = () => {
         email: "",
         password: "",
       });
-      console.log(response.data)
+      console.log(response.data);
     } catch (error) {
       if (error.response) {
         setErrors({
@@ -107,7 +106,7 @@ const Login = () => {
             </p>
           )}
 
-          <div className="flex gap-4">
+          <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
             <div className="relative w-full">
               <input
                 // type="email"
@@ -149,23 +148,6 @@ const Login = () => {
               )}
             </div>
           </div>
-
-          <div className="w-full flex items-center gap-1">
-            <div className="h-[1px] w-full bg-gray-300"></div>
-            <span>or</span>
-            <div className="h-[1px] w-full bg-gray-300"></div>
-          </div>
-          <div className="w-full flex flex-col items-center justify-center gap-2">
-            <button className="bg-white w-[300px] p-2 rounded-full border shadow-md flex items-center justify-center gap-2">
-              <FcGoogle className="text-xl" />
-              Continue With Google
-            </button>
-            <button className="bg-white w-[300px] p-2 rounded-full border shadow-md flex items-center justify-center gap-2">
-              <FaFacebook className="text-xl text-blue-500" />
-              Continue With Facebook
-            </button>
-          </div>
-
           <button
             type="submit"
             className={`w-full text-white font-semibold py-2 rounded-lg transition-colors duration-300 ${
@@ -177,6 +159,20 @@ const Login = () => {
           >
             {isSubmitting ? "Logging in..." : "Login"}
           </button>
+          <div className="w-full flex items-center gap-1">
+            <div className="h-[1px] w-full bg-gray-300"></div>
+            <span>or</span>
+            <div className="h-[1px] w-full bg-gray-300"></div>
+          </div>
+          <div className="w-full flex flex-col items-center justify-center gap-2">
+            <button
+              type="button"
+              className="flex items-center justify-center gap-2 border border-gray-200 py-2 px-4 rounded shadow-md hover:shadow-none transition-shadow focus:outline-none text-sm w-full"
+              onClick={() => signIn("google", { callbackUrl: "/" })}
+            >
+              <FcGoogle size={20} /> Continue with Google
+            </button>
+          </div>
         </form>
 
         <p className="text-sm text-center text-gray-600 mt-6">

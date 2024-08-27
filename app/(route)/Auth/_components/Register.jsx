@@ -4,8 +4,13 @@ import { FaFacebook } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
+import { signIn, useSession } from "next-auth/react";
 
 const Register = () => {
+  const { data: session } = useSession();
+  if (session) {
+    console.log(session);
+  }
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -66,6 +71,7 @@ const Register = () => {
         email: "",
         contact: "",
         password: "",
+        isSocialLogin: false,
       });
       setConfirmPassword("");
       console.log(response.data);
@@ -115,7 +121,7 @@ const Register = () => {
               </span>
             </p>
           )}
-          <div className="flex gap-4">
+          <div className="grid lg:grid-cols-3 gap-4 md:grid-cols-2 grid-cols-1">
             <div className="relative w-full">
               <input
                 type="text"
@@ -135,7 +141,6 @@ const Register = () => {
                 <p className="text-xs text-red-500 mt-1">{errors.fullName}</p>
               )}
             </div>
-
             <div className="relative w-full">
               <input
                 type="text"
@@ -157,7 +162,7 @@ const Register = () => {
             </div>
             <div className="relative w-full">
               <input
-                type="number"
+                type="tel"
                 id="contact"
                 className="peer block w-full px-4 py-2 text-gray-900 bg-gray-100 border rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white transition-all duration-300"
                 placeholder=" "
@@ -176,8 +181,8 @@ const Register = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col gap-6 w-full border-r border-gray-200 pr-4">
+          <div className="flex items-center md:flex-row flex-col gap-4">
+            <div className="flex flex-col gap-6 w-full md:border-r border-gray-200 md:pr-4">
               <div className="relative">
                 <input
                   type="password"
@@ -201,14 +206,14 @@ const Register = () => {
               <div className="relative">
                 <input
                   type="password"
-                  id="confirm-password"
+                  id="confirmPassword"
                   className="peer block w-full px-4 py-2 text-gray-900 bg-gray-100 border rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white transition-all duration-300"
                   placeholder=" "
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
                 <label
-                  htmlFor="confirm-password"
+                  htmlFor="confirmPassword"
                   className="absolute rounded-full left-4 -top-2.5 text-sm text-gray-600 px-1 transition-all bg-gray-100 peer-focus:bg-blue-500 peer-focus:text-white peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-2.5 peer-focus:text-sm peer-focus:px-1"
                 >
                   Confirm Password
@@ -220,37 +225,32 @@ const Register = () => {
                 )}
               </div>
             </div>
-            <div className="w-[70%] py-4 flex flex-col gap-2">
-              <button className="bg-white p-2 rounded-full border shadow-md flex items-center justify-center gap-2">
-                <FcGoogle className="text-xl" />
-                Continue With Google
+
+            <div className="flex flex-col w-full">
+              <button
+                type="submit"
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded focus:outline-none"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Registering..." : "Register"}
               </button>
-              <button className="bg-white p-2 rounded-full border shadow-md flex items-center justify-center gap-2">
-                <FaFacebook className="text-xl text-blue-500" />
-                Continue With Facebook
-              </button>
+              <div className="flex items-center gap-1 my-2">
+                <span className="h-[1px] bg-gray-300 w-full"></span>
+                <p className="w-fit">or</p>
+                <span className="h-[1px] bg-gray-300 w-full"></span>
+              </div>
+              <div className="flex justify-center gap-2">
+                <button
+                  type="button"
+                  className="flex items-center justify-center gap-2 border border-gray-200 py-2 px-4 rounded shadow-md hover:shadow-none transition-shadow focus:outline-none text-sm w-full"
+                  onClick={() => signIn("google", { callbackUrl: "/" })}
+                >
+                  <FcGoogle size={20} /> Continue with Google
+                </button>
+              </div>
             </div>
           </div>
-
-          <button
-            type="submit"
-            className={`w-full font-semibold py-2 rounded-lg transition-colors duration-300 ${
-              isSubmitting
-                ? "bg-blue-400 cursor-not-allowed"
-                : "bg-blue-500 text-white hover:bg-blue-600"
-            }`}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Registering..." : "Register"}
-          </button>
         </form>
-
-        <p className="text-sm text-center text-gray-600 mt-6">
-          Already have an account?{" "}
-          <a href="#" className="text-blue-500 hover:underline">
-            Sign in here
-          </a>
-        </p>
       </div>
     </div>
   );
