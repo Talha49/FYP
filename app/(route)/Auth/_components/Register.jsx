@@ -9,7 +9,7 @@ import { signIn, useSession } from "next-auth/react";
 const Register = () => {
   const { data: session } = useSession();
   if (session) {
-    console.log(session)
+    console.log(session);
   }
   const [formData, setFormData] = useState({
     fullName: "",
@@ -121,7 +121,7 @@ const Register = () => {
               </span>
             </p>
           )}
-          <div className="flex gap-4">
+          <div className="grid lg:grid-cols-3 gap-4 md:grid-cols-2 grid-cols-1">
             <div className="relative w-full">
               <input
                 type="text"
@@ -141,7 +141,6 @@ const Register = () => {
                 <p className="text-xs text-red-500 mt-1">{errors.fullName}</p>
               )}
             </div>
-
             <div className="relative w-full">
               <input
                 type="text"
@@ -182,8 +181,8 @@ const Register = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col gap-6 w-full border-r border-gray-200 pr-4">
+          <div className="flex items-center md:flex-row flex-col gap-4">
+            <div className="flex flex-col gap-6 w-full md:border-r border-gray-200 md:pr-4">
               <div className="relative">
                 <input
                   type="password"
@@ -235,18 +234,16 @@ const Register = () => {
               >
                 {isSubmitting ? "Registering..." : "Register"}
               </button>
-              <div className='flex items-center gap-1 my-2'>
-                <span className='h-[1px] bg-gray-300 w-full'></span>
-                <p className='w-fit'>or</p>
-                <span className='h-[1px] bg-gray-300 w-full'></span>
+              <div className="flex items-center gap-1 my-2">
+                <span className="h-[1px] bg-gray-300 w-full"></span>
+                <p className="w-fit">or</p>
+                <span className="h-[1px] bg-gray-300 w-full"></span>
               </div>
               <div className="flex justify-center gap-2">
                 <button
                   type="button"
                   className="flex items-center justify-center gap-2 border border-gray-200 py-2 px-4 rounded shadow-md hover:shadow-none transition-shadow focus:outline-none text-sm w-full"
-                  onClick={() =>
-                    signIn("google", { callbackUrl: "/" })
-                  }
+                  onClick={() => signIn("google", { callbackUrl: "/" })}
                 >
                   <FcGoogle size={20} /> Continue with Google
                 </button>

@@ -38,7 +38,7 @@ const SideNav = () => {
       <ul className="list-none p-0 flex flex-col  justify-center ">
         <Link href="/" className="flex items-center hover:bg-blue-200">
           <li className="flex items-center p-4  cursor-pointer">
-            <FaHome className="text-blue-400 text-xl" />
+            <FaHome className="text-blue-600 text-xl" />
             {isOpen && (
               <span className="ml-4 text-black text-sm hidden md:inline">Home</span>
             )}
@@ -46,7 +46,7 @@ const SideNav = () => {
         </Link>
         <Link href="/Projects" className="flex items-center hover:bg-blue-200 ">
           <li className="flex items-center p-4  cursor-pointer ">
-            <GoProjectSymlink className="text-blue-400 text-xl" />
+            <GoProjectSymlink className="text-blue-600 text-xl" />
             {isOpen && (
               <span className="ml-4 text-black text-sm hidden md:inline">Projects</span>
             )}
@@ -55,7 +55,7 @@ const SideNav = () => {
 
         <Link href="/Admin" className="flex items-center hover:bg-blue-200">
           <li className="flex items-center p-4  cursor-pointer">
-            <RiAdminLine className="text-blue-400 text-xl" />
+            <RiAdminLine className="text-blue-600 text-xl" />
             {isOpen && (
               <span className="ml-4 text-black text-sm hidden md:inline">Admin</span>
             )}
@@ -66,7 +66,7 @@ const SideNav = () => {
 
         <Link href="/Active" className="flex items-center hover:bg-blue-200">
           <li className="flex items-center p-4  cursor-pointer">
-            <PiRadioactive className="text-blue-400 text-xl" />
+            <PiRadioactive className="text-blue-600 text-xl" />
             {isOpen && (
               <span className="ml-4 text-black text-sm hidden md:inline">Active</span>
             )}
@@ -82,7 +82,7 @@ const SideNav = () => {
           }}
         >
           <li className="flex items-center p-4  cursor-pointer">
-            <IoPricetagsOutline className="text-blue-400 text-xl" />
+            <IoPricetagsOutline className="text-blue-600 text-xl" />
             {isOpen && (
               <span className="ml-4 text-black text-sm hidden md:inline">Captures</span>
             )}
@@ -98,7 +98,7 @@ const SideNav = () => {
           }}
         >
           <li className="flex items-center p-4 cursor-pointer">
-            <TbArrowRoundaboutLeft className="text-blue-400 text-xl" />
+            <TbArrowRoundaboutLeft className="text-blue-600 text-xl" />
             {isOpen && (
               <span className="ml-4 text-black text-sm hidden md:inline">FieldNotes</span>
             )}
@@ -110,7 +110,7 @@ const SideNav = () => {
           className="flex items-center hover:bg-blue-200"
         >
           <li className="flex items-center p-4 cursor-pointer">
-            <PiVirtualRealityFill  className="text-blue-400 text-xl" />
+            <PiVirtualRealityFill  className="text-blue-600 text-xl" />
             {isOpen && (
               <span className="ml-4 text-black text-sm hidden md:inline">Virtual Tour</span>
             )}

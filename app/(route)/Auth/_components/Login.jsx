@@ -106,7 +106,7 @@ const Login = () => {
             </p>
           )}
 
-          <div className="flex gap-4">
+          <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
             <div className="relative w-full">
               <input
                 // type="email"
