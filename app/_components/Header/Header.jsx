@@ -6,16 +6,20 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import Cookies from "js-cookie";
+import { usePathname, useRouter } from "next/navigation";
 
 const Header = () => {
   const [showDialog, setShowDialog] = useState(false);
+  const [authenticatedUser, setAuthenticatedUser] = useState(null);
+
+  const pathname = usePathname();
 
   const handleDialog = () => {
     setShowDialog(!showDialog);
   };
 
   const { data: session } = useSession();
-  console.log("Cookies from Header =>", Cookies.get('user'));
+
   useEffect(() => {
     if (session && session.user.userData) {
       // Store the user data in a cookie
@@ -25,7 +29,12 @@ const Header = () => {
         path: "/",
       });
     }
-  }, [session]);
+    if (Cookies.get("user")) {
+      setAuthenticatedUser(JSON.parse(Cookies.get("user")));
+    }
+  }, [session, pathname]);
+
+  console.log("Authenticated User =>", authenticatedUser);
 
   return (
     <div className="flex w-full justify-between leading-[60px] border-b-2 px-8 bg-white sticky top-0 z-10 cursor-pointer shadow-sm">
@@ -38,9 +47,9 @@ const Header = () => {
       <div className="flex items-center gap-2 relative" onClick={handleDialog}>
         <FaQuestion className="text-lg text-blue-500" />
         <div className="bg-blue-500 rounded-full p-[2px]">
-          {session ? (
+          {authenticatedUser?.image ? (
             <img
-              src={session?.user?.image}
+              src={authenticatedUser?.image}
               width={35}
               height={35}
               alt="Profile"
@@ -58,14 +67,14 @@ const Header = () => {
         </div>
         {showDialog && (
           <div className="absolute top-14 right-0 w-[300px] bg-white shadow-lg border border-gray-200 rounded-lg py-3 px-4 transform transition-transform duration-300 ease-in-out">
-            {session ? (
+            {authenticatedUser ? (
               <>
                 <div className="py-4">
                   <p className="font-semibold leading-tight">
-                    {session.user.name}
+                    {authenticatedUser?.fullName}
                   </p>
                   <p className="text-gray-500 leading-tight">
-                    {session.user.email}
+                    {authenticatedUser?.email}
                   </p>
                 </div>
                 <hr className="border-t border-gray-300 my-0" />

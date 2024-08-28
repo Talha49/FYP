@@ -5,6 +5,7 @@ import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { signIn } from "next-auth/react";
 import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
 
 const ForgotPasswordDialog = ({ children, isOpen, onClose }) => {
   return (
@@ -35,6 +36,8 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const router = useRouter();
 
   const handleChange = (e) => {
     setFormData({
@@ -90,6 +93,7 @@ const Login = () => {
         email: "",
         password: "",
       });
+      router.push('/')
       console.log(response.data);
     } catch (error) {
       if (error.response) {

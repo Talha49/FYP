@@ -6,6 +6,7 @@ import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { signIn, useSession } from "next-auth/react";
 import Cookies from "js-cookie";
+import { useRouter } from "next/navigation";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -19,6 +20,8 @@ const Register = () => {
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const router = useRouter();
 
   const handleChange = (e) => {
     setFormData({
@@ -85,6 +88,7 @@ const Register = () => {
         isSocialLogin: false,
       });
       setConfirmPassword("");
+      router.push("/");
       console.log(response.data);
     } catch (err) {
       if (err.response) {
