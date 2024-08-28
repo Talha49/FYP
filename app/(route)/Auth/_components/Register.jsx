@@ -7,10 +7,10 @@ import axios from "axios";
 import { signIn, useSession } from "next-auth/react";
 
 const Register = () => {
-  const { data: session } = useSession();
-  if (session) {
-    console.log(session);
-  }
+  // const { data: session } = useSession();
+  // if (session) {
+  //   console.log(session);
+  // }
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -234,18 +234,31 @@ const Register = () => {
               >
                 {isSubmitting ? "Registering..." : "Register"}
               </button>
-              <div className="flex items-center gap-1 my-2">
+              <div className="flex items-center gap-1 md:my-2 my-5">
                 <span className="h-[1px] bg-gray-300 w-full"></span>
                 <p className="w-fit">or</p>
                 <span className="h-[1px] bg-gray-300 w-full"></span>
               </div>
-              <div className="flex justify-center gap-2">
+              <div className="flex justify-center md:gap-2 gap-4">
                 <button
                   type="button"
-                  className="flex items-center justify-center gap-2 border border-gray-200 py-2 px-4 rounded shadow-md hover:shadow-none transition-shadow focus:outline-none text-sm w-full"
-                  onClick={() => signIn("google", { callbackUrl: "/" })}
+                  className={`flex items-center justify-center gap-2 border border-gray-200 md:py-2 md:px-4 p-4 md:rounded rounded-full shadow-md hover:shadow-none transition-shadow focus:outline-none text-sm md:w-full w-fit`}
+                  onClick={async () =>
+                    await signIn("google", { callbackUrl: "/" })
+                  }
                 >
-                  <FcGoogle size={20} /> Continue with Google
+                  <FcGoogle size={20} />{" "}
+                  <span className="hidden md:flex">Continue with Google</span>
+                </button>
+                <button
+                  type="button"
+                  className={`flex items-center justify-center gap-2 border border-gray-200 md:py-2 md:px-4 p-4 md:rounded rounded-full shadow-md hover:shadow-none transition-shadow focus:outline-none text-sm md:w-full w-fit`}
+                  onClick={async () =>
+                    await signIn("facebook", { callbackUrl: "/" })
+                  }
+                >
+                  <FaFacebook className="text-blue-600" size={20} />{" "}
+                  <span className="hidden md:flex">Continue with Facebook</span>
                 </button>
               </div>
             </div>

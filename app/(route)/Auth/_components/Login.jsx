@@ -4,8 +4,30 @@ import { FcGoogle } from "react-icons/fc";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { signIn } from "next-auth/react";
+import Dialog from "@/app/_components/Dialog/Dialog";
+
+const ForgotPasswordDialog = ({ children, isOpen, onClose }) => {
+  return (
+    <div
+      className={`${
+        isOpen ? "fixed" : "hidden"
+      } inset-0 overflow-auto bg-black bg-opacity-30 flex  items-center justify-center top-0 ml-8`}
+    >
+      <div
+        className="absolute top-20 right-5 text-3xl cursor-pointer z-10 hover:bg-gray-300 rounded-lg transition-all"
+        onClick={onClose}
+      >
+        <IoClose />
+      </div>
+      <div className="bg-white shadow-lg rounded-lg border w-[500px] min-h-[300px] m-4 p-4">
+        {children}
+      </div>
+    </div>
+  );
+};
 
 const Login = () => {
+  const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -146,6 +168,14 @@ const Login = () => {
               {errors.password && (
                 <p className="text-sm text-red-500 mt-1">{errors.password}</p>
               )}
+              <p
+                className="text-blue-500 hover:underline cursor-pointer text-right my-1 text-sm"
+                onClick={() => {
+                  setIsOpen(true);
+                }}
+              >
+                Forgot Password
+              </p>
             </div>
           </div>
           <button
@@ -164,24 +194,38 @@ const Login = () => {
             <span>or</span>
             <div className="h-[1px] w-full bg-gray-300"></div>
           </div>
-          <div className="w-full flex flex-col items-center justify-center gap-2">
+          <div className="flex items-center justify-center md:gap-2 gap-4">
             <button
               type="button"
-              className="flex items-center justify-center gap-2 border border-gray-200 py-2 px-4 rounded shadow-md hover:shadow-none transition-shadow focus:outline-none text-sm w-full"
-              onClick={() => signIn("google", { callbackUrl: "/" })}
+              className={`flex items-center justify-center gap-2 border border-gray-200 md:py-2 md:px-4 p-4 md:rounded rounded-full shadow-md hover:shadow-none transition-shadow focus:outline-none text-sm md:w-full w-fit`}
+              onClick={async () => {
+                await signIn("google", { callbackUrl: "/" });
+              }}
             >
-              <FcGoogle size={20} /> Continue with Google
+              <FcGoogle size={20} />{" "}
+              <span className="hidden md:flex">Continue with Google</span>
+            </button>
+            <button
+              type="button"
+              className={`flex items-center justify-center gap-2 border border-gray-200 md:py-2 md:px-4 p-4 md:rounded rounded-full shadow-md hover:shadow-none transition-shadow focus:outline-none text-sm md:w-full w-fit`}
+              onClick={async () => {
+                await signIn("facebook", { callbackUrl: "/", });
+              }}
+            >
+              <FaFacebook className="text-blue-600" size={20} />{" "}
+              <span className="hidden md:flex">Continue with Facebook</span>
             </button>
           </div>
         </form>
-
-        <p className="text-sm text-center text-gray-600 mt-6">
-          Don't have an account?{" "}
-          <a href="#" className="text-blue-500 hover:underline">
-            Register here
-          </a>
-        </p>
       </div>
+      <ForgotPasswordDialog
+        isOpen={isOpen}
+        onClose={() => {
+          setIsOpen(false);
+        }}
+      >
+        <h1>Forgot Password</h1>
+      </ForgotPasswordDialog>
     </div>
   );
 };
