@@ -76,8 +76,8 @@ export async function POST(request) {
           email: newUser.email,
           contact: newUser.contact,
           isSocialLogin: newUser.isSocialLogin,
-          token: newUser.token,
         },
+        token: newUser.token,
       },
       { status: 201 }
     ); // Moved status to the options object

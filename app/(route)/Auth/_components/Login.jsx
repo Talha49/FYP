@@ -4,14 +4,14 @@ import { FcGoogle } from "react-icons/fc";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { signIn } from "next-auth/react";
-import Dialog from "@/app/_components/Dialog/Dialog";
+import Cookies from "js-cookie";
 
 const ForgotPasswordDialog = ({ children, isOpen, onClose }) => {
   return (
     <div
       className={`${
-        isOpen ? "fixed" : "hidden"
-      } inset-0 overflow-auto bg-black bg-opacity-30 flex  items-center justify-center top-0 ml-8`}
+        isOpen ? "fixed animate-fade-in" : "hidden animate-fade-out"
+      } inset-0 overflow-auto bg-black bg-opacity-20 flex  items-center justify-center top-0 ml-8`}
     >
       <div
         className="absolute top-20 right-5 text-3xl cursor-pointer z-10 hover:bg-gray-300 rounded-lg transition-all"
@@ -69,6 +69,20 @@ const Login = () => {
         headers: {
           "Content-Type": "application/json",
         },
+      });
+
+      const cookieData = {
+        id: response?.data?.user?.id,
+        fullName: response?.data?.user?.fullName,
+        email: response?.data?.user?.email,
+        image: response?.data?.user?.image,
+        isSocialLogin: response?.data?.user?.isSocialLogin,
+        token: response?.data?.token,
+      };
+      Cookies.set("user", JSON.stringify(cookieData), {
+        expires: 1, // 1 day
+        secure: false, // true in production with HTTPS
+        path: "/",
       });
 
       setSuccess("Login successful!");
@@ -209,7 +223,7 @@ const Login = () => {
               type="button"
               className={`flex items-center justify-center gap-2 border border-gray-200 md:py-2 md:px-4 p-4 md:rounded rounded-full shadow-md hover:shadow-none transition-shadow focus:outline-none text-sm md:w-full w-fit`}
               onClick={async () => {
-                await signIn("facebook", { callbackUrl: "/", });
+                await signIn("facebook", { callbackUrl: "/" });
               }}
             >
               <FaFacebook className="text-blue-600" size={20} />{" "}

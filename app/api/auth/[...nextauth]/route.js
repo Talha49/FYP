@@ -27,12 +27,27 @@ export const authOptions = {
         await dbConnect();
 
         const existingUser = await User.findOne({ email: user.email });
+        let userData;
 
         if (existingUser) {
           existingUser.fullName = user.name || existingUser.fullName;
           existingUser.image = user.image || existingUser.image;
           existingUser.isSocialLogin = true;
+          const token = jwt.sign(
+            { userId: existingUser._id, email: existingUser.email },
+            JWT_SECRET,
+            { expiresIn: "1d" }
+          );
+          existingUser.token = token;
           await existingUser.save();
+          userData = {
+            id: existingUser._id,
+            fullName: existingUser.fullName,
+            email: existingUser.email,
+            image: existingUser.image,
+            isSocialLogin: true,
+            token: existingUser.token,
+          };
         } else {
           const newUser = new User({
             fullName: user.name,
@@ -47,7 +62,18 @@ export const authOptions = {
           );
           newUser.token = token;
           await newUser.save();
+          userData = {
+            id: newUser._id,
+            fullName: newUser.fullName,
+            email: newUser.email,
+            image: newUser.image,
+            isSocialLogin: true,
+            token: newUser.token,
+          };
         }
+
+        // Pass some data to the client-side via the token
+        user.userData = userData;
 
         return true;
       } catch (error) {
@@ -57,7 +83,6 @@ export const authOptions = {
     },
 
     async jwt({ token, user, account }) {
-      // Add the access token and refresh token to the token object
       if (account) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
@@ -65,17 +90,18 @@ export const authOptions = {
 
       if (user) {
         token.id = user.id;
+        token.userData = user.userData;
       }
 
       return token;
     },
 
     async session({ session, token }) {
-      // Attach the access token to the session
       if (token) {
         session.accessToken = token.accessToken;
-        session.refreshToken = token.refreshToken; // optional if you need a refresh token
+        session.refreshToken = token.refreshToken;
         session.user.id = token.sub;
+        session.user.userData = token.userData;
       }
 
       return session;

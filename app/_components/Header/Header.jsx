@@ -1,10 +1,11 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { GiSpaceShuttle } from "react-icons/gi";
 import { FaQuestion } from "react-icons/fa";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+import Cookies from "js-cookie";
 
 const Header = () => {
   const [showDialog, setShowDialog] = useState(false);
@@ -14,7 +15,17 @@ const Header = () => {
   };
 
   const { data: session } = useSession();
-  // console.log('session =>',session);
+  console.log("Cookies from Header =>", Cookies.get('user'));
+  useEffect(() => {
+    if (session && session.user.userData) {
+      // Store the user data in a cookie
+      Cookies.set("user", JSON.stringify(session.user.userData), {
+        expires: 1, // 1 day
+        secure: false, // true in production with HTTPS
+        path: "/",
+      });
+    }
+  }, [session]);
 
   return (
     <div className="flex w-full justify-between leading-[60px] border-b-2 px-8 bg-white sticky top-0 z-10 cursor-pointer shadow-sm">
@@ -62,7 +73,13 @@ const Header = () => {
                   <button className="bg-blue-50 hover:bg-blue-100 hover:shadow-lg transition-all border border-blue-300 p-2 rounded-lg text-blue-500 w-full">
                     View Profile
                   </button>
-                  <button className="bg-blue-500 hover:bg-blue-600 hover:shadow-lg transition-all p-2 rounded-lg text-white w-full" onClick={()=>{signOut()}}>
+                  <button
+                    className="bg-blue-500 hover:bg-blue-600 hover:shadow-lg transition-all p-2 rounded-lg text-white w-full"
+                    onClick={() => {
+                      signOut();
+                      Cookies.remove("user");
+                    }}
+                  >
                     Sign Out
                   </button>
                 </div>

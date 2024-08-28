@@ -5,12 +5,9 @@ import { FcGoogle } from "react-icons/fc";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { signIn, useSession } from "next-auth/react";
+import Cookies from "js-cookie";
 
 const Register = () => {
-  // const { data: session } = useSession();
-  // if (session) {
-  //   console.log(session);
-  // }
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -63,6 +60,20 @@ const Register = () => {
         headers: {
           "Content-Type": "application/json",
         },
+      });
+
+      const cookieData = {
+        id: response?.data?.user?.id,
+        fullName: response?.data?.user?.fullName,
+        email: response?.data?.user?.email,
+        image: response?.data?.user?.image,
+        isSocialLogin: response?.data?.user?.isSocialLogin,
+        token: response?.data?.token,
+      };
+      Cookies.set("user", JSON.stringify(cookieData), {
+        expires: 1, // 1 day
+        secure: false, // true in production with HTTPS
+        path: "/",
       });
 
       setSuccess("Registration successful!");
