@@ -147,7 +147,7 @@ const CaptureModal = ({ onClose }) => {
                   </div>
                   <p className="text-xs text-gray-500">{card.floor}</p>
                   <div className="mt-2 flex items-center">
-                    <span className="bg-green-200 text-green-800 p-1 rounded text-xs flex gap-x-1 items-center">
+                    <span className="bg-blue-200 text-blue-800 p-1 rounded text-xs flex gap-x-1 items-center">
                        <IoVideocamOutline /> {card.captureType} 
   
                     </span>

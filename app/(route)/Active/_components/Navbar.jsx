@@ -12,8 +12,8 @@ const Navbar = ({ activeTab, onTabChange }) => {
         <li
           className={`py-2 px-4  rounded-md ${
             activeTab === "Projects"
-              ? "font-semibold text-blue-400"
-              : "text-gray-600 hover:bg-gray-100"
+              ? "font-semibold text-blue-500"
+              : "text-gray-600 hover:bg-blue-50"
           }`}
         >
           <p
@@ -28,8 +28,8 @@ const Navbar = ({ activeTab, onTabChange }) => {
         <li
           className={`py-2 px-4 rounded-md ${
             activeTab === "Captures"
-              ? "font-semibold text-blue-400"
-              : "text-gray-600 hover:bg-gray-100"
+              ? "font-semibold text-blue-500"
+              : "text-gray-600 hover:bg-blue-50"
           }`}
         >
           <p
@@ -44,8 +44,8 @@ const Navbar = ({ activeTab, onTabChange }) => {
         <li
           className={`py-2 px-4 rounded-md ${
             activeTab === "FieldNotes"
-              ? "font-semibold text-blue-400"
-              : "text-gray-600 hover:bg-gray-100"
+              ? "font-semibold text-blue-500"
+              : "text-gray-600 hover:bg-blue-50"
           }`}
         >
           <p
@@ -60,8 +60,8 @@ const Navbar = ({ activeTab, onTabChange }) => {
         <li
           className={`py-2 px-4 rounded-md ${
             activeTab === "Activty"
-              ? "font-semibold text-blue-400"
-              : "text-gray-600 hover:bg-gray-100"
+              ? "font-semibold text-blue-500"
+              : "text-gray-600 hover:bg-blue-50"
           }`}
         >
           <p

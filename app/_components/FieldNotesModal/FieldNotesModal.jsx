@@ -73,39 +73,39 @@ const FieldNotesModal = ({ onClose }) => {
           </div>
           <div className="flex flex-wrap items-center">
             <div className="flex flex-wrap gap-1 text-xs">
-              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
+              <button className="border border-black/15 hover:bg-blue-100 p-2 rounded">
                 For me
               </button>
-              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
+              <button className="border border-black/15 hover:bg-blue-100 p-2 rounded">
                 Tags
               </button>
-              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
+              <button className="border border-black/15 hover:bg-blue-100 p-2 rounded">
                 Status
               </button>
-              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
+              <button className="border border-black/15 hover:bg-blue-100 p-2 rounded">
                 Due date
               </button>
-              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
+              <button className="border border-black/15 hover:bg-blue-100 p-2 rounded">
                 Assignee
               </button>
-              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
+              <button className="border border-black/15 hover:bg-blue-100 p-2 rounded">
                 Date created
               </button>
-              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
+              <button className="border border-black/15 hover:bg-blue-100 p-2 rounded">
                 Sheets
               </button>
-              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
+              <button className="border border-black/15 hover:bg-blue-100 p-2 rounded">
                 Zones
               </button>
-              <button className="border border-black/15 p-2 hover:bg-slate-200 rounded-full">
+              <button className="border border-black/15 p-2 hover:bg-blue-100 rounded">
                 Creator
               </button>
-              <button className="border border-black/15 p-2 hover:bg-slate-200 rounded-full">
+              <button className="border border-black/15 p-2 hover:bg-blue-100 rounded">
                 Tags
               </button>
             </div>
             <div className="flex justify-end ml-auto mt-1">
-              <button className="text-black p-2 text-xs bg-slate-200 rounded-md">
+              <button className="text-black p-2 text-xs bg-blue-200 hover:bg-blue-300 transition-all rounded-md">
                 Clear all
               </button>
             </div>
@@ -139,7 +139,7 @@ const FieldNotesModal = ({ onClose }) => {
                   </div>
                   <p className="text-sm text-gray-600">{note.floor}</p>
                   <div className="my-2 bg-gray-200 p-2 rounded-md">
-                    <span className="bg-yellow-200 text-yellow-800 text-xs font-semibold px-2 py-1 rounded-full">
+                    <span className="bg-blue-300 text-blue-800 text-xs font-semibold px-2 py-1 rounded-full">
                       {note.priority}
                     </span>
                   </div>
@@ -153,7 +153,7 @@ const FieldNotesModal = ({ onClose }) => {
                     />
                   </div>
                   <div className="my-2 bg-gray-200 p-2 rounded-md">
-                    <span className="bg-gray-300 text-gray-800 text-xs font-semibold px-2 py-1 rounded-full">
+                    <span className="bg-blue-300 text-blue-800 text-xs font-semibold px-2 py-1 rounded-full">
                       {note.tag}
                     </span>
                   </div>

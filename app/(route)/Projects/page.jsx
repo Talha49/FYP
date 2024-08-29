@@ -25,7 +25,7 @@ const Page = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <button className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-3xl sm:ml-4 ml-2 sm:my-0 my-2">
+          <button className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 transition-all text-white px-4 py-2 rounded-lg sm:ml-4 ml-2 sm:my-0 my-2">
             <AiOutlinePlus color="white" size={20} />
             New Project
           </button>

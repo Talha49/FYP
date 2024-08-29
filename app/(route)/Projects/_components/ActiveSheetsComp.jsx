@@ -21,7 +21,7 @@ const ActiveSheetsComp = () => {
     <div className="py-10">
      <div className='flex justify-between  items-center mb-4 '>
      <h2 className="font-bold text-lg ">Active Sheets</h2>
-     <Link href={`/Projects/1/ActiveSheets/1`} className='bg-blue-200 rounded-full px-6 py-3 mr-6 text-sm text-blue-900 hover:bg-blue-400 hover:text-blue-100 font-semibold'>View all Sheets</Link>
+     <Link href={`/Projects/1/ActiveSheets/1`} className='button rounded-lg px-6 py-3 mr-6 text-sm text-white hover:bg-blue-600 font-semibold transition-all'>View all Sheets</Link>
      </div>
     <div className="relative w-[99%] px-4">
       <div className="flex space-x-4 pb-2 overflow-x-auto custom-scrollbar">
