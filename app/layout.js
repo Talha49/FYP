@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "./_components/Header/Header";
 import SideNav from "./_components/SideNav/SideNav";
 import SessionWrapper from "@/SessionWrapper";
+import ClientProvider from "./_components/ClientProvider/ClientProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,6 +18,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={inter.className}>
         {/* <GoogleOAuthProvider clientId={process.env.GOOGLE_CLIENT_ID}> */}
+        <ClientProvider>
         <Header />
         <div className="h-[100%] flex justify-between ">
           <div className="w-[5%]">
@@ -26,6 +28,7 @@ export default function RootLayout({ children }) {
             <SessionWrapper>{children}</SessionWrapper>
           </div>
         </div>
+        </ClientProvider>
         {/* </GoogleOAuthProvider> */}
       </body>
     </html>
