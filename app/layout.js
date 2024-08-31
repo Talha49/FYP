@@ -18,15 +18,17 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={inter.className}>
         {/* <GoogleOAuthProvider clientId={process.env.GOOGLE_CLIENT_ID}> */}
-        <Header />
-        <div className="h-[100%] flex justify-between ">
-          <div className="w-[5%]">
-            <SideNav />
-          </div>
-          <div className="w-[95%]">
-            <SessionWrapper>{children}</SessionWrapper>
-          </div>
-        </div>
+        <SessionWrapper>
+          <ClientProvider>
+            <Header />
+            <div className="h-[100%] flex justify-between ">
+              <div className="w-[5%]">
+                <SideNav />
+              </div>
+              <div className="w-[95%]">{children}</div>
+            </div>
+          </ClientProvider>
+        </SessionWrapper>
         {/* </GoogleOAuthProvider> */}
       </body>
     </html>
