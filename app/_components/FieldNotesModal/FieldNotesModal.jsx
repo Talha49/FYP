@@ -144,39 +144,25 @@ const FieldNotesModal = ({ onClose }) => {
           </div>
           <div className="flex flex-wrap items-center">
             <div className="flex flex-wrap gap-1 text-xs">
-              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
-                For me
-              </button>
-              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
-                Tags
-              </button>
-              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
-                Status
-              </button>
-              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
-                Due date
-              </button>
-              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
-                Assignee
-              </button>
-              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
-                Date created
-              </button>
-              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
-                Sheets
-              </button>
-              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
-                Zones
-              </button>
-              <button className="border border-black/15 p-2 hover:bg-slate-200 rounded-full">
-                Creator
-              </button>
-              <button className="border border-black/15 p-2 hover:bg-slate-200 rounded-full">
-                Tags
-              </button>
+              {filterButtons.map((filter) => (
+                <button
+                  key={filter}
+                  className={`border ${
+                    activeFilters.includes(filter)
+                      ? "bg-blue-500 text-white"
+                      : "border-black/15 hover:bg-slate-200"
+                  } p-2 rounded-full`}
+                  onClick={() => toggleFilter(filter)}
+                >
+                  {filter}
+                </button>
+              ))}
             </div>
             <div className="flex justify-end ml-auto mt-1">
-              <button className="text-black p-2 text-xs bg-slate-200 rounded-md">
+              <button
+                className="text-black p-2 text-xs bg-slate-200 rounded-md"
+                onClick={clearFilters}
+              >
                 Clear all
               </button>
             </div>
@@ -207,23 +193,29 @@ const FieldNotesModal = ({ onClose }) => {
                   </div>
                   <p className="text-sm text-gray-600 mt-1">{note.floor}</p>
                   <div className="my-2 bg-gray-200 p-2 rounded-md">
-                    <span className="bg-yellow-200 text-yellow-800 text-xs font-semibold px-2 py-1 rounded-full">
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                      note.priority === "High" ? "bg-red-200 text-red-800" :
+                      note.priority === "Medium" ? "bg-yellow-200 text-yellow-800" :
+                      "bg-green-200 text-green-800"
+                    }`}>
                       {note.priority}
                     </span>
                   </div>
-                  <div className="my-2">
-                    <img
-                      src={note.imageUrl}
-                      alt="Note Image"
-                      // width={400}
-                      // height={300}
-                      className="rounded-md"
-                    />
-                  </div>
-                  <div className="my-2 bg-gray-200 p-2 rounded-md">
-                    <span className="bg-gray-300 text-gray-800 text-xs font-semibold px-2 py-1 rounded-full">
-                      {note.tag}
-                    </span>
+                  {note.imageUrls && note.imageUrls.length > 0 && (
+                    <div className="my-2">
+                      <img
+                        src='/floor.jpg'
+                        alt="Note Image"
+                        className="rounded-md w-full h-48 object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="my-2 flex flex-wrap gap-1">
+                    {note.tags.map((tag, index) => (
+                      <span key={index} className="bg-gray-200 text-gray-800 text-xs font-semibold px-2 py-1 rounded-full">
+                        {tag}
+                      </span>
+                    ))}
                   </div>
                   <p className="text-sm text-gray-600 mt-2">{note.description}</p>
                   <p className="text-sm text-gray-600 mt-2">Assignee: {note.assignee}</p>
