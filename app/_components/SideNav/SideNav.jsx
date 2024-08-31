@@ -31,7 +31,7 @@ const SideNav = () => {
   return (
     <div
       className={`bg-white shadow-lg h-screen fixed transition-all  duration-300 z-10
-                  ${isOpen ? "md:w-44 w-14" : "md:w-12 w-12"}`}
+                  ${isOpen ? "md:w-48 w-14" : "w-14"}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -112,7 +112,7 @@ const SideNav = () => {
           <li className="flex items-center p-4 cursor-pointer">
             <PiVirtualRealityFill  className="icon text-xl" />
             {isOpen && (
-              <span className="ml-4 text-black text-sm hidden md:inline">Virtual Tour</span>
+              <span className="ml-4 text-black text-sm hidden md:inline">VirtualTour</span>
             )}
           </li>
         </Link>
