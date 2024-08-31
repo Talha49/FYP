@@ -1,54 +1,126 @@
-import React, { useState } from "react";
-import { FaSortAmountDown } from "react-icons/fa";
+import React, { useState, useEffect, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { FaSortAmountDown, FaGlobe, FaExpand } from "react-icons/fa";
 import { CiExport } from "react-icons/ci";
-import { FaGlobe, FaExpand } from "react-icons/fa";
+import { VscClose } from "react-icons/vsc";
 import Image from "next/image";
 import Dialog from "../Dialog/Dialog";
 import FieldNoteModalCardsModal from "../FieldNoteModalCardsModal/FieldNoteModalCardsModal";
-import { VscClose } from "react-icons/vsc";
+import { fetchFieldNotes } from "@/lib/Features/FieldNoteSlice";
 
 const FieldNotesModal = ({ onClose }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchParam, setSearchParam] = useState("");
+  const [selectedNote, setSelectedNote] = useState(null);
+  const [activeFilters, setActiveFilters] = useState([]);
+  const notes = useSelector((state) => state.FieldNotesSlice.FieldNotes);
+  const dispatch = useDispatch();
 
-  const notes = [
-    {
-      id: 1,
-      name: "Muhammad Waseem",
-      room: "3-12",
-      date: "Dec 8, 2022",
-      floor: "Floor 2",
-      priority: "Priority 2",
-      imageUrl: "/floor.jpg",
-      tag: "Fire alarm",
-      description: "Fire Alarm is not connected to power source",
-    },
-    {
-      id: 2,
-      name: "Jane Doe",
-      room: "2-14",
-      date: "Jan 10, 2023",
-      floor: "Floor 3",
-      priority: "Priority 1",
-      imageUrl: "/floor.jpg",
-      tag: "Smoke detector",
-      description: "Smoke detector needs maintenance",
-    },
-    
+  useEffect(() => {
+    dispatch(fetchFieldNotes());
+  }, [dispatch]);
+
+  const filterButtons = [
+    "For me",
+    "Tags",
+    "Status",
+    "Due date",
+    "Assignee",
+    "Date created",
+    "Priority",
+    "Creator"
   ];
 
-  const filterNotes = notes.filter(
-    (note) =>
-      note.name.toLowerCase().includes(searchParam.toLowerCase()) ||
-      note.description.toLowerCase().includes(searchParam.toLowerCase())
-  );
+  const toggleFilter = (filter) => {
+    setActiveFilters((prev) =>
+      prev.includes(filter)
+        ? prev.filter((f) => f !== filter)
+        : [...prev, filter]
+    );
+    setSearchParam(""); // Clear search when toggling filters
+  };
+
+  const clearFilters = () => {
+    setActiveFilters([]);
+    setSearchParam("");
+  };
+
+  const filterNotes = useMemo(() => {
+    return notes.filter((note) => {
+      const matchesSearch = searchParam === "" || 
+        (activeFilters.includes("Assignee") ? 
+          note.assignee.toLowerCase().includes(searchParam.toLowerCase()) :
+          note.name.toLowerCase().includes(searchParam.toLowerCase()) || 
+          note.description.toLowerCase().includes(searchParam.toLowerCase()) ||
+          note.tags.some(tag => tag.toLowerCase().includes(searchParam.toLowerCase())) ||
+          note.status.toLowerCase().includes(searchParam.toLowerCase()) ||
+          note.priority.toLowerCase().includes(searchParam.toLowerCase()) ||
+          note.room.toLowerCase().includes(searchParam.toLowerCase()) ||
+          note.floor.toLowerCase().includes(searchParam.toLowerCase())
+        );
+
+      const matchesFilters = activeFilters.every((filter) => {
+        switch (filter) {
+          case "Tags":
+            return note.tags.length > 0;
+          case "Status":
+            return note.status !== "";
+          case "Due date":
+            return note.dueDate !== null;
+          case "Assignee":
+            return note.assignee !== "";
+          case "Date created":
+            return note.createdAt !== null;
+          case "Priority":
+            return note.priority !== "";
+          default:
+            return true;
+        }
+      });
+
+      return matchesSearch && matchesFilters;
+    });
+  }, [notes, searchParam, activeFilters]);
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return `${date.getMonth() + 1}-${date.getDate()}`;
+  };
+
+  const handleCardClick = (note) => {
+    setSelectedNote(note);
+    setIsOpen(true);
+  };
+
+  const getSearchPlaceholder = () => {
+    if (activeFilters.length === 0) return "Search Field Notes";
+    if (activeFilters.length > 1) return "Search in selected filters";
+    
+    const activeFilter = activeFilters[0];
+    switch (activeFilter) {
+      case "Tags":
+        return "Search tags";
+      case "Status":
+        return "Search by status";
+      case "Due date":
+        return "Search by due date";
+      case "Assignee":
+        return "Search by assignee";
+      case "Date created":
+        return "Search by creation date";
+      case "Sheets":
+        return "Search sheets";
+      case "Creator":
+        return "Search by creator";
+      default:
+        return `Search ${activeFilter}`;
+    }
+  };
 
   return (
     <>
-      <div>
-        {/*** Header Field Notes */}
-        {/*** Search bar Row */}
-        <div className="border-b-2 bg-white sticky top-0 p-4">
+      <div className="bg-white h-full overflow-auto">
+        <div className="border-b-2 bg-white sticky top-0 p-4 z-10">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold">FieldNotes</h1>
             <button className="hover:bg-gray-200 p-2 rounded-md" onClick={onClose}>
@@ -58,8 +130,7 @@ const FieldNotesModal = ({ onClose }) => {
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <input
               type="text"
-              placeholder="Search Field Notes"
-              className="border border-gray-300 rounded-md p-2 w-full outline-none md:max-w-[70%]"
+              placeholder={getSearchPlaceholder()}              className="border border-gray-300 rounded-md p-2 w-full outline-none md:max-w-[70%]"
               value={searchParam}
               onChange={(e) => setSearchParam(e.target.value)}
             />
@@ -73,63 +144,60 @@ const FieldNotesModal = ({ onClose }) => {
           </div>
           <div className="flex flex-wrap items-center">
             <div className="flex flex-wrap gap-1 text-xs">
-              <button className="border border-black/15 hover:bg-blue-100 p-2 rounded">
+              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
                 For me
               </button>
-              <button className="border border-black/15 hover:bg-blue-100 p-2 rounded">
+              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
                 Tags
               </button>
-              <button className="border border-black/15 hover:bg-blue-100 p-2 rounded">
+              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
                 Status
               </button>
-              <button className="border border-black/15 hover:bg-blue-100 p-2 rounded">
+              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
                 Due date
               </button>
-              <button className="border border-black/15 hover:bg-blue-100 p-2 rounded">
+              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
                 Assignee
               </button>
-              <button className="border border-black/15 hover:bg-blue-100 p-2 rounded">
+              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
                 Date created
               </button>
-              <button className="border border-black/15 hover:bg-blue-100 p-2 rounded">
+              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
                 Sheets
               </button>
-              <button className="border border-black/15 hover:bg-blue-100 p-2 rounded">
+              <button className="border border-black/15 hover:bg-slate-200 p-2 rounded-full">
                 Zones
               </button>
-              <button className="border border-black/15 p-2 hover:bg-blue-100 rounded">
+              <button className="border border-black/15 p-2 hover:bg-slate-200 rounded-full">
                 Creator
               </button>
-              <button className="border border-black/15 p-2 hover:bg-blue-100 rounded">
+              <button className="border border-black/15 p-2 hover:bg-slate-200 rounded-full">
                 Tags
               </button>
             </div>
             <div className="flex justify-end ml-auto mt-1">
-              <button className="text-black p-2 text-xs bg-blue-200 hover:bg-blue-300 transition-all rounded-md">
+              <button className="text-black p-2 text-xs bg-slate-200 rounded-md">
                 Clear all
               </button>
             </div>
           </div>
-          <div className="text-gray-600">{filterNotes.length} results</div>
+          <div className="text-gray-600 mt-2">{filterNotes.length} results</div>
         </div>
 
-        {/*** Cards */}
-        <div className="mt-3">
-          <div className="p-4">
-           {
-            filterNotes.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-4">
+          {filterNotes.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filterNotes.map((note) => (
                 <div
-                  key={note.id}
-                  className="bg-white shadow-md rounded-md p-4"
-                  onClick={() => setIsOpen(true)}
+                  key={note._id}
+                  className="bg-white shadow-md rounded-md p-4 cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => handleCardClick(note)}
                 >
                   <div className="flex justify-between items-center">
                     <div>
                       <h3 className="font-semibold">{note.name}</h3>
                       <p className="text-sm text-gray-600">
-                        {note.room} &nbsp;&nbsp; {note.date}
+                        {note.room} &nbsp;&nbsp; {formatDate(note.createdAt)}
                       </p>
                     </div>
                     <div className="flex space-x-2">
@@ -137,9 +205,9 @@ const FieldNotesModal = ({ onClose }) => {
                       <FaExpand className="text-gray-600" />
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600">{note.floor}</p>
+                  <p className="text-sm text-gray-600 mt-1">{note.floor}</p>
                   <div className="my-2 bg-gray-200 p-2 rounded-md">
-                    <span className="bg-blue-300 text-blue-800 text-xs font-semibold px-2 py-1 rounded-full">
+                    <span className="bg-yellow-200 text-yellow-800 text-xs font-semibold px-2 py-1 rounded-full">
                       {note.priority}
                     </span>
                   </div>
@@ -153,27 +221,28 @@ const FieldNotesModal = ({ onClose }) => {
                     />
                   </div>
                   <div className="my-2 bg-gray-200 p-2 rounded-md">
-                    <span className="bg-blue-300 text-blue-800 text-xs font-semibold px-2 py-1 rounded-full">
+                    <span className="bg-gray-300 text-gray-800 text-xs font-semibold px-2 py-1 rounded-full">
                       {note.tag}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600">{note.description}</p>
+                  <p className="text-sm text-gray-600 mt-2">{note.description}</p>
+                  <p className="text-sm text-gray-600 mt-2">Assignee: {note.assignee}</p>
+                  <p className="text-sm text-gray-600">Status: {note.status}</p>
                 </div>
               ))}
             </div>
-            ) : (<div className="flex justify-center mt-4">
-            <div className="text-center flex flex-col justify-center max-w-md mx-auto">
-              <p className="text-md ">No Matches For Your Results !!</p>
-              <Image src='/svg.jpg' width={300} height={300} className="mx-auto md:w-[73%]" />
+          ) : (
+            <div className="flex justify-center mt-4">
+              <div className="text-center flex flex-col justify-center max-w-md mx-auto">
+                <p className="text-md">No Matches For Your Results</p>
+                <Image src='/svg.jpg' width={300} height={300} alt="No results" className="mx-auto md:w-[73%]" />
+              </div>
             </div>
-          </div>)
-           }
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Dialog Middle */}
-      {isOpen && (
+      {isOpen && selectedNote && (
         <Dialog
           isOpen={isOpen}
           onClose={() => setIsOpen(false)}
@@ -181,9 +250,8 @@ const FieldNotesModal = ({ onClose }) => {
           isLeft={false}
           withBlur={true}
           padding="p-4"
-          
         >
-          <FieldNoteModalCardsModal onClose={() => setIsOpen(false)} />
+          <FieldNoteModalCardsModal onClose={() => setIsOpen(false)} note={selectedNote} />
         </Dialog>
       )}
     </>
