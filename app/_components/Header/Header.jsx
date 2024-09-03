@@ -6,35 +6,38 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import Cookies from "js-cookie";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 const Header = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [authenticatedUser, setAuthenticatedUser] = useState(null);
-
   const pathname = usePathname();
-
-  const handleDialog = () => {
-    setShowDialog(!showDialog);
-  };
 
   const { data: session } = useSession();
 
   useEffect(() => {
-    if (session && session.user.userData) {
+    if (session?.user?.userData) {
       // Store the user data in a cookie
       Cookies.set("user", JSON.stringify(session.user.userData), {
         expires: 1, // 1 day
-        secure: false, // true in production with HTTPS
+        secure: process.env.NODE_ENV === "production", // Secure in production with HTTPS
         path: "/",
       });
     }
-    if (Cookies.get("user")) {
-      setAuthenticatedUser(JSON.parse(Cookies.get("user")));
+
+    const storedUser = Cookies.get("user");
+    if (storedUser) {
+      setAuthenticatedUser(JSON.parse(storedUser));
     }
   }, [session, pathname]);
 
-  console.log("Authenticated User =>", authenticatedUser);
+  const handleSignOut = () => {
+    signOut();
+    Cookies.remove("user");
+    setAuthenticatedUser(null);
+  };
+
+  const profileImage = authenticatedUser?.image || "/avatar.png";
 
   return (
     <div className="flex w-full justify-between leading-[60px] border-b px-8 bg-white sticky top-0 z-10 cursor-pointer shadow-sm">
@@ -44,26 +47,16 @@ const Header = () => {
           OpenSpace - Home
         </div>
       </div>
-      <div className="flex items-center gap-2 relative" onClick={handleDialog}>
+      <div className="flex items-center gap-2 relative" onClick={() => setShowDialog(!showDialog)}>
         <FaQuestion className="text-lg text-blue-500" />
         <div className="bg-blue-500 rounded-full p-[2px]">
-          {authenticatedUser?.image ? (
-            <img
-              src={authenticatedUser?.image}
-              width={35}
-              height={35}
-              alt="Profile"
-              className="rounded-full"
-            />
-          ) : (
-            <Image
-              src="/avatar.png"
-              width={35}
-              height={35}
-              alt="Profile"
-              className="rounded-full"
-            />
-          )}
+          <Image
+            src={profileImage}
+            width={35}
+            height={35}
+            alt="Profile"
+            className="rounded-full"
+          />
         </div>
         {showDialog && (
           <div className="absolute top-14 right-0 w-[300px] bg-white shadow-lg border border-gray-200 rounded-lg py-3 px-4 transform transition-transform duration-300 ease-in-out">
@@ -71,10 +64,10 @@ const Header = () => {
               <>
                 <div className="py-4">
                   <p className="font-semibold leading-tight">
-                    {authenticatedUser?.fullName}
+                    {authenticatedUser.fullName}
                   </p>
                   <p className="text-gray-500 leading-tight">
-                    {authenticatedUser?.email}
+                    {authenticatedUser.email}
                   </p>
                 </div>
                 <hr className="border-t border-gray-300 my-0" />
@@ -84,10 +77,7 @@ const Header = () => {
                   </button>
                   <button
                     className="bg-blue-500 hover:bg-blue-600 hover:shadow-lg transition-all p-2 rounded-lg text-white w-full"
-                    onClick={() => {
-                      signOut();
-                      Cookies.remove("user");
-                    }}
+                    onClick={handleSignOut}
                   >
                     Sign Out
                   </button>
@@ -116,7 +106,6 @@ const Header = () => {
                 </div>
               </>
             )}
-            {/* Uncomment below for additional profile details */}
           </div>
         )}
       </div>

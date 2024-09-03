@@ -36,6 +36,13 @@ export async function POST(req) {
       );
     }
 
+    if (user.isSocialLogin) {
+      return NextResponse.json(
+        { error: 'Please login with your social account.' },
+        { status: 400 }
+      );
+    }
+
     // Compare the provided password with the stored hashed password
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
