@@ -32,7 +32,7 @@ const Header = () => {
   }, [session, pathname]);
 
   const handleSignOut = () => {
-    signOut();
+    signOut({ callbackUrl: '/' });
     Cookies.remove("user");
     setAuthenticatedUser(null);
   };
