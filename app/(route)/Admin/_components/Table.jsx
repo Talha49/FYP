@@ -34,7 +34,7 @@ const usersData = [
   },
 ];
 
-const Table = ({ searchQuery }) => {
+function Table({ searchQuery }) {
   const [users, setUsers] = useState(usersData);
   const [sortOrder, setSortOrder] = useState(null);
 

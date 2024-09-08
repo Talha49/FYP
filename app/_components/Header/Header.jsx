@@ -8,7 +8,7 @@ import { useSession, signOut } from "next-auth/react";
 import Cookies from "js-cookie";
 import { usePathname } from "next/navigation";
 
-const Header = () => {
+function Header(){
   const [showDialog, setShowDialog] = useState(false);
   const [authenticatedUser, setAuthenticatedUser] = useState(null);
   const pathname = usePathname();

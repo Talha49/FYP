@@ -14,7 +14,7 @@ import CaptureModal from "../CaptureModal/CaptureModal";
 import { PiVirtualRealityFill } from "react-icons/pi";
 
 
-const SideNav = () => {
+function SideNav() {
   const [isOpen, setIsOpen] = useState(false);
 
   const [openCaptures, setopenCaptures] = useState(false);

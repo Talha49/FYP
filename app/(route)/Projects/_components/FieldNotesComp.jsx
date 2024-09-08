@@ -2,7 +2,7 @@ import Image from 'next/image';
 import React from 'react'
 import { RxAvatar } from 'react-icons/rx';
 
-const FieldNotesComp = () => {
+function FieldNotesComp(){
  
     const fieldnotes = [
         { id: 1, title: 'Added a note on Floor1', lastactive: 'Jan 17, 2019', image: '/h1.jpg', Avatar: "Mehwat Waseem" },

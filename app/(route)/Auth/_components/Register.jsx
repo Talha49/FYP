@@ -8,7 +8,7 @@ import { signIn, useSession } from "next-auth/react";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 
-const Register = () => {
+function Register() {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",

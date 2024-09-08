@@ -29,7 +29,7 @@ const ForgotPasswordDialog = ({ children, isOpen, onClose }) => {
   );
 };
 
-const Login = () => {
+function Login () {
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
     email: "",

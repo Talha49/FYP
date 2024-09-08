@@ -43,7 +43,7 @@ export const projects = [
   },
 ];
 
-const ProjectCards = ({ searchQuery }) => {
+function ProjectCards({ searchQuery }){
 
 
 

@@ -12,7 +12,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { updateFieldNote } from "@/lib/Features/FieldNoteSlice";
 import { fetchUsers } from "@/lib/Features/UserSlice";
 
-const FieldNoteModalCardsModal = ({ onClose, note }) => {
+function FieldNoteModalCardsModal({ onClose, note }){
   const dispatch = useDispatch();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isEditing, setIsEditing] = useState(false);

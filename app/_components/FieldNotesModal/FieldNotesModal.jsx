@@ -8,7 +8,7 @@ import Dialog from "../Dialog/Dialog";
 import FieldNoteModalCardsModal from "../FieldNoteModalCardsModal/FieldNoteModalCardsModal";
 import { fetchFieldNotes } from "@/lib/Features/FieldNoteSlice";
 
-const FieldNotesModal = ({ onClose }) => {
+function  FieldNotesModal({ onClose }){
   const [isOpen, setIsOpen] = useState(false);
   const [searchParam, setSearchParam] = useState("");
   const [selectedNote, setSelectedNote] = useState(null);

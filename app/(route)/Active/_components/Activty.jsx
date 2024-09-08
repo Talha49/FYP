@@ -1,6 +1,6 @@
 import React from 'react'
 
-const Activty = () => {
+function Activty(){
   return (
     <div>Activty</div>
   )

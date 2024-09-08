@@ -5,7 +5,7 @@ import { FiUsers } from "react-icons/fi";
 import { IoDocumentTextOutline } from "react-icons/io5";
 import { RxDividerVertical } from "react-icons/rx";
 
-const Navbar = ({ activeTab, onTabChange }) => {
+function Navbar ({ activeTab, onTabChange }) {
   return (
     <nav className="flex justify-between items-center mb-4 shadow-sm border bg-white  cursor-pointer text-xs">
       <ul className="flex flex-wrap">

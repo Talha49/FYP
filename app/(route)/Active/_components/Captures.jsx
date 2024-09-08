@@ -3,7 +3,7 @@ import { PiFileCsv } from "react-icons/pi";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { LiaSortSolid } from "react-icons/lia";
 
-const Captures = () => {
+function Captures() {
   
   const users = [
     {

@@ -3,7 +3,7 @@ import React from 'react';
 import { IoMdSearch } from 'react-icons/io';
 import { AiOutlineDownload, AiOutlineUserAdd } from 'react-icons/ai';
 
-const Header = ({ searchQuery, setSearchQuery }) => {
+function Header({ searchQuery, setSearchQuery }){
   return (
     <div className='bg-white rounded-md border-2 border-gray-200 py-4 px-4 mt-4'>
       <div className="flex justify-between lg:flex-row flex-col lg:gap-y-0 gap-y-2">
