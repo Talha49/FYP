@@ -12,7 +12,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { updateFieldNote } from "@/lib/Features/FieldNoteSlice";
 import { fetchUsers } from "@/lib/Features/UserSlice";
 
-const FieldNoteModalCardsModal = ({ onClose, note }) => {
+const FieldNoteModalCardsModal = ({ onClose, note,token }) => {
+
+
+
   const dispatch = useDispatch();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
@@ -30,14 +33,13 @@ const FieldNoteModalCardsModal = ({ onClose, note }) => {
 
   useEffect(() => {
     if (userStatus === "idle") {
-      dispatch(fetchUsers());
+      dispatch(fetchUsers(token));
     }
   }, [userStatus, dispatch]);
 
   const users = useSelector((state) => state.UserSlice.users);
 
-  console.log(users, "user");
-  console.log( "note", localNote );
+  
 
   useEffect(() => {
     setLocalNote(note);

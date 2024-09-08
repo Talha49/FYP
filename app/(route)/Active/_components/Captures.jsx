@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { PiFileCsv } from "react-icons/pi";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { LiaSortSolid } from "react-icons/lia";
+import Table from "@/app/_components/HOC/Table/Table";
 
 const Captures = () => {
   
@@ -148,6 +149,7 @@ const Captures = () => {
     },
     ];
 
+
   const [currentPage, setCurrentPage] = useState(1);
   const [sortOrder, setSortOrder] = useState(null);
   const [sortField, setSortField] = useState(null);
@@ -186,7 +188,18 @@ const Captures = () => {
     setSortField(field);
     setSortOrder(newSortOrder);
   };
-  
+ 
+
+  const headers = [
+    { key: "projectname", label: "Project Name", sortable: true },
+    { key: "capturedate", label: "Capture Date", sortable: false },
+    { key: "uploaded", label: "Uploaded", sortable: false },
+    { key: "captureremail", label: "Capture Email", sortable: false },
+    { key: "sheet", label: "Sheet", sortable: false },
+    { key: "type", label: "Type", sortable: false },
+    { key: "minutes", label: "Minutes", sortable: false },
+    { key: "capture", label: "Capture", sortable: false },
+  ];
 
   return (
     <div>
@@ -243,7 +256,7 @@ const Captures = () => {
             </button>
           </div>
         </div>
-        <div className="min-w-full overflow-x-auto">
+        {/* <div className="min-w-full overflow-x-auto">
           <table className="w-full border-collapse border min-w-[1000px]">
             <thead className="text-sm font-medium text-gray-600">
               <tr className="bg-gray-200">
@@ -275,7 +288,15 @@ const Captures = () => {
 </tbody>
 
           </table>
-        </div>
+        </div> */}
+               <Table
+          headers={headers}
+          data={sortedCurrentUsers}
+          onSort={handleSort}
+          sortField={sortField}
+          sortOrder={sortOrder}
+        />
+
       </div>
     </div>
   );
