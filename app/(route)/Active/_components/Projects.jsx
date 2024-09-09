@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { PiFileCsv } from "react-icons/pi";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { LiaSortSolid } from "react-icons/lia";
+import Table from "@/app/_components/HOC/Table/Table";
 
 function Projects() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -208,6 +209,17 @@ function Projects() {
     setSortOrder(newSortOrder);
   };
 
+  const headers = [
+    { key: "projectname", label: "Project Name", sortable: true },
+    { key: "address", label: "Address", sortable: false },
+    { key: "topcapturer", label: "Top Capturer", sortable: false },
+    { key: "lastcapturer", label: "Last Capture", sortable: false },
+    { key: "videos", label: "360° Videos", sortable: false },
+    { key: "photos", label: "360° Photos", sortable: false },
+    { key: "Scans", label: "3D Scans", sortable: false },
+  ];
+
+
   return (
     <div>
       <div className=" mx-2 p-2 border border-gray-300 shadow-md rounded-lg">
@@ -283,7 +295,7 @@ function Projects() {
             </button>
           </div>
         </div>
-        <div className="min-w-full overflow-x-auto">
+        {/* <div className="min-w-full overflow-x-auto">
           <table className="w-full border-collapse border min-w-[1000px]">
             <thead className="text-sm font-medium text-gray-600">
               <tr className="bg-gray-200">
@@ -316,7 +328,14 @@ function Projects() {
               ))}
             </tbody>
           </table>
-        </div>
+        </div> */}
+        <Table
+          headers={headers}
+          data={sortedCurrentUsers}
+          onSort={handleSort}
+          sortField={sortField}
+          sortOrder={sortOrder}
+        />
       </div>
     </div>
   );

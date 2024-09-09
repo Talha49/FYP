@@ -2,8 +2,11 @@ import React, { useState } from "react";
 import { PiFileCsv } from "react-icons/pi";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { LiaSortSolid } from "react-icons/lia";
+import Table from "@/app/_components/HOC/Table/Table";
 
 function FieldNotes () {
+
+
   const [currentPage, setCurrentPage] = useState(1);
   const [sortOrder, setSortOrder] = useState(null);
 const [sortField, setSortField] = useState(null);
@@ -221,6 +224,18 @@ const [sortField, setSortField] = useState(null);
     setSortField(field);
     setSortOrder(newSortOrder);
   };
+
+  const headers = [
+    { key: "projectname", label: "Project Name", sortable: true },
+    { key: "createdon", label: "Created On", sortable: false },
+    { key: "captureDate", label: "Capture Date", sortable: false },
+    { key: "fieldnoteurl", label: "Field Note Url", sortable: false },
+    { key: "creatoremail", label: "Creator Email", sortable: false },
+    { key: "Description", label: "Description", sortable: false },
+    { key: "Start", label: "Start", sortable: false },
+  ];
+
+
   return (
     <div>
     <div className=" mx-2 p-2 border border-gray-300 shadow-md rounded-lg">
@@ -276,7 +291,7 @@ const [sortField, setSortField] = useState(null);
             </button>
         </div>
       </div>
-      <div className="min-w-full overflow-x-auto">
+      {/* <div className="min-w-full overflow-x-auto">
         <table className="w-full border-collapse border min-w-[1000px]">
           <thead className="text-sm font-medium text-gray-600">
             <tr className="bg-gray-200">
@@ -307,7 +322,16 @@ const [sortField, setSortField] = useState(null);
             ))}
           </tbody>
         </table>
-      </div>
+      </div> */}
+         <Table
+          headers={headers}
+          data={sortedCurrentUsers}
+          onSort={handleSort}
+          sortField={sortField}
+          sortOrder={sortOrder}
+        />
+
+
     </div>
   </div>
   )

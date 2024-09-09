@@ -12,6 +12,7 @@ import Dialog from "../Dialog/Dialog";
 import FieldNotesModal from "../FieldNotesModal/FieldNotesModal";
 import CaptureModal from "../CaptureModal/CaptureModal";
 import { PiVirtualRealityFill } from "react-icons/pi";
+import { MdOutlineSpaceDashboard } from "react-icons/md";
 
 
 function SideNav() {
@@ -41,6 +42,14 @@ function SideNav() {
             <FaHome className="icon text-xl" />
             {isOpen && (
               <span className="ml-4 text-black text-sm hidden md:inline">Home</span>
+            )}
+          </li>
+        </Link>
+        <Link href="/Dashboard" className="flex items-center hover:bg-blue-200">
+          <li className="flex items-center p-4  cursor-pointer">
+            <MdOutlineSpaceDashboard className="icon text-xl" />
+            {isOpen && (
+              <span className="ml-4 text-black text-sm hidden md:inline">Dashboard</span>
             )}
           </li>
         </Link>
