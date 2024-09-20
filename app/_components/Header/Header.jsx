@@ -7,35 +7,25 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import Cookies from "js-cookie";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 const Header = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [authenticatedUser, setAuthenticatedUser] = useState(null);
   const pathname = usePathname();
+  const router = useRouter();
 
   const { data: session } = useSession();
 
   useEffect(() => {
-    if (session?.user?.userData) {
-      // Store the user data in a cookie
-      Cookies.set("user", JSON.stringify(session.user.userData), {
-        expires: 1, // 1 day
-        secure: process.env.NODE_ENV === "production", // Secure in production with HTTPS
-        path: "/",
-      });
-    }
-
-    const storedUser = Cookies.get("user");
-    if (storedUser) {
-      setAuthenticatedUser(JSON.parse(storedUser));
-    }
+    setAuthenticatedUser(session?.user?.userData);
   }, [session, pathname]);
 
   const handleSignOut = () => {
-    signOut({ callbackUrl: '/' });
-    Cookies.remove("user");
-    setAuthenticatedUser(null);
+    signOut({ callbackUrl: "/" });
   };
+
+  console.log("Authenticated User =>", authenticatedUser);
 
   const profileImage = authenticatedUser?.image || "/avatar.png";
 
@@ -47,7 +37,10 @@ const Header = () => {
           OpenSpace - Home
         </div>
       </div>
-      <div className="flex items-center gap-2 relative" onClick={() => setShowDialog(!showDialog)}>
+      <div
+        className="flex items-center gap-2 relative"
+        onClick={() => setShowDialog(!showDialog)}
+      >
         <FaQuestion className="text-lg text-blue-500" />
         <div className="bg-blue-500 rounded-full p-[2px]">
           <Image
@@ -72,7 +65,12 @@ const Header = () => {
                 </div>
                 <hr className="border-t border-gray-300 my-0" />
                 <div className="flex justify-between gap-2 text-gray-500 py-3 px-1 text-sm">
-                  <button className="bg-blue-50 hover:bg-blue-100 hover:shadow-lg transition-all border border-blue-300 p-2 rounded-lg text-blue-500 w-full">
+                  <button
+                    className="bg-blue-50 hover:bg-blue-100 hover:shadow-lg transition-all border border-blue-300 p-2 rounded-lg text-blue-500 w-full"
+                    onClick={() => {
+                      router.push("/Profile");
+                    }}
+                  >
                     View Profile
                   </button>
                   <button

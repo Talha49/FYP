@@ -20,12 +20,12 @@ export async function POST(req) {
       });
     }
 
-    if (user.isSocialLogin) {
-      return NextResponse.json({
-        error:
-          "You are registered with your social account. try login to that account",
-      });
-    }
+    // if (user.isSocialLogin) {
+    //   return NextResponse.json({
+    //     error:
+    //       "You are registered with your social account. try login to that account",
+    //   });
+    // }
 
     // Generate a 5-digit OTP
     const otp = Math.floor(10000 + Math.random() * 90000).toString();

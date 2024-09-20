@@ -59,48 +59,72 @@ const Register = () => {
 
     // Proceed with API request if no errors
     try {
-      const response = await axios.post("/api/auth/register", formData, {
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const result = await signIn("register", {
+        callbackUrl: "/",
+        redirect: false, // Ensure no redirect, handle in your app
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        contact: formData.contact,
       });
 
-      const cookieData = {
-        id: response?.data?.user?.id,
-        fullName: response?.data?.user?.fullName,
-        email: response?.data?.user?.email,
-        image: response?.data?.user?.image,
-        isSocialLogin: response?.data?.user?.isSocialLogin,
-        token: response?.data?.token,
-      };
-      Cookies.set("user", JSON.stringify(cookieData), {
-        expires: 1, // 1 day
-        secure: false, // true in production with HTTPS
-        path: "/",
-      });
-
-      setSuccess("Registration successful!");
-      setFormData({
-        fullName: "",
-        email: "",
-        contact: "",
-        password: "",
-        isSocialLogin: false,
-      });
-      setConfirmPassword("");
-      router.push("/");
-      console.log(response.data);
-    } catch (err) {
-      if (err.response) {
-        // Server responded with a status other than 2xx
-        setErrors({ form: err.response.data.error || "Something went wrong." });
+      if (result.error) {
+        setErrors({ form: result.error }); // Display the specific error message
+        setIsSubmitting(false);
       } else {
-        // No response from server or other errors
-        setErrors({ form: "Failed to register. Please try again later." });
+        router.push(result.url); // Redirect to the callback URL if successful
+        setIsSubmitting(false);
       }
+    } catch (error) {
+      console.log(error);
+      console.error("Error in registration:", error.message);
+      setErrors({ form: "Registration failed. Please try again later." });
     } finally {
       setIsSubmitting(false); // End form submission
     }
+    // try {
+    //   const response = await axios.post("/api/auth/register", formData, {
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //   });
+
+    //   const cookieData = {
+    //     id: response?.data?.user?.id,
+    //     fullName: response?.data?.user?.fullName,
+    //     email: response?.data?.user?.email,
+    //     image: response?.data?.user?.image,
+    //     isSocialLogin: response?.data?.user?.isSocialLogin,
+    //     token: response?.data?.token,
+    //   };
+    //   Cookies.set("user", JSON.stringify(cookieData), {
+    //     expires: 1, // 1 day
+    //     secure: false, // true in production with HTTPS
+    //     path: "/",
+    //   });
+
+    //   setSuccess("Registration successful!");
+    //   setFormData({
+    //     fullName: "",
+    //     email: "",
+    //     contact: "",
+    //     password: "",
+    //     isSocialLogin: false,
+    //   });
+    //   setConfirmPassword("");
+    //   router.push("/");
+    //   console.log(response.data);
+    // } catch (err) {
+    //   if (err.response) {
+    //     // Server responded with a status other than 2xx
+    //     setErrors({ form: err.response.data.error || "Something went wrong." });
+    //   } else {
+    //     // No response from server or other errors
+    //     setErrors({ form: "Failed to register. Please try again later." });
+    //   }
+    // } finally {
+    //   setIsSubmitting(false); // End form submission
+    // }
   };
 
   return (
