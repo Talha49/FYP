@@ -5,7 +5,6 @@ import { FaQuestion } from "react-icons/fa";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import Cookies from "js-cookie";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 

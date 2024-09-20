@@ -5,7 +5,6 @@ import { FcGoogle } from "react-icons/fc";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { signIn, useSession } from "next-auth/react";
-import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 
 const Register = () => {

@@ -4,7 +4,6 @@ import { FcGoogle } from "react-icons/fc";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { signIn } from "next-auth/react";
-import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { MdOutlineNavigateNext } from "react-icons/md";
