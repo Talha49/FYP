@@ -4,7 +4,6 @@ import { FcGoogle } from "react-icons/fc";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
 import { signIn } from "next-auth/react";
-import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { MdOutlineNavigateNext } from "react-icons/md";
@@ -101,48 +100,66 @@ function Login () {
 
     // Proceed with API request if no errors
     try {
-      const response = await axios.post("/api/auth/login", formData, {
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const result = await signIn("login", {
+        callbackUrl: "/",
+        redirect: false, // Ensure no redirect, handle in your app
+        email: formData.email,
+        password: formData.password,
       });
 
-      const cookieData = {
-        id: response?.data?.user?.id,
-        fullName: response?.data?.user?.fullName,
-        email: response?.data?.user?.email,
-        image: response?.data?.user?.image,
-        isSocialLogin: response?.data?.user?.isSocialLogin,
-        token: response?.data?.token,
-      };
-      Cookies.set("user", JSON.stringify(cookieData), {
-        expires: 1, // 1 day
-        secure: false, // true in production with HTTPS
-        path: "/",
-      });
-
-      setSuccess("Login successful!");
-      setFormData({
-        email: "",
-        password: "",
-      });
-      router.push("/");
-      // console.log(response.data);
-    } catch (error) {
-      if (error.response) {
-        setErrors({
-          form: error.response.data.error || "Invalid credentials.",
-        });
-      } else if (error.request) {
-        setErrors({
-          form: "No response from the server. Please try again later.",
-        });
+      if (result.error) {
+        setErrors({ form: result.error });
+        setIsSubmitting(false)
       } else {
-        setErrors({ form: "Failed to log in. Please try again later." });
+        router.push(result.url); // Redirect to the callback URL if successful
+        setIsSubmitting(false)
       }
-    } finally {
-      setIsSubmitting(false); // End form submission
+    } catch (error) {
+      console.log(error);
     }
+    // try {
+    //   const response = await axios.post("/api/auth/login", formData, {
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //   });
+
+    //   const cookieData = {
+    //     id: response?.data?.user?.id,
+    //     fullName: response?.data?.user?.fullName,
+    //     email: response?.data?.user?.email,
+    //     image: response?.data?.user?.image,
+    //     isSocialLogin: response?.data?.user?.isSocialLogin,
+    //     token: response?.data?.token,
+    //   };
+    //   Cookies.set("user", JSON.stringify(cookieData), {
+    //     expires: 1, // 1 day
+    //     secure: false, // true in production with HTTPS
+    //     path: "/",
+    //   });
+
+    //   setSuccess("Login successful!");
+    //   setFormData({
+    //     email: "",
+    //     password: "",
+    //   });
+    //   router.push("/");
+    //   // console.log(response.data);
+    // } catch (error) {
+    //   if (error.response) {
+    //     setErrors({
+    //       form: error.response.data.error || "Invalid credentials.",
+    //     });
+    //   } else if (error.request) {
+    //     setErrors({
+    //       form: "No response from the server. Please try again later.",
+    //     });
+    //   } else {
+    //     setErrors({ form: "Failed to log in. Please try again later." });
+    //   }
+    // } finally {
+    //   setIsSubmitting(false); // End form submission
+    // }
   };
 
   const handleSendOtp = async () => {

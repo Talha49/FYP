@@ -3,13 +3,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { FaSortAmountDown, FaGlobe, FaExpand } from "react-icons/fa";
 import { CiExport } from "react-icons/ci";
 import { VscClose } from "react-icons/vsc";
-import Cookies from "js-cookie";
 import Image from "next/image";
 import Dialog from "../Dialog/Dialog";
 import FieldNoteModalCardsModal from "../FieldNoteModalCardsModal/FieldNoteModalCardsModal";
 import { fetchFieldNotes } from "@/lib/Features/FieldNoteSlice";
 import CardsComponent from "../HOC/Cards/CardsComponent";
 import FilterSearchComponent from "../HOC/Filters/FilterSearchComponent";
+import { useSession } from "next-auth/react";
 
 function  FieldNotesModal({ onClose }){
   const [isOpen, setIsOpen] = useState(false);
@@ -20,24 +20,20 @@ function  FieldNotesModal({ onClose }){
   const notes = useSelector((state) => state.FieldNotesSlice.FieldNotes);
   const dispatch = useDispatch();
 
+  const { data: session } = useSession();
 
   useEffect(() => {
-    const user = Cookies.get("user");
-    console.log("User from cookie:", user);  // Check the structure here
-    if (user) {
-      setAuthenticatedUser(JSON.parse(user));
+    if (session) {
+      setAuthenticatedUser(session?.user?.userData);
     }
   }, []);
-  
- 
-   
+
   useEffect(() => {
     if (authenticatedUser?.id) {
       dispatch(fetchFieldNotes(authenticatedUser.id));
     }
   }, [dispatch, authenticatedUser?.id]);
-  
- 
+
   const filterButtons = [
     "For me",
     "Tags",
@@ -46,7 +42,7 @@ function  FieldNotesModal({ onClose }){
     "Assignee",
     "Date created",
     "Priority",
-    "Creator"
+    "Creator",
   ];
 
   const toggleFilter = (filter) => {
@@ -65,17 +61,21 @@ function  FieldNotesModal({ onClose }){
 
   const filterNotes = useMemo(() => {
     return notes?.filter((note) => {
-      const matchesSearch = searchParam === "" || 
-        (activeFilters.includes("Assignee") ? 
-          note.assignee.toLowerCase().includes(searchParam.toLowerCase()) :
-          note.name.toLowerCase().includes(searchParam.toLowerCase()) || 
-          note.description.toLowerCase().includes(searchParam.toLowerCase()) ||
-          note.tags.some(tag => tag.toLowerCase().includes(searchParam.toLowerCase())) ||
-          note.status.toLowerCase().includes(searchParam.toLowerCase()) ||
-          note.priority.toLowerCase().includes(searchParam.toLowerCase()) ||
-          note.room.toLowerCase().includes(searchParam.toLowerCase()) ||
-          note.floor.toLowerCase().includes(searchParam.toLowerCase())
-        );
+      const matchesSearch =
+        searchParam === "" ||
+        (activeFilters.includes("Assignee")
+          ? note.assignee.toLowerCase().includes(searchParam.toLowerCase())
+          : note.name.toLowerCase().includes(searchParam.toLowerCase()) ||
+            note.description
+              .toLowerCase()
+              .includes(searchParam.toLowerCase()) ||
+            note.tags.some((tag) =>
+              tag.toLowerCase().includes(searchParam.toLowerCase())
+            ) ||
+            note.status.toLowerCase().includes(searchParam.toLowerCase()) ||
+            note.priority.toLowerCase().includes(searchParam.toLowerCase()) ||
+            note.room.toLowerCase().includes(searchParam.toLowerCase()) ||
+            note.floor.toLowerCase().includes(searchParam.toLowerCase()));
 
       const matchesFilters = activeFilters.every((filter) => {
         switch (filter) {
@@ -113,7 +113,7 @@ function  FieldNotesModal({ onClose }){
   // const getSearchPlaceholder = () => {
   //   if (activeFilters.length === 0) return "Search Field Notes";
   //   if (activeFilters.length > 1) return "Search in selected filters";
-    
+
   //   const activeFilter = activeFilters[0];
   //   switch (activeFilter) {
   //     case "Tags":
@@ -135,7 +135,7 @@ function  FieldNotesModal({ onClose }){
   //   }
   // };
 
-   console.log("notes", notes) 
+  console.log("notes", notes);
 
   return (
     <>
@@ -189,7 +189,7 @@ function  FieldNotesModal({ onClose }){
           </div>
           <div className="text-gray-600 mt-2">{filterNotes.length} results</div>
         </div> */}
-        
+
         <FilterSearchComponent
           title="FieldNotes"
           onClose={onClose}
@@ -262,8 +262,8 @@ function  FieldNotesModal({ onClose }){
             </div>
           )}
         </div> */}
-    
-    <div className="p-4">
+
+        <div className="p-4">
           <CardsComponent
             cards={filterNotes}
             onCardClick={handleCardClick}
@@ -281,7 +281,11 @@ function  FieldNotesModal({ onClose }){
           withBlur={true}
           padding="p-4"
         >
-          <FieldNoteModalCardsModal onClose={() => setIsOpen(false)} note={selectedNote} token={authenticatedUser?.token} />
+          <FieldNoteModalCardsModal
+            onClose={() => setIsOpen(false)}
+            note={selectedNote}
+            token={authenticatedUser?.token}
+          />
         </Dialog>
       )}
     </>
