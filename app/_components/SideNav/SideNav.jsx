@@ -14,10 +14,13 @@ import CaptureModal from "../CaptureModal/CaptureModal";
 import { PiVirtualRealityFill } from "react-icons/pi";
 import { MdOutlineSpaceDashboard } from "react-icons/md";
 import { LuWorkflow } from "react-icons/lu";
+import { useSession } from "next-auth/react";
 
 const SideNav = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const { data: session } = useSession();
+  const token = session?.user?.userData.token;
 
+  const [isOpen, setIsOpen] = useState(false);
   const [openCaptures, setopenCaptures] = useState(false);
   const [openFieldnote, setopenFieldnote] = useState(false);
 
@@ -79,7 +82,11 @@ const SideNav = () => {
           </li>
         </Link>
 
-        <Link href="/WorkFlow" className="flex items-center hover:bg-blue-200">
+        <Link
+          href={`http://localhost:3001`}
+          // target="_blank"
+          className="flex items-center hover:bg-blue-200"
+        >
           <li className="flex items-center p-4  cursor-pointer">
             <LuWorkflow className="icon text-xl" />
             {isOpen && (

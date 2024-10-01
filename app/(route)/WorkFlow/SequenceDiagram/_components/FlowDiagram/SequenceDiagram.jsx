@@ -1,5 +1,5 @@
-"use client"
-import React, { useState, useCallback, useEffect } from 'react';
+"use client";
+import React, { useState, useCallback, useEffect } from "react";
 import ReactFlow, {
   ReactFlowProvider,
   addEdge,
@@ -8,23 +8,23 @@ import ReactFlow, {
   MiniMap,
   useNodesState,
   useEdgesState,
-  MarkerType
-} from 'reactflow';
-import 'reactflow/dist/style.css';
-import Sidebar from '../SideBar/Siderbar'; // Adjust the path as needed
-import NodeDialog from '../dialouge/NodeDialog'; // Adjust the path as needed
-import EdgeDialog from '../edges/EdgeDialog'; // Updated Edge Dialog component
-import DefaultNode from '../Nodes/DefaultNode';
-import InputNode from '../Nodes/InputNode';
-import OutputNode from '../Nodes/OutputNode';
-import CustomNode from '../Nodes/CustomNode';
-import CircleNode from '../Nodes/CircleNode';
-import RectangleNode from '../Nodes/RectangleNode';
-import HumanNode from '../Nodes/HumanNode';
-import VerticalLineNode from '../Nodes/VerticalLineNode';
-import { CustomEdge } from '../edges/CustomEdge';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+  MarkerType,
+} from "reactflow";
+import "reactflow/dist/style.css";
+import Sidebar from "../SideBar/Siderbar"; // Adjust the path as needed
+import NodeDialog from "../dialouge/NodeDialog"; // Adjust the path as needed
+import EdgeDialog from "../edges/EdgeDialog"; // Updated Edge Dialog component
+import DefaultNode from "../Nodes/DefaultNode";
+import InputNode from "../Nodes/InputNode";
+import OutputNode from "../Nodes/OutputNode";
+import CustomNode from "../Nodes/CustomNode";
+import CircleNode from "../Nodes/CircleNode";
+import RectangleNode from "../Nodes/RectangleNode";
+import HumanNode from "../Nodes/HumanNode";
+import VerticalLineNode from "../Nodes/VerticalLineNode";
+import { CustomEdge } from "../edges/CustomEdge";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 const localStorageKey = "Sequence-diagram-data";
 
@@ -57,28 +57,30 @@ const SequenceDiagram = () => {
 
   const onConnect = useCallback(
     (params) => {
-      const edgeType = dialogData.edgeStyle || 'smoothstep'; // Use 'smoothstep' by default
+      const edgeType = dialogData.edgeStyle || "straight";
+
+      // Ensure all edges are straight
       const newEdge = {
         ...params,
-        type: edgeType, // Set edge type to smoothstep
-        animated: edgeType === 'dotted' ? false : true,
+        type: "straight", // Always use 'straight' for all edges
+        animated: edgeType === "dotted" ? false : true, // Disable animation for dotted lines
         style: {
-          stroke: '#333',
-          strokeWidth: '2px',
-          strokeDasharray: edgeType === 'dotted' ? '5,5' : '0',
+          stroke: "#333",
+          strokeWidth: "2px",
+          strokeDasharray: edgeType === "dotted" ? "5,5" : "0", // Dotted style for 'dotted' edges
         },
-        markerEnd: { type: MarkerType.ArrowClosed },
-        label: dialogData.edgeLabel || '',
+        markerEnd: { type: MarkerType.ArrowClosed }, // Arrow at the end of the edge
+        label: dialogData.edgeLabel || "",
       };
 
-      setEdges((eds) => addEdge(newEdge, eds));
+      setEdges((eds) => addEdge(newEdge, eds)); // Update edges in the state
     },
     [dialogData.edgeLabel, dialogData.edgeStyle, setEdges]
   );
 
   const handleDragStart = (event, nodeType) => {
-    event.dataTransfer.setData('application/reactflow', nodeType);
-    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData("application/reactflow", nodeType);
+    event.dataTransfer.effectAllowed = "move";
     setDraggingNodeType(nodeType);
   };
 
@@ -100,7 +102,7 @@ const SequenceDiagram = () => {
       position: node.position || dialogData.position,
       nodeType: node.type,
       title: node.data.label,
-      color: node.data.color || '#ffffff',
+      color: node.data.color || "#ffffff",
       nodeId: node.id,
     });
     setDialogOpen(true);
@@ -109,8 +111,8 @@ const SequenceDiagram = () => {
   const handleEdgeDoubleClick = (event, edge) => {
     setEdgeDialogData({
       ...edge,
-      label: edge.label || '',
-      style: edge.style || { stroke: '#333', strokeWidth: '2px' },
+      label: edge.label || "",
+      style: edge.style || { stroke: "#333", strokeWidth: "2px" },
     });
     setEdgeDialogOpen(true);
   };
@@ -126,47 +128,46 @@ const SequenceDiagram = () => {
   };
 
   const handleDialogSave = () => {
-  const { position, nodeType, title, color, nodeId } = dialogData;
+    const { position, nodeType, title, color, nodeId } = dialogData;
 
-  if (nodeId) {
-    // Update existing node
-    setNodes((nds) =>
-      nds.map((node) =>
-        node.id === nodeId
-          ? {
-              ...node,
-              data: { label: title, color },
-              position: position || node.position,
-              type: nodeType,
-            }
-          : node
-      )
-    );
-  } else {
-    // Add new node
-    const newNode = {
-      id: `${nodes.length + 1}`,
-      type: nodeType,
-      position,
-      data: { label: title, color },
-    };
-
-    if (nodeType === 'verticalLine') {
-      newNode.data = {
-        intervals: 10,
-        height: 500,
-        color,
-        title,
-        onConnectHandle: (params) => onConnect(params),
+    if (nodeId) {
+      // Update existing node
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === nodeId
+            ? {
+                ...node,
+                data: { label: title, color },
+                position: position || node.position,
+                type: nodeType,
+              }
+            : node
+        )
+      );
+    } else {
+      // Add new node
+      const newNode = {
+        id: `${nodes.length + 1}`,
+        type: nodeType,
+        position,
+        data: { label: title, color },
       };
+
+      if (nodeType === "verticalLine") {
+        newNode.data = {
+          intervals: 10,
+          height: 500,
+          color,
+          title,
+          onConnectHandle: (params) => onConnect(params),
+        };
+      }
+
+      setNodes((nds) => [...nds, newNode]);
     }
 
-    setNodes((nds) => [...nds, newNode]);
-  }
-
-  handleDialogClose();
-};
-
+    handleDialogClose();
+  };
 
   const handleEdgeDialogSave = () => {
     const { id, label, style } = edgeDialogData;
@@ -195,7 +196,9 @@ const SequenceDiagram = () => {
 
   const handleDeleteNode = (nodeId) => {
     setNodes((nds) => nds.filter((node) => node.id !== nodeId));
-    setEdges((eds) => eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
+    setEdges((eds) =>
+      eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
+    );
     handleDialogClose();
   };
 
@@ -204,12 +207,15 @@ const SequenceDiagram = () => {
   };
 
   const handleEdgeInputChange = (event) => {
-    setEdgeDialogData({ ...edgeDialogData, [event.target.name]: event.target.value });
+    setEdgeDialogData({
+      ...edgeDialogData,
+      [event.target.name]: event.target.value,
+    });
   };
 
   const onDragOver = (event) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
+    event.dataTransfer.dropEffect = "move";
   };
 
   const handleSaveDiagram = () => {
@@ -231,25 +237,25 @@ const SequenceDiagram = () => {
   };
 
   const handleExportPng = () => {
-    const element = document.getElementById('react-flow');
+    const element = document.getElementById("react-flow");
     html2canvas(element).then((canvas) => {
-      const dataURL = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
+      const dataURL = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
       link.href = dataURL;
-      link.download = 'diagram.png';
+      link.download = "diagram.png";
       link.click();
     });
   };
 
   const handleExportPdf = () => {
-    const element = document.getElementById('react-flow');
+    const element = document.getElementById("react-flow");
     html2canvas(element).then((canvas) => {
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
       const imgWidth = 210;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-      pdf.save('diagram.pdf');
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      pdf.save("diagram.pdf");
     });
   };
 
@@ -291,7 +297,9 @@ const SequenceDiagram = () => {
               onEdgeDoubleClick={handleEdgeDoubleClick} // Add edge double click handler
               fitView
             >
-              <div className="font-bold pl-4 pt-3 text-2xl"><h1>SEQUENCE DIAGRAM</h1></div>
+              <div className="font-bold pl-4 pt-3 text-2xl">
+                <h1>SEQUENCE DIAGRAM</h1>
+              </div>
               {showMiniMap && <MiniMap />}
               <Controls />
               <Background />
