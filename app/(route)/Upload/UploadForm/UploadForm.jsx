@@ -1,5 +1,4 @@
-// components/TaskCreationForm.jsx
-"use client";
+"use client"
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -9,7 +8,6 @@ import { FormSelect } from '../_components/FormSelect';
 import { AttachmentSection } from '../_components/AttachmentSection';
 import { createTask } from '@/lib/Features/TaskSlice';
 
-
 const TaskCreationForm = () => {
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.TaskSlice);
@@ -17,12 +15,11 @@ const TaskCreationForm = () => {
     description: '',
     username: '',
     priority: '',
-    name: '',
     room: '',
     floor: '',
     status: '',
     tags: [],
-    assignee: '',
+    assignee: 'Not Assign', // Default value
     dueDate: '',
     emailAlerts: [],
     watchers: [],
@@ -58,7 +55,7 @@ const TaskCreationForm = () => {
       floor: '',
       status: '',
       tags: [],
-      assignee: '',
+      assignee: 'Not Assign', // Reset default value
       dueDate: '',
       emailAlerts: [],
       watchers: [],
@@ -72,59 +69,49 @@ const TaskCreationForm = () => {
     e.preventDefault();
 
     const taskFormData = new FormData();
-    Object.keys(formData).forEach(key => {
+    Object.keys(formData).forEach((key) => {
       if (Array.isArray(formData[key])) {
         taskFormData.append(key, JSON.stringify(formData[key]));
       } else {
         taskFormData.append(key, formData[key] || '');
       }
     });
-    
+
     taskFormData.append('userId', authuserdata?.id || '');
 
-    groundFloorImages.forEach((img, index) => 
-      taskFormData.append(`groundFloorImages`, img.file)
+    groundFloorImages.forEach((img) =>
+      taskFormData.append('groundFloorImages', img.file)
     );
     if (lastFloorImage[0]) taskFormData.append('lastFloorImage', lastFloorImage[0].file);
-    attachments.forEach((file, index) => 
-      taskFormData.append(`attachments`, file)
+    attachments.forEach((file) =>
+      taskFormData.append('attachments', file)
     );
 
     try {
       await dispatch(createTask(taskFormData)).unwrap();
       resetForm();
     } catch (error) {
-      console.error("Error submitting form:", error);
+      console.error('Error submitting form:', error);
     }
   };
 
-
-  
-
- 
-
-
-
-
-
   const priorityOptions = [
-    { value: "No data", label: "No data" },
-    { value: "Low", label: "Low" },
-    { value: "Medium", label: "Medium" },
-    { value: "High", label: "High" },
+    { value: 'No data', label: 'No data' },
+    { value: 'Low', label: 'Low' },
+    { value: 'Medium', label: 'Medium' },
+    { value: 'High', label: 'High' },
   ];
-  
-  const statusOptions =[
-    { value: "No data", label: "No data" },
-    { value: "In Progress", label: "In Progress" },
-    { value: "Pending", label: "Pending" },
-    { value: "Completed", label: "Completed" },
-  ]
 
-   
+  const statusOptions = [
+    { value: 'No data', label: 'No data' },
+    { value: 'In Progress', label: 'In Progress' },
+    { value: 'Pending', label: 'Pending' },
+    { value: 'Completed', label: 'Completed' },
+  ];
+
   return (
     <form onSubmit={handleSubmit} className="max-w-6xl mx-auto p-8 bg-white shadow-2xl rounded-xl">
-      <div className="mb-8 ">
+      <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">RFI Creation Form</h1>
       </div>
 
@@ -150,7 +137,7 @@ const TaskCreationForm = () => {
             label="User ID"
             id="userId"
             name="userId"
-            value={authuserdata?.id || ""}
+            value={authuserdata?.id || ''}
             disabled
           />
           <FormInput
@@ -179,8 +166,8 @@ const TaskCreationForm = () => {
         </div>
 
         <div className="space-y-4">
-        <FormInput
-            label="User Name"
+          <FormInput
+            label="Full Name"
             id="username"
             name="username"
             value={formData.username}
@@ -207,7 +194,12 @@ const TaskCreationForm = () => {
             id="assignee"
             name="assignee"
             value={formData.assignee}
-            onChange={handleInputChange}
+            readOnly
+            style={{
+              backgroundColor: '#f9f9f9',
+              color: '#555',
+              cursor: 'not-allowed',
+            }}
           />
         </div>
       </div>
@@ -236,7 +228,7 @@ const TaskCreationForm = () => {
         <button
           type="submit"
           className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors relative"
-          disabled={loading}
+          disabled={loading || !(groundFloorImages.length && lastFloorImage.length)}
         >
           {loading ? (
             <>

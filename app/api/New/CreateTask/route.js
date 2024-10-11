@@ -1,21 +1,4 @@
-// import { NextResponse } from 'next/server'; // Import NextResponse
-// import NewTask  from '../../../../lib/models/New'
-// import dbConnect from '@/lib/connectdb/connection';
 
-// export async function POST(req) {
-//     try {
-//         await dbConnect(); 
-//         const body = await req.json(); 
-//         const propertyInspection = await NewTask.create(body); 
-        
-        
-//         return NextResponse.json({ success: true, data: propertyInspection }, { status: 201 });
-//     } catch (error) {
-      
-//         console.error("Error creating task:", error);
-//         return NextResponse.json({ success: false, error: error.message }, { status: 400 });
-//     }
-// }
 
 
 import { NextResponse } from 'next/server';

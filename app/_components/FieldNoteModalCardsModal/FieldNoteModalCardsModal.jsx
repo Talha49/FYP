@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FaHandLizard, FaDownload } from "react-icons/fa";
 import { ImBold } from "react-icons/im";
 import { TbWorld, TbCapture } from "react-icons/tb";
@@ -13,7 +13,7 @@ import {
   GroundFloorImageSection,
   LastFloorImageSection,
 } from "../HOC/FieldNotesComps/FieldNotesComp";
-import { updateTask } from "@/lib/Features/TaskSlice";
+import { addAttachments, updateTask } from "@/lib/Features/TaskSlice";
 
 function FieldNoteModalCardsModal({ onClose, note, token }) {
   const dispatch = useDispatch();
@@ -107,13 +107,26 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
     setZoomLevel2((prevZoomLevel) => Math.max(prevZoomLevel - 0.1, 1));
   };
 
-  const handleFileChange = (e) => {
+  const fileInputRef = useRef(null);
+
+  const handleFileChange = async (e) => {
     const newFiles = Array.from(e.target.files);
-    const newAttachments = newFiles.map((file) => ({
-      name: file.name,
-      url: URL.createObjectURL(file),
-    }));
-    updateField("attachments", [...localNote.attachments, ...newAttachments]);
+    dispatch(addAttachments({ taskId: localNote._id, files: newFiles }))
+      .unwrap()
+      .then((result) => {
+        setLocalNote(prevNote => ({
+          ...prevNote,
+          attachments: [...prevNote.attachments, ...result.data.attachments]
+        }));
+      })
+      .catch((error) => {
+        console.error('Error adding attachments:', error);
+        // Handle error (e.g., show an error message to the user)
+      });
+  };
+
+  const handleAddAttachment = () => {
+    fileInputRef.current.click();
   };
 
  
@@ -187,8 +200,8 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
     try {
       const link = document.createElement('a');
       link.href = url;
-      link.target = '_blank'; // Open in a new tab
-      link.download = url.split('/').pop(); // File name extraction from URL
+      link.target = '_blank'; 
+      link.download = url.split('/').pop(); 
       link.click();
     } catch (error) {
       console.error('Download failed:', error);
@@ -216,6 +229,8 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
         return '📄';
     }
   };
+
+
 
 
   return (
@@ -474,11 +489,12 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
               <p className="mt-2 text-gray-600">
                 No attachments added yet.
               </p>
-              {isEditing && (
-                <p className="mt-2 text-gray-600">
-                  Add attachments from the dashboard.
-                </p>
-              )}
+              <button
+                onClick={handleAddAttachment}
+                className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Add Attachment
+              </button>
             </div>
           ) : (
             <div>
@@ -487,7 +503,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
                   key={index}
                   className="flex justify-between items-center mt-2 p-2 border border-gray-300 rounded"
                 >
-                 <span className="text-gray-700">
+                  <span className="text-gray-700">
                     {getFileIcon(file.url)} {`Attachment ${index + 1}`}
                   </span>
                   <button
@@ -506,10 +522,22 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
                   )}
                 </div>
               ))}
+              <button
+                onClick={handleAddAttachment}
+                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Add More Attachments
+              </button>
             </div>
           )}
-
               </div>
+              <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+          multiple
+        />
             </div>
 
 
@@ -543,3 +571,27 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
 }
 
 export default FieldNoteModalCardsModal;
+
+
+
+
+
+
+
+//                    onClick={() => handleFileDownload(file.url, `attachment_${index + 1}`)}
+// const handleFileDownload = async (url, fileName) => {
+//   try {
+//     const response = await fetch(url);
+//     const blob = await response.blob();
+//     const downloadUrl = window.URL.createObjectURL(blob);
+//     const link = document.createElement('a');
+//     link.href = downloadUrl;
+//     link.download = fileName || 'download';
+//     document.body.appendChild(link);
+//     link.click();
+//     document.body.removeChild(link);
+//   } catch (error) {
+//     console.error('Download failed:', error);
+//     // Handle error (e.g., show an error message to the user)
+//   }
+// };

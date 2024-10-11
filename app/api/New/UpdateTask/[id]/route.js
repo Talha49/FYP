@@ -43,4 +43,3 @@ export async function PUT(req, { params }) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
-
