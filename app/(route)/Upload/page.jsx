@@ -1,11 +1,12 @@
 import React from 'react'
+import TaskCreationForm from './UploadForm/UploadForm'
 
-const page = () => {
+const Upload = () => {
     return (
         <div>
-            
+            <TaskCreationForm/>
         </div>
     )
 }
 
-export default page
+export default Upload

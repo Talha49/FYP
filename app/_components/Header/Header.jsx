@@ -33,7 +33,7 @@ function Header(){
       <div className="flex gap-2 items-center">
         <GiSpaceShuttle className="md:text-[35px] sm:text-sm icon" />
         <div className="md:text-[16px] sm:text-[12px] font-semibold">
-          OpenSpace - Home
+          SIJM - Home
         </div>
       </div>
       <div
