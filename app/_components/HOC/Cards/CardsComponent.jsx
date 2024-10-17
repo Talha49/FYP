@@ -35,17 +35,17 @@ const CardsComponent = ({
         >
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="font-semibold">{card.name}</h3>
+              <h3 className="font-semibold">{card.username}</h3>
               <p className="text-sm text-gray-600">
-                {card.room} &nbsp;&nbsp; {formatDate(card.createdAt)}
+              <b> Room:</b> {card.room} &nbsp;&nbsp; <b>Ceated At:</b> {formatDate(card.createdAt)}
               </p>
             </div>
             <div className="flex space-x-2">
-              <FaGlobe className="text-gray-600" />
+              {/* <FaGlobe className="text-gray-600" /> */}
               <FaExpand className="text-gray-600" />
             </div>
           </div>
-          <p className="text-sm text-gray-600 mt-1">{card.floor}</p>
+          <p className="text-sm text-gray-600 mt-1"><b>Floor:</b> {card.floor}</p>
           <div className="my-2 bg-gray-200 p-2 rounded-md">
             <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
               card.priority === "High" ? "bg-red-200 text-red-800" :
@@ -55,12 +55,14 @@ const CardsComponent = ({
               {card.priority}
             </span>
           </div>
-          {card.imageUrls && card.imageUrls.length > 0 && (
-            <div className="my-2">
-              <img
-                src='/floor.jpg'
-                alt="Card Image"
-                className="rounded-md w-full h-48 object-cover"
+          {card.groundFloorImages && card.groundFloorImages.length > 0 && (
+            <div className="my-2 relative w-full h-48">
+              <Image
+                src={card.groundFloorImages[0].url}
+                alt="Ground Floor Image"
+                layout="fill"
+                objectFit="cover"
+                className="rounded-md"
               />
             </div>
           )}
@@ -71,9 +73,11 @@ const CardsComponent = ({
               </span>
             ))}
           </div>
-          <p className="text-sm text-gray-600 mt-2">{card.description}</p>
-          <p className="text-sm text-gray-600 mt-2">Assignee: {card.assignee}</p>
-          <p className="text-sm text-gray-600">Status: {card.status}</p>
+          <p className="text-sm text-gray-600 mt-2 my-2 bg-gray-200 p-2 rounded-md">{card.description}</p>
+          <p className="text-sm text-gray-600 mt-2"><b>Assignee:</b> {card.assignee}</p>
+          <p className="text-sm text-gray-600"><b>Status:</b> {card.status}</p>
+          <p className="text-sm text-gray-600"><b>Due:</b> {formatDate(card.dueDate)}</p>
+
           {renderCustomContent && renderCustomContent(card)}
         </div>
       ))}

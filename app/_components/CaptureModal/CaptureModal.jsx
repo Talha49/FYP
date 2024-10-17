@@ -9,7 +9,7 @@ import { LuFolderInput } from "react-icons/lu";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { VscClose } from "react-icons/vsc";
 
-const CaptureModal = ({ onClose }) => {
+function CaptureModal({ onClose })  {
   const [searchTerm, setSearchTerm] = useState("");
   const [sheetFilter, setSheetFilter] = useState("");
   const [captureTypeFilter, setCaptureTypeFilter] = useState("");

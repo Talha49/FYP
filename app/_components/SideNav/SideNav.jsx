@@ -16,9 +16,14 @@ import { MdOutlineSpaceDashboard } from "react-icons/md";
 import { LuWorkflow } from "react-icons/lu";
 import { useSession } from "next-auth/react";
 
+<<<<<<< HEAD
 const SideNav = () => {
   const { data: session } = useSession();
   const token = session?.user?.userData.token;
+=======
+function SideNav() {
+  const [isOpen, setIsOpen] = useState(false);
+>>>>>>> b6f042e36998367c1d9d657869c4f85f47bf8a6c
 
   const [isOpen, setIsOpen] = useState(false);
   const [openCaptures, setopenCaptures] = useState(false);

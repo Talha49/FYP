@@ -8,7 +8,7 @@ import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 
-const Header = () => {
+function Header(){
   const [showDialog, setShowDialog] = useState(false);
   const [authenticatedUser, setAuthenticatedUser] = useState(null);
   const pathname = usePathname();
@@ -35,7 +35,7 @@ const Header = () => {
       <div className="flex gap-2 items-center">
         <GiSpaceShuttle className="md:text-[35px] sm:text-sm icon" />
         <div className="md:text-[16px] sm:text-[12px] font-semibold">
-          OpenSpace - Home
+          SIJM - Home
         </div>
       </div>
       <div

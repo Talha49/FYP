@@ -3,7 +3,7 @@ import store from '@/lib/Store/Store'
 import React from 'react'
 import { Provider } from 'react-redux'
 
-const ClientProvider = ({children}) => {
+function ClientProvider({children}) {
     return (
         <div>
             <Provider store={store}>

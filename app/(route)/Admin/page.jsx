@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import Header from "./_components/Header";
 import Table from "./_components/Table";
 
-const Admin = () => {
+function Admin()  {
   const [searchQuery, setSearchQuery] = useState('');
 
   return (

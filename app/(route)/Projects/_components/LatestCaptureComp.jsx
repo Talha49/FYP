@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import React from 'react'
 
-const LatestCaptureComp = () => {
+function LatestCaptureComp(){
 
   const sheets = [
     { id: 1, title: 'Published a Capture on Floor1', lastactive: 'Jan 17, 2019', image: '/floor2.jpg', Avatar: "Unknown User" },

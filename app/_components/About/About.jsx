@@ -1,6 +1,6 @@
 import React from 'react'
 
-const About = () => {
+function About () {
   return (
     <div className='px-6 py-6'>
 
@@ -48,6 +48,7 @@ const About = () => {
 }
 
 export default About
+
 
 
 

@@ -7,7 +7,7 @@ import axios from "axios";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
-const Register = () => {
+function Register() {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",

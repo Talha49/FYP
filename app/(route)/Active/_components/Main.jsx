@@ -6,7 +6,7 @@ import Captures from './Captures';
 import FieldNotes from './FieldNotes';
 import Activty from './Activty';
 
-const Page = () => {
+function Page () {
   const [activeTab, setActiveTab] = useState('Projects'); 
 
   const handleTabChange = (tab) => {

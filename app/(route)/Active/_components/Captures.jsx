@@ -4,7 +4,7 @@ import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { LiaSortSolid } from "react-icons/lia";
 import Table from "@/app/_components/HOC/Table/Table";
 
-const Captures = () => {
+function Captures() {
   
   const users = [
     {
