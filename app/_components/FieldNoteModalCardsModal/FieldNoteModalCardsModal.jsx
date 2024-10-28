@@ -14,6 +14,7 @@ import {
   LastFloorImageSection,
 } from "../HOC/FieldNotesComps/FieldNotesComp";
 import { addAttachments, updateTask } from "@/lib/Features/TaskSlice";
+import ChatApp from "../ChatApp/page";
 
 function FieldNoteModalCardsModal({ onClose, note, token }) {
   const dispatch = useDispatch();
@@ -30,7 +31,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
   const [localNote, setLocalNote] = useState(note);
   const [groundFloorImages, setGroundFloorImages] = useState(localNote.groundFloorImages);
   const [lastFloorImage, setLastFloorImage] = useState(localNote.lastFloorImages[0]);
-
+  const [showChat, setShowChat] = useState(false); // State to control chat visibility
   const userStatus = useSelector((state) => state.UserSlice.status);
 
   useEffect(() => {
@@ -68,21 +69,36 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
       attachments: localNote.attachments,
     };
 
+   
     dispatch(updateTask({ taskId: localNote._id, updateData }))
       .unwrap()
       .then(() => {
         setIsEditing(false);
-        // Optionally, you can show a success message here
+
+        // Show the chat if an assignee is selected
+        if (localNote.assignee) {
+          setShowChat(true); // Show chat after task is saved and assignee is selected
+          createChatRoom(localNote._id, localNote.assignee);
+        } else {
+          setShowChat(false); // Hide chat if no assignee is selected
+        }
       })
       .catch((error) => {
-        console.error("Failed to update task:", error);
-        // Optionally, you can show an error message here
+        console.error('Failed to update task:', error);
       });
   };
+ // Create chat room based on task ID and assignee
+ const createChatRoom = (taskId, assigneeId) => {
+  const chatRoomId = taskId; // Using task ID as chat room ID
+  const participants = [assigneeId, localNote.userId]; // Assignee and assigner
 
- 
+  console.log(`Creating chat room with ID: ${chatRoomId}`);
+  console.log(`Participants: ${participants.join(', ')}`);
+};
 
-  
+// Check if an assignee is assigned and there are multiple participants
+const hasMultipleParticipants = localNote.assignee && localNote.userId && localNote.assignee !== localNote.userId;
+
 
   const handleFileRemove = (index) => {
     const updatedAttachments = localNote.attachments.filter(
@@ -129,7 +145,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
     fileInputRef.current.click();
   };
 
- 
+
 
   const handleNext = () => {
     setCurrentIndex(
@@ -196,12 +212,12 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
     setIsEditing(!isEditing);
   };
 
- const handleFileDownload = async (url) => {
+  const handleFileDownload = async (url) => {
     try {
       const link = document.createElement('a');
       link.href = url;
-      link.target = '_blank'; 
-      link.download = url.split('/').pop(); 
+      link.target = '_blank';
+      link.download = url.split('/').pop();
       link.click();
     } catch (error) {
       console.error('Download failed:', error);
@@ -209,10 +225,10 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
   };
 
 
- 
+
   const getFileIcon = (url) => {
     const extension = url.split('.').pop().toLowerCase();
-    switch(extension) {
+    switch (extension) {
       case 'pdf':
         return '📄';
       case 'doc':
@@ -304,7 +320,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
 
 
             />
-
+           
             {/* Description Input */}
             <div>
               <label className="block text-gray-600">Description</label>
@@ -322,11 +338,15 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
                 </p>
               )}
             </div>
-
-
-           
-          </div>
-
+              
+      {/* Conditionally render ChatApp if there are multiple participants */}
+      {showChat && hasMultipleParticipants && (
+        <ChatApp
+          chatRoomName={localNote.username} // Use task username (or name) here
+          assignedUsers={[localNote.userId, localNote.assignee]} // Assigner and assignee
+        />
+      )}
+    </div>
           {/* Right Section */}
           <div className="col-span-2 p-2 space-y-4">
             {/* Image Card */}
@@ -343,11 +363,11 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
               onMouseLeave={handleMouseUp2}
               dragging={dragging2}
               image={localNote.lastFloorImages[0]}
-  updateImage={(newUrl) => {
-    const newImages = [{ ...localNote.lastFloorImages[0], url: newUrl }];
-    setLocalNote(prev => ({ ...prev, lastFloorImages: newImages }));
-  }}
-  taskId={localNote._id}
+              updateImage={(newUrl) => {
+                const newImages = [{ ...localNote.lastFloorImages[0], url: newUrl }];
+                setLocalNote(prev => ({ ...prev, lastFloorImages: newImages }));
+              }}
+              taskId={localNote._id}
             />
 
             {/* Priority Section */}
@@ -391,19 +411,20 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
                 </p>
               )}
             </div>
-             {/* Status Section */}
-             <div>
+         
+            {/* Status Section */}
+            <div>
               <label className="block text-gray-600">Status</label>
               {isEditing ? (
                 <select
-                className="w-full p-2 border border-gray-300 rounded outline-none"
-                value={localNote.status}
-                onChange={(e) => updateField("status", e.target.value)}
-              >
-                <option value="Pending">Pending</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-              </select>
+                  className="w-full p-2 border border-gray-300 rounded outline-none"
+                  value={localNote.status}
+                  onChange={(e) => updateField("status", e.target.value)}
+                >
+                  <option value="Pending">Pending</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                </select>
               ) : (
                 <p className="w-full p-2 border border-gray-300 rounded bg-gray-100">
                   {localNote.status}
@@ -483,61 +504,61 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
             <div>
               <label className="block text-gray-600">Attachments</label>
               <div className="border-2 border-dashed border-gray-300 rounded p-4 mt-1 overflow-auto h-40 custom-scrollbars">
-              {localNote.attachments.length === 0 ? (
-            <div className="text-center ">
-              <AiOutlinePlus className="mx-auto text-2xl text-gray-600" />
-              <p className="mt-2 text-gray-600">
-                No attachments added yet.
-              </p>
-              <button
-                onClick={handleAddAttachment}
-                className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Add Attachment
-              </button>
-            </div>
-          ) : (
-            <div>
-              {localNote.attachments.map((file, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between items-center mt-2 p-2 border border-gray-300 rounded"
-                >
-                  <span className="text-gray-700">
-                    {getFileIcon(file.url)} {`Attachment ${index + 1}`}
-                  </span>
-                  <button
-                    onClick={() => handleFileDownload(file.url)}
-                    className="ml-2 px-2 py-1 bg-blue-500 text-white rounded"
-                  >
-                    <FaDownload />
-                  </button>
-                  {isEditing && (
+                {localNote.attachments.length === 0 ? (
+                  <div className="text-center ">
+                    <AiOutlinePlus className="mx-auto text-2xl text-gray-600" />
+                    <p className="mt-2 text-gray-600">
+                      No attachments added yet.
+                    </p>
                     <button
-                      onClick={() => handleFileRemove(index)}
-                      className="ml-2 px-2 py-1 bg-red-600 text-white rounded"
+                      onClick={handleAddAttachment}
+                      className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                     >
-                      Delete
+                      Add Attachment
                     </button>
-                  )}
-                </div>
-              ))}
-              <button
-                onClick={handleAddAttachment}
-                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Add More Attachments
-              </button>
-            </div>
-          )}
+                  </div>
+                ) : (
+                  <div>
+                    {localNote.attachments.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex justify-between items-center mt-2 p-2 border border-gray-300 rounded"
+                      >
+                        <span className="text-gray-700">
+                          {getFileIcon(file.url)} {`Attachment ${index + 1}`}
+                        </span>
+                        <button
+                          onClick={() => handleFileDownload(file.url)}
+                          className="ml-2 px-2 py-1 bg-blue-500 text-white rounded"
+                        >
+                          <FaDownload />
+                        </button>
+                        {isEditing && (
+                          <button
+                            onClick={() => handleFileRemove(index)}
+                            className="ml-2 px-2 py-1 bg-red-600 text-white rounded"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      onClick={handleAddAttachment}
+                      className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                      Add More Attachments
+                    </button>
+                  </div>
+                )}
               </div>
               <input
-          type="file"
-          ref={fileInputRef}
-          style={{ display: 'none' }}
-          onChange={handleFileChange}
-          multiple
-        />
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+                multiple
+              />
             </div>
 
 
@@ -550,9 +571,8 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
       </div>
       <div className="p-2 flex justify-end gap-x-2">
         <button
-          className={`px-4 py-2 ${
-            isEditing ? "bg-blue-600" : "bg-blue-600"
-          } text-white rounded`}
+          className={`px-4 py-2 ${isEditing ? "bg-blue-600" : "bg-blue-600"
+            } text-white rounded`}
           onClick={isEditing ? handleSave : toggleEditMode}
         >
           {isEditing ? "Save" : "Edit"}
