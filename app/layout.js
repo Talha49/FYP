@@ -5,6 +5,7 @@ import Header from "./_components/Header/Header";
 import SideNav from "./_components/SideNav/SideNav";
 import SessionWrapper from "@/SessionWrapper";
 import ClientProvider from "./_components/ClientProvider/ClientProvider";
+import { ToastProvider } from "./_components/CustomToast/Toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,6 +21,7 @@ export default function RootLayout({ children }) {
         {/* <GoogleOAuthProvider clientId={process.env.GOOGLE_CLIENT_ID}> */}
         <SessionWrapper>
           <ClientProvider>
+            <ToastProvider>
             <Header />
             <div className="h-[100%] flex justify-between ">
               <div className="w-[5%]">
@@ -27,6 +29,7 @@ export default function RootLayout({ children }) {
               </div>
               <div className="w-[95%]">{children}</div>
             </div>
+            </ToastProvider>
           </ClientProvider>
         </SessionWrapper>
         {/* </GoogleOAuthProvider> */}

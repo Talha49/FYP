@@ -13,7 +13,11 @@ function FieldNotesModal({ onClose }) {
   const [selectedNote, setSelectedNote] = useState(null);
   const [activeFilters, setActiveFilters] = useState([]);
   const [authenticatedUser, setAuthenticatedUser] = useState(null);
+  const [previousCount, setPreviousCount] = useState(0);
   const notes = useSelector((state) => state.TaskSlice.tasks);
+  const loading = useSelector((state) => state.TaskSlice.loading);
+  const [isOpenConfirmDeleteDialog, setIsOpenConfirmDeleteDialog] = useState(false);
+
   const dispatch = useDispatch();
 
   const { data: session } = useSession();
@@ -29,6 +33,13 @@ function FieldNotesModal({ onClose }) {
       dispatch(getTasks(authenticatedUser.id));
     }
   }, [dispatch, authenticatedUser?.id]);
+
+  useEffect(() => {
+    if (!loading && notes?.length > 0) {
+      setPreviousCount(notes.length);
+    }
+  }, [notes, loading]);
+
 
   const filterButtons = [
     "For me",
@@ -139,7 +150,11 @@ function FieldNotesModal({ onClose }) {
           <CardsComponent
             cards={filterNotes}
             onCardClick={handleCardClick}
+            isOpenConfirmDeleteDialog={isOpenConfirmDeleteDialog}
             emptyStateMessage="No Matches For Your Results"
+            isLoading={loading}
+            previousCount={previousCount}
+
           />
         </div>
       </div>
@@ -160,6 +175,14 @@ function FieldNotesModal({ onClose }) {
             note={selectedNote}
             token={authenticatedUser?.token}
           />
+        </Dialog>
+      )}
+
+      {isOpenConfirmDeleteDialog && (
+        <Dialog
+        >
+          <h1>Are You Sure!</h1>
+          <p>Do you want to delete?</p>
         </Dialog>
       )}
     </>

@@ -14,6 +14,7 @@ import {
   LastFloorImageSection,
 } from "../HOC/FieldNotesComps/FieldNotesComp";
 import { addAttachments, updateTask } from "@/lib/Features/TaskSlice";
+import { useToast } from "../CustomToast/Toast";
 
 function FieldNoteModalCardsModal({ onClose, note, token }) {
   const dispatch = useDispatch();
@@ -30,6 +31,8 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
   const [localNote, setLocalNote] = useState(note);
   const [groundFloorImages, setGroundFloorImages] = useState(localNote.groundFloorImages);
   const [lastFloorImage, setLastFloorImage] = useState(localNote.lastFloorImages[0]);
+  const { showToast } = useToast();
+
 
   const userStatus = useSelector((state) => state.UserSlice.status);
 
@@ -49,36 +52,64 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
     setLocalNote((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
-    const updateData = {
-      userId: localNote.userId,
-      username: localNote.username,
-      description: localNote.description,
-      priority: localNote.priority,
-      room: localNote.room,
-      floor: localNote.floor,
-      status: localNote.status,
-      tags: localNote.tags,
-      assignee: localNote.assignee,
-      dueDate: localNote.dueDate,
-      emailAlerts: localNote.emailAlerts,
-      watchers: localNote.watchers,
-      groundFloorImages: localNote.groundFloorImages,
-      lastFloorImages: localNote.lastFloorImages,
-      attachments: localNote.attachments,
-    };
 
-    dispatch(updateTask({ taskId: localNote._id, updateData }))
-      .unwrap()
-      .then(() => {
-        setIsEditing(false);
-        // Optionally, you can show a success message here
-      })
-      .catch((error) => {
-        console.error("Failed to update task:", error);
-        // Optionally, you can show an error message here
-      });
+const handleSave = () => {
+  
+  const updateData = {
+    userId: localNote.userId,
+    username: localNote.username,
+    description: localNote.description,
+    priority: localNote.priority,
+    room: localNote.room,
+    floor: localNote.floor,
+    status: localNote.status,
+    tags: localNote.tags,
+    assignee: localNote.assignee,
+    dueDate: localNote.dueDate,
+    emailAlerts: localNote.emailAlerts,
+    watchers: localNote.watchers,
+    groundFloorImages: localNote.groundFloorImages,
+    lastFloorImages: localNote.lastFloorImages,
+    attachments: localNote.attachments,
   };
+
+  // Validate required fields before saving
+  if (!updateData.description || !updateData.room || !updateData.floor) {
+    showToast('Please fill in all required fields', 'warning');
+    return;
+  }
+
+  dispatch(updateTask({ taskId: localNote._id, updateData }))
+    .unwrap()
+    .then(() => {
+      setIsEditing(false);
+      showToast('RFI updated successfully!', 'success');
+      
+      // If the status was changed to 'Completed'
+      if (updateData.status === 'Completed') {
+        showToast('Task marked as completed! All watchers will be notified.', 'info');
+      }
+      
+      // If priority was changed to 'High'
+      if (updateData.priority === 'High') {
+        showToast('Priority set to High! Team leads will be notified.', 'info');
+      }
+    })
+    .catch((error) => {
+      console.error("Failed to update task:", error);
+      showToast(
+        error.message || 'Failed to update RFI. Please try again.', 
+        'error'
+      );
+      
+      // If it's a specific error you want to handle differently
+      if (error.code === 'UNAUTHORIZED') {
+        showToast('You don\'t have permission to update this RFI', 'error');
+      } else if (error.code === 'VALIDATION_ERROR') {
+        showToast('Please check your input and try again', 'warning');
+      }
+    });
+};
 
  
 

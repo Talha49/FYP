@@ -1,26 +1,27 @@
-"use client"
-import React, { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { useDispatch, useSelector } from 'react-redux';
-import ImageUploadSection from '../_components/ImageUploadSection';
-import { FormInput } from '../_components/FormInput';
-import { FormSelect } from '../_components/FormSelect';
-import { AttachmentSection } from '../_components/AttachmentSection';
-import { createTask } from '@/lib/Features/TaskSlice';
+"use client";
+import React, { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useDispatch, useSelector } from "react-redux";
+import ImageUploadSection from "../_components/ImageUploadSection";
+import { FormInput } from "../_components/FormInput";
+import { FormSelect } from "../_components/FormSelect";
+import { AttachmentSection } from "../_components/AttachmentSection";
+import { createTask } from "@/lib/Features/TaskSlice";
+import { useToast } from "@/app/_components/CustomToast/Toast";
 
 const TaskCreationForm = () => {
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.TaskSlice);
   const [formData, setFormData] = useState({
-    description: '',
-    username: '',
-    priority: '',
-    room: '',
-    floor: '',
-    status: '',
+    description: "",
+    username: "",
+    priority: "",
+    room: "",
+    floor: "",
+    status: "",
     tags: [],
-    assignee: 'Not Assign', // Default value
-    dueDate: '',
+    assignee: "Not Assign", // Default value
+    dueDate: "",
     emailAlerts: [],
     watchers: [],
   });
@@ -29,7 +30,7 @@ const TaskCreationForm = () => {
   const [lastFloorImage, setLastFloorImage] = useState([]);
   const [attachments, setAttachments] = useState([]);
   const [authuserdata, setAuthuserData] = useState(null);
-
+  const { showToast } = useToast();
   const { data: session } = useSession();
 
   useEffect(() => {
@@ -42,21 +43,21 @@ const TaskCreationForm = () => {
   };
 
   const handleArrayInputChange = (e, field) => {
-    const values = e.target.value.split(',').map((item) => item.trim());
+    const values = e.target.value.split(",").map((item) => item.trim());
     setFormData((prev) => ({ ...prev, [field]: values }));
   };
 
   const resetForm = () => {
     setFormData({
-      description: '',
-      username: '',
-      priority: '',
-      room: '',
-      floor: '',
-      status: '',
+      description: "",
+      username: "",
+      priority: "",
+      room: "",
+      floor: "",
+      status: "",
       tags: [],
-      assignee: 'Not Assign', // Reset default value
-      dueDate: '',
+      assignee: "Not Assign", // Reset default value
+      dueDate: "",
       emailAlerts: [],
       watchers: [],
     });
@@ -66,6 +67,10 @@ const TaskCreationForm = () => {
   };
 
   const handleSubmit = async (e) => {
+    if (!groundFloorImages.length || !lastFloorImage.length) {
+      showToast('Please upload all required images', 'warning');
+      return;
+    }
     e.preventDefault();
 
     const taskFormData = new FormData();
@@ -73,44 +78,52 @@ const TaskCreationForm = () => {
       if (Array.isArray(formData[key])) {
         taskFormData.append(key, JSON.stringify(formData[key]));
       } else {
-        taskFormData.append(key, formData[key] || '');
+        taskFormData.append(key, formData[key] || "");
       }
     });
 
-    taskFormData.append('userId', authuserdata?.id || '');
+    taskFormData.append("userId", authuserdata?.id || "");
 
     groundFloorImages.forEach((img) =>
-      taskFormData.append('groundFloorImages', img.file)
+      taskFormData.append("groundFloorImages", img.file)
     );
-    if (lastFloorImage[0]) taskFormData.append('lastFloorImage', lastFloorImage[0].file);
-    attachments.forEach((file) =>
-      taskFormData.append('attachments', file)
-    );
+    if (lastFloorImage[0])
+      taskFormData.append("lastFloorImage", lastFloorImage[0].file);
+    attachments.forEach((file) => taskFormData.append("attachments", file));
 
     try {
       await dispatch(createTask(taskFormData)).unwrap();
+      showToast(
+        "Task created successfully! Your request has been processed.",
+        "success"
+      );
       resetForm();
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error("Error submitting form:", error);
+      showToast(error.message || 'Failed to create RFI. Please try again.', 'error');
+
     }
   };
 
   const priorityOptions = [
-    { value: 'No data', label: 'No data' },
-    { value: 'Low', label: 'Low' },
-    { value: 'Medium', label: 'Medium' },
-    { value: 'High', label: 'High' },
+    { value: "No data", label: "No data" },
+    { value: "Low", label: "Low" },
+    { value: "Medium", label: "Medium" },
+    { value: "High", label: "High" },
   ];
 
   const statusOptions = [
-    { value: 'No data', label: 'No data' },
-    { value: 'In Progress', label: 'In Progress' },
-    { value: 'Pending', label: 'Pending' },
-    { value: 'Completed', label: 'Completed' },
+    { value: "No data", label: "No data" },
+    { value: "In Progress", label: "In Progress" },
+    { value: "Pending", label: "Pending" },
+    { value: "Completed", label: "Completed" },
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-6xl mx-auto p-8 bg-white shadow-2xl rounded-xl">
+    <form
+      onSubmit={handleSubmit}
+      className="max-w-6xl mx-auto p-8 bg-white shadow-2xl rounded-xl"
+    >
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800">RFI Creation Form</h1>
       </div>
@@ -137,7 +150,7 @@ const TaskCreationForm = () => {
             label="User ID"
             id="userId"
             name="userId"
-            value={authuserdata?.id || ''}
+            value={authuserdata?.id || ""}
             disabled
           />
           <FormInput
@@ -196,9 +209,9 @@ const TaskCreationForm = () => {
             value={formData.assignee}
             readOnly
             style={{
-              backgroundColor: '#f9f9f9',
-              color: '#555',
-              cursor: 'not-allowed',
+              backgroundColor: "#f9f9f9",
+              color: "#555",
+              cursor: "not-allowed",
             }}
           />
         </div>
@@ -209,8 +222,8 @@ const TaskCreationForm = () => {
           label="Tags (comma-separated)"
           id="tags"
           name="tags"
-          value={formData.tags.join(', ')}
-          onChange={(e) => handleArrayInputChange(e, 'tags')}
+          value={formData.tags.join(", ")}
+          onChange={(e) => handleArrayInputChange(e, "tags")}
         />
         <FormInput
           label="Due Date"
@@ -222,25 +235,48 @@ const TaskCreationForm = () => {
         />
       </div>
 
-      <AttachmentSection attachments={attachments} setAttachments={setAttachments} />
+      <AttachmentSection
+        attachments={attachments}
+        setAttachments={setAttachments}
+      />
 
       <div className="mt-8 flex justify-end">
         <button
           type="submit"
           className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors relative"
-          disabled={loading || !(groundFloorImages.length && lastFloorImage.length)}
+          disabled={
+            loading || !(groundFloorImages.length && lastFloorImage.length)
+          }
         >
           {loading ? (
             <>
               <span className="opacity-0">Submit Form</span>
               <span className="absolute inset-0 flex items-center justify-center">
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  className="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
               </span>
             </>
-          ) : 'Submit Form'}
+          ) : (
+            "Submit Form"
+          )}
         </button>
       </div>
 
