@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { FaGlobe, FaExpand } from "react-icons/fa";
 import { MdOutlineDelete } from "react-icons/md";
 import Image from "next/image";
 import ShimmerLoader from "../../FieldNotesModal/shimmer";
+import Dialog from "../../Dialog/Dialog";
+import { IoClose } from "react-icons/io5";
+import { useToast } from "../../CustomToast/Toast";
 
 const CardsComponent = ({
   cards,
@@ -16,6 +19,46 @@ const CardsComponent = ({
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return `${date.getMonth() + 1}-${date.getDate()}`;
+  };
+
+  const [isOpenConfirmDeleteDialog, setIsOpenConfirmDeleteDialog] =
+    useState(false);
+  const [answer, setAnswer] = useState(false);
+  const [deletingTaskId, setDeletingTaskId] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { showToast } = useToast();
+
+  // console.log("ID =>", deletingTaskId);
+  // console.log("Answer =>", answer);
+
+  const handleDeleteTask = async () => {
+    try {
+      if (answer === true) {
+        setIsDeleting(true);
+        const response = await fetch(`/api/New/DeleteTask/${deletingTaskId}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        if (!response.ok) {
+          console.log(response);
+          setIsDeleting(false);
+          showToast("Failed to delete task", "error");
+          throw new Error("Failed to delete task");
+        }
+        onCardClick(null);
+        setIsOpenConfirmDeleteDialog(false);
+        setAnswer(false);
+        setDeletingTaskId("");
+        setIsDeleting(false);
+        showToast("Task deleted successfully", "success");
+      }
+    } catch (error) {
+      console.error("Error deleting task:", error.message);
+      setIsDeleting(false);
+      showToast("Failed to delete task", "error");
+    }
   };
 
   if (isLoading) {
@@ -45,9 +88,9 @@ const CardsComponent = ({
       {cards?.map((card) => (
         <div
           key={card._id}
-          className="bg-white shadow-md rounded-md p-4 cursor-pointer hover:shadow-lg transition-shadow"
+          className="bg-white shadow-md rounded-md p-4 hover:shadow-lg transition-shadow"
         >
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center relative">
             <div>
               <h3 className="font-semibold">{card.username}</h3>
               <p className="text-sm text-gray-600">
@@ -55,16 +98,17 @@ const CardsComponent = ({
                 {formatDate(card.createdAt)}
               </p>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 items-center absolute top-0 right-0">
               {/* <FaGlobe className="text-gray-600" /> */}
               <FaExpand
-                className="text-gray-600"
+                className="text-gray-600 cursor-pointer hover:text-blue-500 hover:scale-110 transition-all"
                 onClick={() => onCardClick(card)}
               />
               <MdOutlineDelete
-                className="text-gray-600"
+                className="text-gray-600 text-xl cursor-pointer hover:text-red-500 hover:rotate-12 transition-all"
                 onClick={() => {
-                  console.log("CLiekd");
+                  setIsOpenConfirmDeleteDialog(true);
+                  setDeletingTaskId(card._id);
                 }}
               />
             </div>
@@ -122,6 +166,47 @@ const CardsComponent = ({
           {renderCustomContent && renderCustomContent(card)}
         </div>
       ))}
+      {/* Confirm Delete Dialog */}
+      {isOpenConfirmDeleteDialog && (
+        <div className="fixed left-0 top-0 z-50 h-screen w-full animate-fade-in bg-black bg-opacity-75 flex items-center justify-center">
+          <div className="w-[500px] bg-white rounded-lg shadow-md p-4">
+            <div className="flex justify-end w-full">
+              <button
+                onClick={() => {
+                  setIsOpenConfirmDeleteDialog(false);
+                }}
+              >
+                <IoClose />
+              </button>
+            </div>
+            <h1 className="text-xl font-semibold">Are you sure!</h1>
+            <p>Do you want to delete permanently?</p>
+            <div className="flex justify-end gap-2">
+              <button
+                disabled={isDeleting}
+                className="border border-blue-500 bg-blue-50 text-blue-500 shadow-md rounded px-2 py-1 disabled:cursor-not-allowed"
+                onClick={() => {
+                  setIsOpenConfirmDeleteDialog(false);
+                  setAnswer(false);
+                  setDeletingTaskId("");
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                disabled={isDeleting}
+                className="bg-blue-500 text-white rounded shadow-md px-2 py-1 disabled:bg-opacity-50 disabled:cursor-not-allowed"
+                onClick={() => {
+                  setAnswer(true);
+                  handleDeleteTask();
+                }}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

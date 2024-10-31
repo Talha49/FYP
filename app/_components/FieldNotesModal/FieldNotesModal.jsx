@@ -16,7 +16,8 @@ function FieldNotesModal({ onClose }) {
   const [previousCount, setPreviousCount] = useState(0);
   const notes = useSelector((state) => state.TaskSlice.tasks);
   const loading = useSelector((state) => state.TaskSlice.loading);
-  const [isOpenConfirmDeleteDialog, setIsOpenConfirmDeleteDialog] = useState(false);
+  const [isOpenConfirmDeleteDialog, setIsOpenConfirmDeleteDialog] =
+    useState(false);
 
   const dispatch = useDispatch();
 
@@ -40,7 +41,6 @@ function FieldNotesModal({ onClose }) {
     }
   }, [notes, loading]);
 
-
   const filterButtons = [
     "For me",
     "Tags",
@@ -59,27 +59,49 @@ function FieldNotesModal({ onClose }) {
 
       // Search logic
       if (searchParam !== "") {
-        const searchFields = activeFilters.length > 0 ? activeFilters : filterButtons;
-        matchesSearch = searchFields.some(field => {
+        const searchFields =
+          activeFilters.length > 0 ? activeFilters : filterButtons;
+        matchesSearch = searchFields.some((field) => {
           switch (field) {
             case "Assignee":
-              return note.assignee.toLowerCase().includes(searchParam.toLowerCase());
+              return note.assignee
+                .toLowerCase()
+                .includes(searchParam.toLowerCase());
             case "Tags":
-              return note.tags.some(tag => tag.toLowerCase().includes(searchParam.toLowerCase()));
+              return note.tags.some((tag) =>
+                tag.toLowerCase().includes(searchParam.toLowerCase())
+              );
             case "Status":
-              return note.status.toLowerCase().includes(searchParam.toLowerCase());
+              return note.status
+                .toLowerCase()
+                .includes(searchParam.toLowerCase());
             case "Priority":
-              return note.priority.toLowerCase().includes(searchParam.toLowerCase());
+              return note.priority
+                .toLowerCase()
+                .includes(searchParam.toLowerCase());
             case "Creator":
-              return note.username.toLowerCase().includes(searchParam.toLowerCase());
+              return note.username
+                .toLowerCase()
+                .includes(searchParam.toLowerCase());
             case "Due date":
-              return note.dueDate && new Date(note.dueDate).toLocaleDateString().includes(searchParam);
+              return (
+                note.dueDate &&
+                new Date(note.dueDate)
+                  .toLocaleDateString()
+                  .includes(searchParam)
+              );
             case "Date created":
-              return new Date(note.createdAt).toLocaleDateString().includes(searchParam);
+              return new Date(note.createdAt)
+                .toLocaleDateString()
+                .includes(searchParam);
             default:
-              return note.description.toLowerCase().includes(searchParam.toLowerCase()) ||
-                     note.room.toLowerCase().includes(searchParam.toLowerCase()) ||
-                     note.floor.toLowerCase().includes(searchParam.toLowerCase());
+              return (
+                note.description
+                  .toLowerCase()
+                  .includes(searchParam.toLowerCase()) ||
+                note.room.toLowerCase().includes(searchParam.toLowerCase()) ||
+                note.floor.toLowerCase().includes(searchParam.toLowerCase())
+              );
           }
         });
       }
@@ -119,7 +141,7 @@ function FieldNotesModal({ onClose }) {
 
   const handleFilterChange = (filters) => {
     setActiveFilters(filters);
-    setSearchParam(""); 
+    setSearchParam("");
   };
 
   const handleSearchChange = (search) => {
@@ -150,16 +172,12 @@ function FieldNotesModal({ onClose }) {
           <CardsComponent
             cards={filterNotes}
             onCardClick={handleCardClick}
-            isOpenConfirmDeleteDialog={isOpenConfirmDeleteDialog}
             emptyStateMessage="No Matches For Your Results"
             isLoading={loading}
             previousCount={previousCount}
-
           />
         </div>
       </div>
-
-
 
       {isOpen && selectedNote && (
         <Dialog
@@ -177,16 +195,8 @@ function FieldNotesModal({ onClose }) {
           />
         </Dialog>
       )}
-
-      {isOpenConfirmDeleteDialog && (
-        <Dialog
-        >
-          <h1>Are You Sure!</h1>
-          <p>Do you want to delete?</p>
-        </Dialog>
-      )}
     </>
   );
-};
+}
 
 export default FieldNotesModal;
