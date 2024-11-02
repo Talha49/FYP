@@ -80,7 +80,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
           setShowChat(true); // Show chat after task is saved and assignee is selected
           createChatRoom(localNote._id, localNote.assignee);
         } else {
-          setShowChat(false); // Hide chat if no assignee is selected
+          // setShowChat(false); // Hide chat if no assignee is selected
         }
       })
       .catch((error) => {
@@ -340,7 +340,7 @@ const hasMultipleParticipants = localNote.assignee && localNote.userId && localN
             </div>
               
       {/* Conditionally render ChatApp if there are multiple participants */}
-      {showChat && hasMultipleParticipants && (
+      {hasMultipleParticipants && (
         <ChatApp
           chatRoomName={localNote.username} // Use task username (or name) here
           assignedUsers={[localNote.userId, localNote.assignee]} // Assigner and assignee

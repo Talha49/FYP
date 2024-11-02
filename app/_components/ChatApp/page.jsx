@@ -29,7 +29,7 @@ const ChatApp = ({ chatRoomName, assignedUsers }) => {
     <div className="w-full h-[500px] rounded-lg border border-gray-300 shadow-md">
       {/* Top Bar */}
       <header className="h-10 w-full border-b bg-gray-100 flex justify-between items-center p-2 gap-4">
-        <h1>Discussion Panel (Task: {chatRoomName})</h1>
+        <h1>Discussion Panel (Admin: {chatRoomName})</h1>
         <div className="flex items-center gap-4">
           <IoMdCall />
           <IoMdVideocam />
