@@ -22,11 +22,14 @@ io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
   // Listen for incoming messages from clients
-  socket.on('sendMessage', (message) => {
+  socket.on('sendMessage', (message, callback) => {
     console.log('Message received:', message);
 
-    // Broadcast the message to all connected clients, including the sender
-    io.emit('receiveMessage', message);
+    // Broadcast the message to all connected clients except the sender
+    socket.broadcast.emit('receiveMessage', message);
+
+    // Acknowledge receipt to the sender
+    if (callback) callback({ status: 'ok', message: 'Message received' });
   });
 
   // Handle client disconnection

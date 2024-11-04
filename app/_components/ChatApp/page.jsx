@@ -1,4 +1,4 @@
-import React, { useState, useEffect ,useRef} from "react";
+import React, { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 import { IoMdCall, IoMdVideocam, IoMdSearch } from "react-icons/io";
 import { IoSend } from "react-icons/io5";
@@ -21,6 +21,7 @@ const ChatApp = ({ chatRoomName, assignedUsers, currentUserId }) => {
   const socket = useRef(null); // Socket instance as a ref to avoid re-initialization on re-renders
   const isConnected = useRef(false); // Flag to check if socket is connected
   const isSending = useRef(false); // Flag to prevent duplicate sends
+  const scrollRef = useRef(null); // Ref for auto-scrolling to the latest message
 
   useEffect(() => {
     // Initialize the socket connection only once
@@ -52,7 +53,14 @@ const ChatApp = ({ chatRoomName, assignedUsers, currentUserId }) => {
     return () => {
       socket.current.off("receiveMessage", handleReceiveMessage);
     };
-  }, [chatRoomName]); // Dependency on chatRoomName ensures it re-runs only when this value changes
+  }, [chatRoomName]);
+
+  useEffect(() => {
+    // Scroll to the latest message whenever messages update
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   const handleMediaSelect = (e) => {
     const files = Array.from(e.target.files);
@@ -60,19 +68,18 @@ const ChatApp = ({ chatRoomName, assignedUsers, currentUserId }) => {
     setShowMediaPreview(true);
     e.target.value = null; // Clear the input to avoid re-opening
   };
-
   const sendMessage = () => {
     if (isSending.current || !isConnected.current) return; // Prevent duplicate sends if already sending or disconnected
-
+  
     if (newMessage.trim() || selectedMedia.length > 0) {
       isSending.current = true; // Set sending flag to prevent duplicates
-
+  
       const mediaFiles = selectedMedia.map((file) => ({
         url: URL.createObjectURL(file),
         type: file.type.startsWith("image") ? "image" : file.type.startsWith("video") ? "video" : "file",
         name: file.name,
       }));
-
+  
       const messageObject = {
         text: newMessage,
         sender: "You",
@@ -81,21 +88,26 @@ const ChatApp = ({ chatRoomName, assignedUsers, currentUserId }) => {
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         fullTimestamp: new Date().toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }),
       };
-
+  
       // Emit the message to the server
       socket.current.emit("sendMessage", messageObject);
-
-      // Reset input fields and flags without adding the message to local state
+  
+      // Update local state and localStorage with the new message
+      setMessages((prevMessages) => {
+        const updatedMessages = [...prevMessages, messageObject];
+        localStorage.setItem(`chat_${chatRoomName}`, JSON.stringify(updatedMessages)); // Save to localStorage
+        return updatedMessages;
+      });
+  
+      // Reset input fields and flags
       setNewMessage("");
       setSelectedMedia([]);
       setShowMediaPreview(false);
-
+  
       isSending.current = false; // Reset sending flag after send
     }
-};
-
-
-
+  };
+  
 
   const cancelSelectedMedia = () => {
     setSelectedMedia([]);
@@ -267,6 +279,7 @@ const ChatApp = ({ chatRoomName, assignedUsers, currentUserId }) => {
             )}
           </div>
         ))}
+        <div ref={scrollRef} /> {/* Ref to track the latest message */}
       </div>
 
       {/* Selected Media Preview with Delete Option */}
@@ -345,7 +358,7 @@ const ChatApp = ({ chatRoomName, assignedUsers, currentUserId }) => {
       )}
 
       {/* Footer */}
-      <footer className="w-full flex p-3 items-center gap-2  bg-gray-200 rounded-b-lg">
+      <footer className="w-full flex p-3 items-center gap-2 bg-gray-200 rounded-b-lg">
         <label
           className="relative text-2xl cursor-pointer text-gray-500"
           onMouseEnter={() => setIsHovering(true)}
