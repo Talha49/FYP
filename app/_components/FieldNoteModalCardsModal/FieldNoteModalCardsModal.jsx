@@ -13,13 +13,25 @@ import {
   GroundFloorImageSection,
   LastFloorImageSection,
 } from "../HOC/FieldNotesComps/FieldNotesComp";
-import { addAttachments, updateTask } from "@/lib/Features/TaskSlice";
+import { addAttachments, deleteAttachment, updateTask } from "@/lib/Features/TaskSlice";
 import { useToast } from "../CustomToast/Toast";
 
 function FieldNoteModalCardsModal({ onClose, note, token }) {
   const dispatch = useDispatch();
+  const { showToast } = useToast();
+  const fileInputRef = useRef(null);
+
+  // State Management
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
+  const [localNote, setLocalNote] = useState(note);
+  const [originalNote, setOriginalNote] = useState({ ...note });
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingFiles, setIsUploadingFiles] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [attachments, setAttachments] = useState(note.attachments || []);
+
+  // Image Control States
   const [zoomLevel1, setZoomLevel1] = useState(1);
   const [dragging1, setDragging1] = useState(false);
   const [position1, setPosition1] = useState({ x: 0, y: 0 });
@@ -28,140 +40,250 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
   const [dragging2, setDragging2] = useState(false);
   const [position2, setPosition2] = useState({ x: 0, y: 0 });
   const [startPosition2, setStartPosition2] = useState({ x: 0, y: 0 });
-  const [localNote, setLocalNote] = useState(note);
-  const [groundFloorImages, setGroundFloorImages] = useState(localNote.groundFloorImages);
-  const [lastFloorImage, setLastFloorImage] = useState(localNote.lastFloorImages[0]);
-  const { showToast } = useToast();
-
 
   const userStatus = useSelector((state) => state.UserSlice.status);
+  const users = useSelector((state) => state.UserSlice.users);
 
+  // Fetch users if needed
   useEffect(() => {
     if (userStatus === "idle") {
       dispatch(fetchUsers(token));
     }
   }, [userStatus, dispatch, token]);
 
-  const users = useSelector((state) => state.UserSlice.users);
-
+  // Update local note when prop changes
   useEffect(() => {
     setLocalNote(note);
+    setOriginalNote({ ...note });
   }, [note]);
 
+  // Utility Functions
   const updateField = (field, value) => {
     setLocalNote((prev) => ({ ...prev, [field]: value }));
   };
 
-
-const handleSave = () => {
-  
-  const updateData = {
-    userId: localNote.userId,
-    username: localNote.username,
-    description: localNote.description,
-    priority: localNote.priority,
-    room: localNote.room,
-    floor: localNote.floor,
-    status: localNote.status,
-    tags: localNote.tags,
-    assignee: localNote.assignee,
-    dueDate: localNote.dueDate,
-    emailAlerts: localNote.emailAlerts,
-    watchers: localNote.watchers,
-    groundFloorImages: localNote.groundFloorImages,
-    lastFloorImages: localNote.lastFloorImages,
-    attachments: localNote.attachments,
+  const hasFieldChanged = (field) => {
+    return (
+      JSON.stringify(originalNote[field]) !== JSON.stringify(localNote[field])
+    );
   };
 
-  // Validate required fields before saving
-  if (!updateData.description || !updateData.room || !updateData.floor) {
-    showToast('Please fill in all required fields', 'warning');
-    return;
-  }
+  const getChangedFields = () => {
+    const changes = [];
+    const fieldsToCheck = {
+      status: "Status",
+      priority: "Priority",
+      assignee: "Assignee",
+      dueDate: "Due date",
+      description: "Description",
+      tags: "Tags",
+      watchers: "Watchers",
+    };
 
-  dispatch(updateTask({ taskId: localNote._id, updateData }))
-    .unwrap()
-    .then(() => {
+    for (const [field, label] of Object.entries(fieldsToCheck)) {
+      if (hasFieldChanged(field)) {
+        changes.push({
+          field,
+          label,
+          oldValue: originalNote[field],
+          newValue: localNote[field],
+        });
+      }
+    }
+
+    return changes;
+  };
+
+  console.log(localNote)
+  const handleSave = async () => {
+    // Validate required fields
+    if (!localNote.description || !localNote.room || !localNote.floor) {
+      showToast("Please fill in all required fields", "warning");
+      return;
+    }
+
+    // Check if anything has changed
+    const changedFields = getChangedFields();
+    if (changedFields.length === 0) {
       setIsEditing(false);
-      showToast('RFI updated successfully!', 'success');
+      return;
+    }
+
+    setIsSaving(true);
+
+    const updateData = {
+      userId: localNote.userId,
+      username: localNote.username,
+      description: localNote.description,
+      priority: localNote.priority,
+      room: localNote.room,
+      floor: localNote.floor,
+      status: localNote.status,
+      tags: localNote.tags,
+      assignee: localNote.assignee,
+      dueDate: localNote.dueDate,
+      emailAlerts: localNote.emailAlerts,
+      watchers: localNote.watchers,
+      groundFloorImages: localNote.groundFloorImages,
+      lastFloorImages: localNote.lastFloorImages,
+      attachments: localNote.attachments,
+    };
+
+    try {
+      await dispatch(updateTask({ taskId: localNote._id, updateData })).unwrap();
       
-      // If the status was changed to 'Completed'
-      if (updateData.status === 'Completed') {
-        showToast('Task marked as completed! All watchers will be notified.', 'info');
+      // Show single success message if multiple fields changed
+      if (changedFields.length > 1) {
+        showToast("Task updated successfully", "success");
+      } else {
+        // Show specific message for single field change
+        const { field, label, newValue } = changedFields[0];
+        switch (field) {
+          case "status":
+            showToast(`Status updated to ${newValue}`, "success");
+            break;
+          case "priority":
+            showToast(`Priority changed to ${newValue}`, "info");
+            break;
+          case "assignee":
+            showToast(`Task assigned to ${newValue}`, "info");
+            break;
+          case "dueDate":
+            showToast(
+              `Due date updated to ${new Date(newValue).toLocaleDateString()}`,
+              "info"
+            );
+            break;
+          default:
+            showToast(`${label} has been updated`, "info");
+        }
       }
-      
-      // If priority was changed to 'High'
-      if (updateData.priority === 'High') {
-        showToast('Priority set to High! Team leads will be notified.', 'info');
-      }
-    })
-    .catch((error) => {
+
+      setIsEditing(false);
+      setOriginalNote({ ...localNote });
+    } catch (error) {
       console.error("Failed to update task:", error);
       showToast(
-        error.message || 'Failed to update RFI. Please try again.', 
-        'error'
+        error.message || "Failed to update RFI. Please try again.",
+        "error"
       );
-      
-      // If it's a specific error you want to handle differently
-      if (error.code === 'UNAUTHORIZED') {
-        showToast('You don\'t have permission to update this RFI', 'error');
-      } else if (error.code === 'VALIDATION_ERROR') {
-        showToast('Please check your input and try again', 'warning');
-      }
-    });
-};
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
- 
+  const toggleEditMode = () => {
+    if (isEditing) {
+      setLocalNote({ ...originalNote });
+    }
+    setIsEditing(!isEditing);
+  };
+
+  // File Handling Functions
+  const handleFileChange = async (e) => {
+    if (!isEditing) return;
+
+    const newFiles = Array.from(e.target.files);
+    if (newFiles.length === 0) return;
+
+    setIsUploadingFiles(true);
+    setUploadProgress(0);
+
+    try {
+      // Optimistically update UI
+      const optimisticAttachments = newFiles.map((file) => ({
+        url: URL.createObjectURL(file),
+        name: file.name,
+        temporary: true,
+      }));
+
+      setLocalNote((prevNote) => ({
+        ...prevNote,
+        attachments: [...prevNote.attachments, ...optimisticAttachments],
+      }));
+
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => Math.min(prev + 10, 90));
+      }, 200);
+
+      const result = await dispatch(
+        addAttachments({ taskId: localNote._id, files: newFiles })
+      ).unwrap();
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      // Update with actual server response
+      setLocalNote((prevNote) => ({
+        ...prevNote,
+        attachments: [
+          ...prevNote.attachments.filter((a) => !a.temporary),
+          ...result.data.attachments,
+        ],
+      }));
+
+      showToast("Files uploaded successfully", "success");
+    } catch (error) {
+      console.error("Error adding attachments:", error);
+      // Revert optimistic update
+      setLocalNote((prevNote) => ({
+        ...prevNote,
+        attachments: prevNote.attachments.filter((a) => !a.temporary),
+      }));
+      showToast("Failed to upload files", "error");
+    } finally {
+      setIsUploadingFiles(false);
+      setUploadProgress(0);
+    }
+  };
 
   
 
-  const handleFileRemove = (index) => {
-    const updatedAttachments = localNote.attachments.filter(
-      (_, i) => i !== index
-    );
-    updateField("attachments", updatedAttachments);
-  };
 
-  const zoomIn1 = () => {
-    setZoomLevel1((prevZoomLevel) => Math.min(prevZoomLevel + 0.1, 8));
-  };
+  const handleFileRemove = async (index) => {
+    if (!isEditing) return;
 
-  const zoomOut1 = () => {
-    setZoomLevel1((prevZoomLevel) => Math.max(prevZoomLevel - 0.1, 1));
-  };
-
-  const zoomIn2 = () => {
-    setZoomLevel2((prevZoomLevel) => Math.min(prevZoomLevel + 0.1, 8));
-  };
-
-  const zoomOut2 = () => {
-    setZoomLevel2((prevZoomLevel) => Math.max(prevZoomLevel - 0.1, 1));
-  };
-
-  const fileInputRef = useRef(null);
-
-  const handleFileChange = async (e) => {
-    const newFiles = Array.from(e.target.files);
-    dispatch(addAttachments({ taskId: localNote._id, files: newFiles }))
-      .unwrap()
-      .then((result) => {
-        setLocalNote(prevNote => ({
-          ...prevNote,
-          attachments: [...prevNote.attachments, ...result.data.attachments]
+    try {
+        const attachmentToDelete = localNote.attachments[index];
+        
+        // Optimistically update UI
+        const updatedAttachments = localNote.attachments.filter((_, i) => i !== index);
+        setLocalNote(prev => ({
+            ...prev,
+            attachments: updatedAttachments
         }));
-      })
-      .catch((error) => {
-        console.error('Error adding attachments:', error);
-        // Handle error (e.g., show an error message to the user)
-      });
+
+        // Call Redux action to delete from backend
+        await dispatch(deleteAttachment({
+            taskId: localNote._id,
+            attachmentId: attachmentToDelete._id
+        })).unwrap();
+
+        showToast("Attachment deleted successfully", "success");
+    } catch (error) {
+        // Revert optimistic update on error
+        setLocalNote(prev => ({
+            ...prev,
+            attachments: originalNote.attachments
+        }));
+        showToast(error.message || "Failed to delete attachment", "error");
+    }
+};
+  const handleFileDownload = async (url) => {
+    try {
+      const link = document.createElement("a");
+      link.href = url;
+      link.target = "_blank";
+      link.download = url.split("/").pop();
+      link.click();
+    } catch (error) {
+      console.error("Download failed:", error);
+      showToast("Failed to download file", "error");
+    }
   };
 
-  const handleAddAttachment = () => {
-    fileInputRef.current.click();
-  };
-
- 
-
+  // Image Control Functions
   const handleNext = () => {
     setCurrentIndex(
       (prevIndex) => (prevIndex + 1) % localNote.groundFloorImages.length
@@ -176,6 +298,13 @@ const handleSave = () => {
     );
   };
 
+  // Zoom Functions
+  const zoomIn1 = () => setZoomLevel1((prev) => Math.min(prev + 0.1, 8));
+  const zoomOut1 = () => setZoomLevel1((prev) => Math.max(prev - 0.1, 1));
+  const zoomIn2 = () => setZoomLevel2((prev) => Math.min(prev + 0.1, 8));
+  const zoomOut2 = () => setZoomLevel2((prev) => Math.max(prev - 0.1, 1));
+
+  // Mouse Control Functions
   const handleMouseDown1 = (e) => {
     setDragging1(true);
     setStartPosition1({
@@ -193,9 +322,7 @@ const handleSave = () => {
     }
   };
 
-  const handleMouseUp1 = () => {
-    setDragging1(false);
-  };
+  const handleMouseUp1 = () => setDragging1(false);
 
   const handleMouseDown2 = (e) => {
     setDragging2(true);
@@ -214,58 +341,37 @@ const handleSave = () => {
     }
   };
 
-  const handleMouseUp2 = () => {
-    setDragging2(false);
-  };
+  const handleMouseUp2 = () => setDragging2(false);
 
+  // Utility Functions
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return `${date.getMonth() + 1}-${date.getDate()}`;
   };
 
-  const toggleEditMode = () => {
-    setIsEditing(!isEditing);
-  };
-
- const handleFileDownload = async (url) => {
-    try {
-      const link = document.createElement('a');
-      link.href = url;
-      link.target = '_blank'; 
-      link.download = url.split('/').pop(); 
-      link.click();
-    } catch (error) {
-      console.error('Download failed:', error);
-    }
-  };
-
-
- 
   const getFileIcon = (url) => {
-    const extension = url.split('.').pop().toLowerCase();
-    switch(extension) {
-      case 'pdf':
-        return '📄';
-      case 'doc':
-      case 'docx':
-        return '📝';
-      case 'xls':
-      case 'xlsx':
-        return '📊';
-      case 'csv':
-        return '📈';
-      case 'txt':
-        return '📃';
+    const extension = url.split(".").pop().toLowerCase();
+    switch (extension) {
+      case "pdf":
+        return "📄";
+      case "doc":
+      case "docx":
+        return "📝";
+      case "xls":
+      case "xlsx":
+        return "📊";
+      case "csv":
+        return "📈";
+      case "txt":
+        return "📃";
       default:
-        return '📄';
+        return "📄";
     }
   };
-
-
-
 
   return (
     <div>
+      {/* Header Section */}
       <div className="bg-white border-b-2 flex flex-col sm:flex-row sticky top-0 z-10 justify-between px-4 py-2 items-center w-full">
         <div className="flex flex-col items-start sm:flex-row sm:items-center sm:justify-between w-full sm:w-auto">
           <h1 className="text-sm sm:text-base md:text-lg">
@@ -273,7 +379,7 @@ const handleSave = () => {
           </h1>
           <p className="text-xs sm:text-sm md:text-base sm:ml-2">
             | Room: {localNote.room} |{" "}
-            <span> Created At: {formatDate(localNote.createdAt)}</span>
+            <span>Created At: {formatDate(localNote.createdAt)}</span>
           </p>
         </div>
         <div className="flex items-center gap-x-2 gap-y-1 mt-2 sm:mt-0">
@@ -305,14 +411,12 @@ const handleSave = () => {
         </div>
       </div>
 
+      {/* Main Content */}
       <div className="w-full p-4">
         <div className="grid sm:grid-cols-5 gap-4 justify-center">
           {/* Left Section */}
           <div className="col-span-3 p-2 space-y-4">
-            {/* Image Pagination Card */}
-
             <GroundFloorImageSection
-              //images={localNote.groundFloorImages}
               currentIndex={currentIndex}
               zoomLevel={zoomLevel1}
               position={position1}
@@ -329,11 +433,13 @@ const handleSave = () => {
               updateImage={(newUrl, index) => {
                 const newImages = [...localNote.groundFloorImages];
                 newImages[index] = { ...newImages[index], url: newUrl };
-                setLocalNote(prev => ({ ...prev, groundFloorImages: newImages }));
+                setLocalNote((prev) => ({
+                  ...prev,
+                  groundFloorImages: newImages,
+                }));
               }}
               taskId={localNote._id}
-
-
+              editmode={isEditing}
             />
 
             {/* Description Input */}
@@ -353,17 +459,11 @@ const handleSave = () => {
                 </p>
               )}
             </div>
-
-
-           
           </div>
 
           {/* Right Section */}
           <div className="col-span-2 p-2 space-y-4">
-            {/* Image Card */}
-
             <LastFloorImageSection
-              //image={localNote.lastFloorImages[0]}
               zoomLevel={zoomLevel2}
               position={position2}
               onZoomIn={zoomIn2}
@@ -374,11 +474,17 @@ const handleSave = () => {
               onMouseLeave={handleMouseUp2}
               dragging={dragging2}
               image={localNote.lastFloorImages[0]}
-  updateImage={(newUrl) => {
-    const newImages = [{ ...localNote.lastFloorImages[0], url: newUrl }];
-    setLocalNote(prev => ({ ...prev, lastFloorImages: newImages }));
-  }}
-  taskId={localNote._id}
+              updateImage={(newUrl) => {
+                const newImages = [
+                  { ...localNote.lastFloorImages[0], url: newUrl },
+                ];
+                setLocalNote((prev) => ({
+                  ...prev,
+                  lastFloorImages: newImages,
+                }));
+              }}
+              taskId={localNote._id}
+              editmode={isEditing}
             />
 
             {/* Priority Section */}
@@ -400,6 +506,7 @@ const handleSave = () => {
                 </p>
               )}
             </div>
+
             {/* Assignee Section */}
             <div>
               <label className="block text-gray-600">Assignee</label>
@@ -418,31 +525,33 @@ const handleSave = () => {
                 </select>
               ) : (
                 <p className="w-full p-2 border border-gray-300 rounded bg-gray-100">
-                  {localNote.assignee}
+                  {localNote.assignee || "Not assigned"}
                 </p>
               )}
             </div>
-             {/* Status Section */}
-             <div>
+
+            {/* Status Section */}
+            <div>
               <label className="block text-gray-600">Status</label>
               {isEditing ? (
                 <select
-                className="w-full p-2 border border-gray-300 rounded outline-none"
-                value={localNote.status}
-                onChange={(e) => updateField("status", e.target.value)}
-              >
-                <option value="Pending">Pending</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-              </select>
+                  className="w-full p-2 border border-gray-300 rounded outline-none"
+                  value={localNote.status}
+                  onChange={(e) => updateField("status", e.target.value)}
+                >
+                  <option value="Pending">Pending</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                </select>
               ) : (
                 <p className="w-full p-2 border border-gray-300 rounded bg-gray-100">
                   {localNote.status}
                 </p>
               )}
             </div>
-            {/* Email Alerts */}
-            <div className="mb-6">
+
+            {/* Email Alerts & Watchers */}
+            <div>
               <label className="block text-gray-600">Email alerts</label>
               <div className="flex items-center mt-1">
                 {isEditing ? (
@@ -469,8 +578,9 @@ const handleSave = () => {
                 )}
               </div>
             </div>
+
             {/* Tags */}
-            <div className="mb-6">
+            <div>
               <label className="block text-gray-600">Tags</label>
               <div className="flex items-center mt-1">
                 {isEditing ? (
@@ -484,15 +594,17 @@ const handleSave = () => {
                       )
                     }
                     className="w-full p-2 border border-gray-300 rounded outline-none"
+                    placeholder="Add tags separated by commas"
                   />
                 ) : (
                   <p className="w-full p-2 border border-gray-300 rounded bg-gray-100">
-                    {localNote.tags.join(", ")}
+                    {localNote.tags.join(", ") || "No tags"}
                   </p>
                 )}
               </div>
             </div>
-            {/* Calendar */}
+
+            {/* Due Date */}
             <div>
               <label className="block text-gray-600">Due date</label>
               {isEditing ? (
@@ -510,22 +622,23 @@ const handleSave = () => {
                 </p>
               )}
             </div>
+
             {/* Attachments */}
             <div>
-              <label className="block text-gray-600">Attachments</label>
-              <div className="border-2 border-dashed border-gray-300 rounded p-4 mt-1 overflow-auto h-40 custom-scrollbars">
-              {localNote.attachments.length === 0 ? (
-            <div className="text-center ">
+        <label className="block text-gray-600">Attachments</label>
+        <div className="border-2 border-dashed border-gray-300 rounded p-4 mt-1 overflow-auto h-40 custom-scrollbars">
+          {localNote.attachments.length === 0 ? (
+            <div className="text-center">
               <AiOutlinePlus className="mx-auto text-2xl text-gray-600" />
-              <p className="mt-2 text-gray-600">
-                No attachments added yet.
-              </p>
-              <button
-                onClick={handleAddAttachment}
-                className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Add Attachment
-              </button>
+              <p className="mt-2 text-gray-600">No attachments added yet.</p>
+              {isEditing && !isUploadingFiles && (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Add Attachment
+                </button>
+              )}
             </div>
           ) : (
             <div>
@@ -536,93 +649,98 @@ const handleSave = () => {
                 >
                   <span className="text-gray-700">
                     {getFileIcon(file.url)} {`Attachment ${index + 1}`}
+                    {file.temporary && (
+                      <span className="ml-2 text-blue-500">(Uploading...)</span>
+                    )}
                   </span>
-                  <button
-                    onClick={() => handleFileDownload(file.url)}
-                    className="ml-2 px-2 py-1 bg-blue-500 text-white rounded"
-                  >
-                    <FaDownload />
-                  </button>
-                  {isEditing && (
-                    <button
-                      onClick={() => handleFileRemove(index)}
-                      className="ml-2 px-2 py-1 bg-red-600 text-white rounded"
-                    >
-                      Delete
-                    </button>
+                  {!file.temporary && (
+                    <>
+                      <button
+                        onClick={() => handleFileDownload(file.url)}
+                        className="ml-2 px-2 py-1 bg-blue-500 text-white rounded"
+                      >
+                        <FaDownload />
+                      </button>
+                      {isEditing && (
+                        <button
+                          onClick={() => handleFileRemove(index)}
+                          className="ml-2 px-2 py-1 bg-red-600 text-white rounded"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               ))}
-              <button
-                onClick={handleAddAttachment}
-                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Add More Attachments
-              </button>
+              {isEditing && !isUploadingFiles && (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Add More Attachments
+                </button>
+              )}
+              {isUploadingFiles && (
+                <div className="mt-4">
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div
+                      className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-center mt-2 text-sm text-gray-600">
+                    Uploading... {uploadProgress}%
+                  </p>
+                </div>
+              )}
             </div>
           )}
-              </div>
-              <input
+        </div>
+        <input
           type="file"
           ref={fileInputRef}
-          style={{ display: 'none' }}
+          style={{ display: "none" }}
           onChange={handleFileChange}
           multiple
         />
-            </div>
-
-
-
-
-
-
-          </div>
-        </div>
       </div>
-      <div className="p-2 flex justify-end gap-x-2">
+
+      {/* Modified Footer Actions */}
+      <div className="p-4 flex justify-end gap-x-2 border-t">
         <button
-          className={`px-4 py-2 ${
-            isEditing ? "bg-blue-600" : "bg-blue-600"
-          } text-white rounded`}
+          className={`px-4 py-2 rounded transition-colors ${
+            isEditing ? "bg-blue-500 hover:bg-blue-600" : "bg-blue-500 hover:bg-blue-600"
+          } text-white relative ${isSaving ? 'opacity-75 cursor-not-allowed' : ''}`}
           onClick={isEditing ? handleSave : toggleEditMode}
+          disabled={isSaving}
         >
-          {isEditing ? "Save" : "Edit"}
-        </button>
-        {isEditing && (
-          <button
-            className="px-4 py-2 bg-blue-600 text-white rounded"
-            onClick={toggleEditMode}
-          >
-            Cancel
-          </button>
+          {isSaving ? (
+          <div className="flex items-center">
+            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Saving...
+          </div>
+        ) : (
+          isEditing ? "Save Changes" : "Edit"
         )}
+        </button>
+        {isEditing && !isSaving && (
+        <button
+          className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded transition-colors"
+          onClick={toggleEditMode}
+        >
+          Cancel
+        </button>
+      )}
       </div>
+    </div>
+    </div>
+    </div>
     </div>
   );
 }
 
 export default FieldNoteModalCardsModal;
-
-
-
-
-
-
-
-//                    onClick={() => handleFileDownload(file.url, `attachment_${index + 1}`)}
-// const handleFileDownload = async (url, fileName) => {
-//   try {
-//     const response = await fetch(url);
-//     const blob = await response.blob();
-//     const downloadUrl = window.URL.createObjectURL(blob);
-//     const link = document.createElement('a');
-//     link.href = downloadUrl;
-//     link.download = fileName || 'download';
-//     document.body.appendChild(link);
-//     link.click();
-//     document.body.removeChild(link);
-//   } catch (error) {
-//     console.error('Download failed:', error);
-//     // Handle error (e.g., show an error message to the user)
-//   }
-// };

@@ -192,6 +192,12 @@ function FieldNotesModal({ onClose }) {
             onClose={() => setIsOpen(false)}
             note={selectedNote}
             token={authenticatedUser?.token}
+            onUpdate={(updatedNote) => {
+              // Update your parent component's state
+              setNotes(prevNotes => 
+                prevNotes.map(n => n._id === updatedNote._id ? updatedNote : n)
+              );
+            }}
           />
         </Dialog>
       )}

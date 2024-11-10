@@ -130,13 +130,13 @@ const TaskCreationForm = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <ImageUploadSection
-          title="Ground Floor Images"
+          title="Site Inspection Photos"
           images={groundFloorImages}
           setImages={setGroundFloorImages}
           inputId="groundFloorImages"
         />
         <ImageUploadSection
-          title="Last Floor Image"
+          title="Floor Plans"
           images={lastFloorImage}
           setImages={setLastFloorImage}
           inputId="lastFloorImage"
