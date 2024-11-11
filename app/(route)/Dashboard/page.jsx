@@ -1,11 +1,12 @@
 import React from 'react'
+import DashboardComp from './_components/DashoardComp'
 
-const page = () => {
-    return (
-        <div>
-              Page
-        </div>
-    )
+function Dashboard() {
+  return (
+    <div>
+      <DashboardComp />
+    </div>
+  )
 }
 
-export default page
+export default Dashboard

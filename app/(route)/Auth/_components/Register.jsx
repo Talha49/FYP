@@ -27,7 +27,7 @@ const TwoFactorAuthDialog = ({ children, isOpen, onClose }) => {
   );
 };
 
-const Register = () => {
+function Register() {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",

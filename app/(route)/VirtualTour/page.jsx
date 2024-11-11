@@ -1,7 +1,7 @@
 import React from 'react'
 import VirtualTourComponent from './_components/VirtualTour'
 
-const VirtualTour = () => {
+function VirtualTour(){
   return (
     <>
       <VirtualTourComponent/>

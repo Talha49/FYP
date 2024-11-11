@@ -3,7 +3,10 @@ import { PiFileCsv } from "react-icons/pi";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 import { LiaSortSolid } from "react-icons/lia";
 import Table from "@/app/_components/HOC/Table/Table";
-const FieldNotes = () => {
+
+function FieldNotes () {
+
+
   const [currentPage, setCurrentPage] = useState(1);
   const [sortOrder, setSortOrder] = useState(null);
 const [sortField, setSortField] = useState(null);

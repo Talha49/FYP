@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 
-const Dialog = ({
+function Dialog ({
   isOpen,
   onClose,
   children,
@@ -10,7 +10,7 @@ const Dialog = ({
   padding,
   customButton,
   minWidth=400, 
-}) => {
+}) {
   const dialogRef = useRef(null);
 
   const [minwidth, setMinwidth] = useState(minWidth)

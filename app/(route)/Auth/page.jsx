@@ -4,7 +4,7 @@ import Register from "./_components/Register";
 import Login from "./_components/Login";
 import { useSession } from "next-auth/react";
 
-const Auth = () => {
+function Auth() {
   const [activeTab, setActiveTab] = useState("register"); // Default tab is 'login'
 
   const handleTabClick = (tab) => {

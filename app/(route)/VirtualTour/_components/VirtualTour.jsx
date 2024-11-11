@@ -5,7 +5,7 @@ import { BarLoader, ClockLoader } from "react-spinners";
 import axios from "axios";
 import { MdOutlineDelete, MdModeEdit } from "react-icons/md";
 
-const VirtualTourComponent = () => {
+function VirtualTourComponent() {
   const [loading, setLoading] = useState(false);
   const [framePoints, setFramePoints] = useState([]);
   const [showModal, setShowModal] = useState(false);

@@ -15,7 +15,7 @@ import { PiVirtualRealityFill } from "react-icons/pi";
 import { MdOutlineSpaceDashboard } from "react-icons/md";
 
 
-const SideNav = () => {
+function SideNav() {
   const [isOpen, setIsOpen] = useState(false);
 
   const [openCaptures, setopenCaptures] = useState(false);

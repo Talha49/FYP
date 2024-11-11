@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 
-const ActiveSheetsComp = () => {
+function ActiveSheetsComp(){
 
   const sheets = [
     { id: 1, title: 'Floor 1', lastactive: 'Last active Jan 10, 2019', image: '/floor2.jpg' },
