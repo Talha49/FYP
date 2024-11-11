@@ -13,11 +13,11 @@ import FieldNotesModal from "../FieldNotesModal/FieldNotesModal";
 import CaptureModal from "../CaptureModal/CaptureModal";
 import { PiVirtualRealityFill } from "react-icons/pi";
 import { MdOutlineSpaceDashboard } from "react-icons/md";
+import { LuWorkflow } from "react-icons/lu";
+import { useSession } from "next-auth/react";
 
-
-function SideNav() {
+const SideNav = () => {
   const [isOpen, setIsOpen] = useState(false);
-
   const [openCaptures, setopenCaptures] = useState(false);
   const [openFieldnote, setopenFieldnote] = useState(false);
 
@@ -41,7 +41,9 @@ function SideNav() {
           <li className="flex items-center p-4  cursor-pointer">
             <FaHome className="icon text-xl" />
             {isOpen && (
-              <span className="ml-4 text-black text-sm hidden md:inline">Home</span>
+              <span className="ml-4 text-black text-sm hidden md:inline">
+                Home
+              </span>
             )}
           </li>
         </Link>
@@ -49,7 +51,9 @@ function SideNav() {
           <li className="flex items-center p-4  cursor-pointer">
             <MdOutlineSpaceDashboard className="icon text-xl" />
             {isOpen && (
-              <span className="ml-4 text-black text-sm hidden md:inline">Dashboard</span>
+              <span className="ml-4 text-black text-sm hidden md:inline">
+                Dashboard
+              </span>
             )}
           </li>
         </Link>
@@ -57,7 +61,9 @@ function SideNav() {
           <li className="flex items-center p-4  cursor-pointer ">
             <GoProjectSymlink className="icon text-xl" />
             {isOpen && (
-              <span className="ml-4 text-black text-sm hidden md:inline">Projects</span>
+              <span className="ml-4 text-black text-sm hidden md:inline">
+                Projects
+              </span>
             )}
           </li>
         </Link>
@@ -66,7 +72,24 @@ function SideNav() {
           <li className="flex items-center p-4  cursor-pointer">
             <RiAdminLine className="icon text-xl" />
             {isOpen && (
-              <span className="ml-4 text-black text-sm hidden md:inline">Admin</span>
+              <span className="ml-4 text-black text-sm hidden md:inline">
+                Admin
+              </span>
+            )}
+          </li>
+        </Link>
+
+        <Link
+          href={`http://localhost:3001`}
+          // target="_blank"
+          className="flex items-center hover:bg-blue-200"
+        >
+          <li className="flex items-center p-4  cursor-pointer">
+            <LuWorkflow className="icon text-xl" />
+            {isOpen && (
+              <span className="ml-4 text-black text-sm hidden md:inline">
+                WorkFlow
+              </span>
             )}
           </li>
         </Link>
@@ -77,7 +100,9 @@ function SideNav() {
           <li className="flex items-center p-4  cursor-pointer">
             <PiRadioactive className="icon text-xl" />
             {isOpen && (
-              <span className="ml-4 text-black text-sm hidden md:inline">Active</span>
+              <span className="ml-4 text-black text-sm hidden md:inline">
+                Active
+              </span>
             )}
           </li>
         </Link>
@@ -93,7 +118,9 @@ function SideNav() {
           <li className="flex items-center p-4  cursor-pointer">
             <IoPricetagsOutline className="icon text-xl" />
             {isOpen && (
-              <span className="ml-4 text-black text-sm hidden md:inline">Captures</span>
+              <span className="ml-4 text-black text-sm hidden md:inline">
+                Captures
+              </span>
             )}
           </li>
         </Link>
@@ -109,7 +136,9 @@ function SideNav() {
           <li className="flex items-center p-4 cursor-pointer">
             <TbArrowRoundaboutLeft className="icon text-xl" />
             {isOpen && (
-              <span className="ml-4 text-black text-sm hidden md:inline">FieldNotes</span>
+              <span className="ml-4 text-black text-sm hidden md:inline">
+                FieldNotes
+              </span>
             )}
           </li>
         </Link>
@@ -119,9 +148,11 @@ function SideNav() {
           className="flex items-center hover:bg-blue-200"
         >
           <li className="flex items-center p-4 cursor-pointer">
-            <PiVirtualRealityFill  className="icon text-xl" />
+            <PiVirtualRealityFill className="icon text-xl" />
             {isOpen && (
-              <span className="ml-4 text-black text-sm hidden md:inline">VirtualTour</span>
+              <span className="ml-4 text-black text-sm hidden md:inline">
+                VirtualTour
+              </span>
             )}
           </li>
         </Link>
@@ -132,10 +163,14 @@ function SideNav() {
           setopenCaptures(false);
         }}
         widthClass="w-[400px]"
-        
       >
-        <div><CaptureModal title={"Captures"} onClose={() =>setopenCaptures(false)}/></div>
-      </Dialog> 
+        <div>
+          <CaptureModal
+            title={"Captures"}
+            onClose={() => setopenCaptures(false)}
+          />
+        </div>
+      </Dialog>
       <Dialog
         isOpen={openFieldnote}
         onClose={() => {
@@ -144,7 +179,12 @@ function SideNav() {
         widthClass="w-[600px]"
         minWidth="500"
       >
-        <div><FieldNotesModal title={"Field Notes"} onClose={() =>setopenFieldnote(false)}  /></div>
+        <div>
+          <FieldNotesModal
+            title={"Field Notes"}
+            onClose={() => setopenFieldnote(false)}
+          />
+        </div>
       </Dialog>
     </div>
   );
