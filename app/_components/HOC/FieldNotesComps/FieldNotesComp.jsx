@@ -25,42 +25,37 @@ const ImageComponent = ({
   width,
   height,
   updateImage,
-  imageType, // 'groundFloor' or 'lastFloor'
-  taskId
+  imageType,
+  taskId,
+  editmode = false, // Add editmode prop with default value
 }) => {
   const dispatch = useDispatch();
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
-    if (file) {
-      try {
-        // Upload to Firebase
-        const storageRef = ref(storage, `images/${imageType}/${file.name}`);
-        const snapshot = await uploadBytes(storageRef, file);
-        const downloadURL = await getDownloadURL(snapshot.ref);
+    if (!editmode || !file) return; // Early return if not in edit mode or no file selected
 
-        // Update the image in the component state and parent component
-        updateImage(downloadURL);
+    try {
+      // Upload to Firebase
+      const storageRef = ref(storage, `images/${imageType}/${file.name}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
 
-        // Prepare the update data
-        const updateData = {
-          [imageType === 'groundFloor' ? 'groundFloorImages' : 'lastFloorImages']: [{ url: downloadURL }],
-        };
+      // Update the image in the component state and parent component
+      updateImage(downloadURL);
 
-        // Dispatch the updateTask action
-        dispatch(updateTask({ taskId, updateData }));
+      // Prepare the update data
+      const updateData = {
+        [imageType === 'groundFloor' ? 'groundFloorImages' : 'lastFloorImages']: [{ url: downloadURL }],
+      };
 
-      } catch (error) {
-        console.error('Error updating image:', error);
-        // Optionally, you can show an error message here
-      }
+      // Dispatch the updateTask action
+      dispatch(updateTask({ taskId, updateData }));
+
+    } catch (error) {
+      console.error('Error updating image:', error);
     }
   };
-
-
-   
- 
-
 
   return (
     <div className="relative overflow-hidden rounded-lg shadow-md bg-white">
@@ -87,7 +82,7 @@ const ImageComponent = ({
           }}
         />
       </div>
-      {showChangePhoto && (
+      {showChangePhoto && editmode && ( // Only show change photo button in edit mode
         <div className="absolute top-2 left-2">
           <label className="p-2 bg-gray-200 rounded text-xs hover:bg-gray-300 transition-colors cursor-pointer">
             Change photo
@@ -110,7 +105,7 @@ const ImageComponent = ({
           </button>
         </div>
       )}
-      {showToggle && (
+      {showToggle && editmode && ( // Only show toggle in edit mode
         <div className="absolute bottom-2 right-2">
           <label className="relative inline-block h-6 w-12 cursor-pointer rounded-full bg-gray-300 transition [-webkit-tap-highlight-color:_transparent] has-[:checked]:bg-blue-500">
             <input className="peer sr-only" type="checkbox" />
@@ -138,7 +133,8 @@ const GroundFloorImageSection = ({
   onPrevious,
   onNext,
   updateImage,
-  taskId
+  taskId,
+  editmode, // Add editmode prop
 }) => {
   return (
     <div className="mb-2">
@@ -163,6 +159,7 @@ const GroundFloorImageSection = ({
         updateImage={(newUrl) => updateImage(newUrl, currentIndex)}
         imageType="groundFloor"
         taskId={taskId}
+        editmode={editmode} // Pass editmode prop
       />
       <div className="flex justify-between items-center mt-4">
         <button onClick={onPrevious} className="text-blue-600 hover:underline">
@@ -199,7 +196,8 @@ const LastFloorImageSection = ({
   onMouseLeave, 
   dragging,
   updateImage,
-  taskId
+  taskId,
+  editmode, // Add editmode prop
 }) => {
   return (
     <div className="mb-2">
@@ -224,6 +222,7 @@ const LastFloorImageSection = ({
         updateImage={updateImage}
         imageType="lastFloor"
         taskId={taskId}
+        editmode={editmode} // Pass editmode prop
       />
     </div>
   );
