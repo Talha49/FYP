@@ -13,8 +13,14 @@ import {
   GroundFloorImageSection,
   LastFloorImageSection,
 } from "../HOC/FieldNotesComps/FieldNotesComp";
-import { addAttachments, deleteAttachment, updateTask } from "@/lib/Features/TaskSlice";
+import {
+  addAttachments,
+  deleteAttachment,
+  getTasks,
+  updateTask,
+} from "@/lib/Features/TaskSlice";
 import { useToast } from "../CustomToast/Toast";
+import { useSession } from "next-auth/react";
 
 function FieldNoteModalCardsModal({ onClose, note, token }) {
   const dispatch = useDispatch();
@@ -43,6 +49,20 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
 
   const userStatus = useSelector((state) => state.UserSlice.status);
   const users = useSelector((state) => state.UserSlice.users);
+  const { data: session } = useSession();
+  const [authenticatedUser, setAuthenticatedUser] = useState(null);
+
+  useEffect(() => {
+    if (session) {
+      setAuthenticatedUser(session?.user?.userData);
+    }
+  }, [session]);
+
+  useEffect(() => {
+    if (authenticatedUser?.id) {
+      dispatch(getTasks(authenticatedUser.id));
+    }
+  }, [dispatch, authenticatedUser?.id, localNote.attachments]);
 
   // Fetch users if needed
   useEffect(() => {
@@ -94,7 +114,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
     return changes;
   };
 
-  console.log(localNote)
+  console.log(localNote);
   const handleSave = async () => {
     // Validate required fields
     if (!localNote.description || !localNote.room || !localNote.floor) {
@@ -130,8 +150,10 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
     };
 
     try {
-      await dispatch(updateTask({ taskId: localNote._id, updateData })).unwrap();
-      
+      await dispatch(
+        updateTask({ taskId: localNote._id, updateData })
+      ).unwrap();
+
       // Show single success message if multiple fields changed
       if (changedFields.length > 1) {
         showToast("Task updated successfully", "success");
@@ -238,38 +260,39 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
     }
   };
 
-  
-
-
   const handleFileRemove = async (index) => {
     if (!isEditing) return;
 
     try {
-        const attachmentToDelete = localNote.attachments[index];
-        
-        // Optimistically update UI
-        const updatedAttachments = localNote.attachments.filter((_, i) => i !== index);
-        setLocalNote(prev => ({
-            ...prev,
-            attachments: updatedAttachments
-        }));
+      const attachmentToDelete = localNote.attachments[index];
 
-        // Call Redux action to delete from backend
-        await dispatch(deleteAttachment({
-            taskId: localNote._id,
-            attachmentId: attachmentToDelete._id
-        })).unwrap();
+      // Optimistically update UI
+      const updatedAttachments = localNote.attachments.filter(
+        (_, i) => i !== index
+      );
+      setLocalNote((prev) => ({
+        ...prev,
+        attachments: updatedAttachments,
+      }));
 
-        showToast("Attachment deleted successfully", "success");
+      // Call Redux action to delete from backend
+      await dispatch(
+        deleteAttachment({
+          taskId: localNote._id,
+          attachmentId: attachmentToDelete._id,
+        })
+      ).unwrap();
+
+      showToast("Attachment deleted successfully", "success");
     } catch (error) {
-        // Revert optimistic update on error
-        setLocalNote(prev => ({
-            ...prev,
-            attachments: originalNote.attachments
-        }));
-        showToast(error.message || "Failed to delete attachment", "error");
+      // Revert optimistic update on error
+      setLocalNote((prev) => ({
+        ...prev,
+        attachments: originalNote.attachments,
+      }));
+      showToast(error.message || "Failed to delete attachment", "error");
     }
-};
+  };
   const handleFileDownload = async (url) => {
     try {
       const link = document.createElement("a");
@@ -625,120 +648,148 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
 
             {/* Attachments */}
             <div>
-        <label className="block text-gray-600">Attachments</label>
-        <div className="border-2 border-dashed border-gray-300 rounded p-4 mt-1 overflow-auto h-40 custom-scrollbars">
-          {localNote.attachments.length === 0 ? (
-            <div className="text-center">
-              <AiOutlinePlus className="mx-auto text-2xl text-gray-600" />
-              <p className="mt-2 text-gray-600">No attachments added yet.</p>
-              {isEditing && !isUploadingFiles && (
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  Add Attachment
-                </button>
-              )}
-            </div>
-          ) : (
-            <div>
-              {localNote.attachments.map((file, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between items-center mt-2 p-2 border border-gray-300 rounded"
-                >
-                  <span className="text-gray-700">
-                    {getFileIcon(file.url)} {`Attachment ${index + 1}`}
-                    {file.temporary && (
-                      <span className="ml-2 text-blue-500">(Uploading...)</span>
-                    )}
-                  </span>
-                  {!file.temporary && (
-                    <>
+              <label className="block text-gray-600">Attachments</label>
+              <div className="border-2 border-dashed border-gray-300 rounded p-4 mt-1 overflow-auto h-40 custom-scrollbars">
+                {localNote.attachments.length === 0 ? (
+                  <div className="text-center">
+                    <AiOutlinePlus className="mx-auto text-2xl text-gray-600" />
+                    <p className="mt-2 text-gray-600">
+                      No attachments added yet.
+                    </p>
+                    {isEditing && !isUploadingFiles && (
                       <button
-                        onClick={() => handleFileDownload(file.url)}
-                        className="ml-2 px-2 py-1 bg-blue-500 text-white rounded"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                       >
-                        <FaDownload />
+                        Add Attachment
                       </button>
-                      {isEditing && (
-                        <button
-                          onClick={() => handleFileRemove(index)}
-                          className="ml-2 px-2 py-1 bg-red-600 text-white rounded"
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
-              ))}
-              {isEditing && !isUploadingFiles && (
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    {localNote.attachments.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex justify-between items-center mt-2 p-2 border border-gray-300 rounded"
+                      >
+                        <span className="text-gray-700">
+                          {getFileIcon(file.url)} {`Attachment ${index + 1}`}
+                          {file.temporary && (
+                            <span className="ml-2 text-blue-500">
+                              (Uploading...)
+                            </span>
+                          )}
+                        </span>
+                        {!file.temporary && (
+                          <>
+                            <button
+                              onClick={() => handleFileDownload(file.url)}
+                              className="ml-2 px-2 py-1 bg-blue-500 text-white rounded"
+                            >
+                              <FaDownload />
+                            </button>
+                            {isEditing && (
+                              <button
+                                onClick={() => handleFileRemove(index)}
+                                className="ml-2 px-2 py-1 bg-red-600 text-white rounded"
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    ))}
+                    {isEditing && !isUploadingFiles && (
+                      <button
+                        onClick={() => {
+                          fileInputRef.current?.click();
+                        }}
+                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                      >
+                        Add More Attachments
+                      </button>
+                    )}
+                    {isUploadingFiles && (
+                      <div className="mt-4">
+                        <div className="w-full bg-gray-200 rounded-full h-2.5">
+                          <div
+                            className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
+                        <p className="text-center mt-2 text-sm text-gray-600">
+                          Uploading... {uploadProgress}%
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                onChange={handleFileChange}
+                multiple
+              />
+            </div>
+
+            {/* Modified Footer Actions */}
+            <div className="p-4 flex justify-end gap-x-2 border-t">
+              <button
+                className={`px-4 py-2 rounded transition-colors ${
+                  isEditing
+                    ? "bg-blue-500 hover:bg-blue-600"
+                    : "bg-blue-500 hover:bg-blue-600"
+                } text-white relative ${
+                  isSaving ? "opacity-75 cursor-not-allowed" : ""
+                }`}
+                onClick={isEditing ? handleSave : toggleEditMode}
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <div className="flex items-center">
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Saving...
+                  </div>
+                ) : isEditing ? (
+                  "Save Changes"
+                ) : (
+                  "Edit"
+                )}
+              </button>
+              {isEditing && !isSaving && (
                 <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded transition-colors"
+                  onClick={toggleEditMode}
                 >
-                  Add More Attachments
+                  Cancel
                 </button>
               )}
-              {isUploadingFiles && (
-                <div className="mt-4">
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div
-                      className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                      style={{ width: `${uploadProgress}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-center mt-2 text-sm text-gray-600">
-                    Uploading... {uploadProgress}%
-                  </p>
-                </div>
-              )}
             </div>
-          )}
-        </div>
-        <input
-          type="file"
-          ref={fileInputRef}
-          style={{ display: "none" }}
-          onChange={handleFileChange}
-          multiple
-        />
-      </div>
-
-      {/* Modified Footer Actions */}
-      <div className="p-4 flex justify-end gap-x-2 border-t">
-        <button
-          className={`px-4 py-2 rounded transition-colors ${
-            isEditing ? "bg-blue-500 hover:bg-blue-600" : "bg-blue-500 hover:bg-blue-600"
-          } text-white relative ${isSaving ? 'opacity-75 cursor-not-allowed' : ''}`}
-          onClick={isEditing ? handleSave : toggleEditMode}
-          disabled={isSaving}
-        >
-          {isSaving ? (
-          <div className="flex items-center">
-            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Saving...
           </div>
-        ) : (
-          isEditing ? "Save Changes" : "Edit"
-        )}
-        </button>
-        {isEditing && !isSaving && (
-        <button
-          className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded transition-colors"
-          onClick={toggleEditMode}
-        >
-          Cancel
-        </button>
-      )}
+        </div>
       </div>
-    </div>
-    </div>
-    </div>
     </div>
   );
 }

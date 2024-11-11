@@ -1,9 +1,9 @@
-import React from 'react';
+import React from "react";
 import { FaSortAmountDown } from "react-icons/fa";
 import { CiExport } from "react-icons/ci";
-import Link from 'next/link';
+import Link from "next/link";
 
-const FilterSearchComponent = ({ 
+const FilterSearchComponent = ({
   title,
   onClose,
   searchParam,
@@ -13,7 +13,7 @@ const FilterSearchComponent = ({
   filterButtons,
   resultCount,
   customButtons = [],
-  onClearFilters
+  onClearFilters,
 }) => {
   const toggleFilter = (filter) => {
     setActiveFilters((prev) =>
@@ -27,7 +27,7 @@ const FilterSearchComponent = ({
   const getSearchPlaceholder = () => {
     if (activeFilters.length === 0) return `Search ${title}`;
     if (activeFilters.length > 1) return "Search in selected filters";
-    
+
     const activeFilter = activeFilters[0];
     return `Search ${activeFilter.toLowerCase()}`;
   };
@@ -37,10 +37,17 @@ const FilterSearchComponent = ({
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">{title}</h1>
         {onClose && (
-          <button className="hover:bg-gray-200 p-2 rounded-md transition-colors" onClick={onClose}>
+          <button
+            className="hover:bg-gray-200 p-2 rounded-md transition-colors"
+            onClick={onClose}
+          >
             <span className="sr-only">Close</span>
             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                clipRule="evenodd"
+              />
             </svg>
           </button>
         )}
@@ -61,7 +68,11 @@ const FilterSearchComponent = ({
           Export
         </button>
         {customButtons.map((button, index) => (
-          <button key={index} {...button.props} className="bg-transparent border p-2 rounded-md hover:bg-gray-100 transition-colors">
+          <button
+            key={index}
+            {...button.props}
+            className="bg-transparent border p-2 rounded-md hover:bg-gray-100 transition-colors"
+          >
             {button.icon && button.icon}
             {button.text}
           </button>
@@ -90,10 +101,9 @@ const FilterSearchComponent = ({
           >
             Clear all
           </button>
-          <Link href='/Upload'
-          target='_' 
+          <Link
+            href="/Upload"
             className="text-white p-2 text-xs  rounded-md button"
-            
           >
             Upload
           </Link>
