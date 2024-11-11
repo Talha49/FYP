@@ -81,7 +81,7 @@ const SideNav = () => {
 
         <Link
           href={`http://localhost:3001`}
-          // target="_blank"
+          target="_blank"
           className="flex items-center hover:bg-blue-200"
         >
           <li className="flex items-center p-4  cursor-pointer">
