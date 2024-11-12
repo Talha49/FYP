@@ -2,10 +2,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { CiZoomIn, CiZoomOut } from "react-icons/ci";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from '@/lib/firebase/firebaseConfig';
-import { useDispatch } from 'react-redux';
-import { updateTask } from '@/lib/Features/TaskSlice';
+
 
 const ImageComponent = ({ 
   imageSrc, 
@@ -19,42 +16,19 @@ const ImageComponent = ({
   onMouseUp, 
   onMouseLeave, 
   dragging,
-  showChangePhoto = true,
   showZoomControls = true,
-  showToggle = false,
   width,
   height,
-  updateImage,
   imageType,
   taskId,
   editmode = false, // Add editmode prop with default value
 }) => {
-  const dispatch = useDispatch();
 
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (!editmode || !file) return; // Early return if not in edit mode or no file selected
 
-    try {
-      // Upload to Firebase
-      const storageRef = ref(storage, `images/${imageType}/${file.name}`);
-      const snapshot = await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(snapshot.ref);
-
-      // Update the image in the component state and parent component
-      updateImage(downloadURL);
-
-      // Prepare the update data
-      const updateData = {
-        [imageType === 'groundFloor' ? 'groundFloorImages' : 'lastFloorImages']: [{ url: downloadURL }],
-      };
-
-      // Dispatch the updateTask action
-      dispatch(updateTask({ taskId, updateData }));
-
-    } catch (error) {
-      console.error('Error updating image:', error);
-    }
+   
   };
 
   return (
@@ -82,19 +56,7 @@ const ImageComponent = ({
           }}
         />
       </div>
-      {showChangePhoto && editmode && ( // Only show change photo button in edit mode
-        <div className="absolute top-2 left-2">
-          <label className="p-2 bg-gray-200 rounded text-xs hover:bg-gray-300 transition-colors cursor-pointer">
-            Change photo
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </label>
-        </div>
-      )}
+    
       {showZoomControls && (
         <div className="absolute top-2 right-2 flex flex-col gap-y-2">
           <button onClick={onZoomIn} className="p-2 bg-gray-200 rounded hover:bg-gray-300 transition-colors">
@@ -105,37 +67,38 @@ const ImageComponent = ({
           </button>
         </div>
       )}
-      {showToggle && editmode && ( // Only show toggle in edit mode
-        <div className="absolute bottom-2 right-2">
-          <label className="relative inline-block h-6 w-12 cursor-pointer rounded-full bg-gray-300 transition [-webkit-tap-highlight-color:_transparent] has-[:checked]:bg-blue-500">
-            <input className="peer sr-only" type="checkbox" />
-            <span className="absolute inset-y-0 start-0 m-1 h-4 w-4 rounded-full bg-white transition-all peer-checked:start-6"></span>
-          </label>
-        </div>
-      )}
+      
     </div>
   );
 };
 
 // GroundFloorImageSection.js
-const GroundFloorImageSection = ({ 
-  images, 
-  currentIndex, 
-  zoomLevel, 
-  position, 
-  onZoomIn, 
-  onZoomOut, 
-  onMouseMove, 
-  onMouseDown, 
-  onMouseUp, 
-  onMouseLeave, 
+const GroundFloorImageSection = ({
+  images,
+  currentIndex,
+  zoomLevel,
+  position,
+  onZoomIn,
+  onZoomOut,
+  onMouseMove,
+  onMouseDown,
+  onMouseUp,
+  onMouseLeave,
   dragging,
   onPrevious,
   onNext,
-  updateImage,
   taskId,
-  editmode, // Add editmode prop
+  editmode,
 }) => {
+  
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!editmode || !file) return;
+
+   
+  };
+
   return (
     <div className="mb-2">
       <h2 className="text-md font-medium my-2 bg-gray-200 p-2 rounded-md">Site Inspection Photos</h2>
@@ -151,15 +114,12 @@ const GroundFloorImageSection = ({
         onMouseUp={onMouseUp}
         onMouseLeave={onMouseLeave}
         dragging={dragging}
-        showChangePhoto={true}
         showZoomControls={true}
-        showToggle={true}
         width={600}
         height={400}
-        updateImage={(newUrl) => updateImage(newUrl, currentIndex)}
         imageType="groundFloor"
         taskId={taskId}
-        editmode={editmode} // Pass editmode prop
+        editmode={editmode}
       />
       <div className="flex justify-between items-center mt-4">
         <button onClick={onPrevious} className="text-blue-600 hover:underline">
@@ -182,7 +142,6 @@ const GroundFloorImageSection = ({
     </div>
   );
 };
-
 // LastFloorImageSection.js
 const LastFloorImageSection = ({ 
   image, 
@@ -195,7 +154,6 @@ const LastFloorImageSection = ({
   onMouseUp, 
   onMouseLeave, 
   dragging,
-  updateImage,
   taskId,
   editmode, // Add editmode prop
 }) => {
@@ -214,12 +172,9 @@ const LastFloorImageSection = ({
         onMouseUp={onMouseUp}
         onMouseLeave={onMouseLeave}
         dragging={dragging}
-        showChangePhoto={true}
         showZoomControls={true}
-        showToggle={false}
         width={500}
         height={350}
-        updateImage={updateImage}
         imageType="lastFloor"
         taskId={taskId}
         editmode={editmode} // Pass editmode prop

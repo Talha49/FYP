@@ -114,7 +114,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
     return changes;
   };
 
-  console.log(localNote);
+  
   const handleSave = async () => {
     // Validate required fields
     if (!localNote.description || !localNote.room || !localNote.floor) {
@@ -130,7 +130,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
     }
 
     setIsSaving(true);
-
+    console.log("LC" ,localNote);
     const updateData = {
       userId: localNote.userId,
       username: localNote.username,
@@ -260,39 +260,80 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
     }
   };
 
-  const handleFileRemove = async (index) => {
-    if (!isEditing) return;
+//   const handleFileRemove = async (index) => {
+//     if (!isEditing) return;
 
-    try {
+//     try {
+//         const attachmentToDelete = localNote.attachments[index];
+//         console.log("Attachment to delete:", attachmentToDelete); // Debug: Check attachment details
+//         console.log("Attachment ID:", attachmentToDelete?._id); // Debug: Ensure attachment has an ID
+//         console.log("TaskID:", localNote._id); // Debug: Check Task ID
+
+//         if (!attachmentToDelete || !attachmentToDelete._id) {
+//             throw new Error("Attachment ID not found.");
+//         }
+
+//         // Optimistically update UI
+//         const updatedAttachments = localNote.attachments.filter((_, i) => i !== index);
+//         setLocalNote((prev) => ({
+//             ...prev,
+//             attachments: updatedAttachments,
+//         }));
+//         console.log("Updated attachments after delete:", updatedAttachments); // Debug: Check updated UI state
+
+//         // Direct API call to delete from backend
+//         const response = await fetch(`/api/New/DeleteAttachment/${localNote._id}/${attachmentToDelete._id}`, {
+//             method: 'DELETE',
+//         });
+
+//         const result = await response.json();
+//         if (response.ok) {
+//             console.log("Response from deleteAttachment API:", result); // Debug: Check API response
+//             showToast("Attachment deleted successfully", "success");
+//         } else {
+//             throw new Error(result.error || "Failed to delete attachment");
+//         }
+//     } catch (error) {
+//         console.error("Error in handleFileRemove:", error.message || error); // Debug: Log any error encountered
+//         // Revert optimistic update on error
+//         setLocalNote((prev) => ({
+//             ...prev,
+//             attachments: originalNote.attachments,
+//         }));
+//         showToast(error.message || "Failed to delete attachment", "error");
+//     }
+// };
+
+const handleFileRemove = async (index) => {
+  if (!isEditing) return;
+
+  try {
       const attachmentToDelete = localNote.attachments[index];
-
+      
       // Optimistically update UI
-      const updatedAttachments = localNote.attachments.filter(
-        (_, i) => i !== index
-      );
-      setLocalNote((prev) => ({
-        ...prev,
-        attachments: updatedAttachments,
+      const updatedAttachments = localNote.attachments.filter((_, i) => i !== index);
+      setLocalNote(prev => ({
+          ...prev,
+          attachments: updatedAttachments
       }));
 
       // Call Redux action to delete from backend
-      await dispatch(
-        deleteAttachment({
+      await dispatch(deleteAttachment({
           taskId: localNote._id,
-          attachmentId: attachmentToDelete._id,
-        })
-      ).unwrap();
+          attachmentId: attachmentToDelete._id
+      })).unwrap();
 
       showToast("Attachment deleted successfully", "success");
-    } catch (error) {
+  } catch (error) {
       // Revert optimistic update on error
-      setLocalNote((prev) => ({
-        ...prev,
-        attachments: originalNote.attachments,
+      setLocalNote(prev => ({
+          ...prev,
+          attachments: originalNote.attachments
       }));
       showToast(error.message || "Failed to delete attachment", "error");
-    }
-  };
+  }
+};
+
   const handleFileDownload = async (url) => {
     try {
       const link = document.createElement("a");
@@ -405,7 +446,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
             <span>Created At: {formatDate(localNote.createdAt)}</span>
           </p>
         </div>
-        <div className="flex items-center gap-x-2 gap-y-1 mt-2 sm:mt-0">
+        {/* <div className="flex items-center gap-x-2 gap-y-1 mt-2 sm:mt-0">
           <button className="hover:bg-gray-200 p-2 rounded-md">
             <FaHandLizard size={15} />
           </button>
@@ -431,7 +472,13 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
           >
             <VscClose size={20} />
           </button>
-        </div>
+        </div> */}
+                  <button
+            className="hover:bg-gray-200 p-2 rounded-md"
+            onClick={onClose}
+          >
+            <VscClose size={20} />
+          </button>
       </div>
 
       {/* Main Content */}
@@ -453,14 +500,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
               onPrevious={handlePrevious}
               onNext={handleNext}
               images={localNote.groundFloorImages}
-              updateImage={(newUrl, index) => {
-                const newImages = [...localNote.groundFloorImages];
-                newImages[index] = { ...newImages[index], url: newUrl };
-                setLocalNote((prev) => ({
-                  ...prev,
-                  groundFloorImages: newImages,
-                }));
-              }}
+             
               taskId={localNote._id}
               editmode={isEditing}
             />
@@ -497,15 +537,6 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
               onMouseLeave={handleMouseUp2}
               dragging={dragging2}
               image={localNote.lastFloorImages[0]}
-              updateImage={(newUrl) => {
-                const newImages = [
-                  { ...localNote.lastFloorImages[0], url: newUrl },
-                ];
-                setLocalNote((prev) => ({
-                  ...prev,
-                  lastFloorImages: newImages,
-                }));
-              }}
               taskId={localNote._id}
               editmode={isEditing}
             />
@@ -690,11 +721,11 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
                             </button>
                             {isEditing && (
                               <button
-                                onClick={() => handleFileRemove(index)}
-                                className="ml-2 px-2 py-1 bg-red-600 text-white rounded"
-                              >
-                                Delete
-                              </button>
+                              onClick={() => handleFileRemove(index)}
+                              className="ml-2 px-2 py-1 bg-red-600 text-white rounded"
+                            >
+                              Delete
+                            </button>
                             )}
                           </>
                         )}
@@ -773,7 +804,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
                     Saving...
                   </div>
                 ) : isEditing ? (
-                  "Save Changes"
+                  "Save "
                 ) : (
                   "Edit"
                 )}

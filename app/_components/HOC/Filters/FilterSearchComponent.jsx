@@ -60,13 +60,13 @@ const FilterSearchComponent = ({
           value={searchParam}
           onChange={(e) => setSearchParam(e.target.value)}
         />
-        <button className="bg-transparent border p-2 rounded-md hover:bg-gray-100 transition-colors">
+        {/* <button className="bg-transparent border p-2 rounded-md hover:bg-gray-100 transition-colors">
           <FaSortAmountDown />
         </button>
         <button className="bg-transparent text-blue-700 border flex items-center gap-2 p-2 rounded-md hover:bg-blue-50 transition-colors">
           <CiExport />
           Export
-        </button>
+        </button> */}
         {customButtons.map((button, index) => (
           <button
             key={index}

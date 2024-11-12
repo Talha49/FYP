@@ -6,6 +6,8 @@ export async function DELETE(req, { params }) {
     await dbConnect();
     const { taskId, attachmentId } = params;
 
+    console.log("Ids =============>>>>", taskId, attachmentId);
+
     const task = await NewTask.findById(taskId);
     if (!task) {
       return NextResponse.json(
