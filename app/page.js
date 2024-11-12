@@ -16,10 +16,6 @@ export default function Home() {
        </div> */}
       
       <About/>
-      <About/>
-      <About/>
-      <About/>
-      <About/>
 
 
     </main>
