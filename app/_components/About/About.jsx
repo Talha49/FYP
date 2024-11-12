@@ -6,7 +6,7 @@ function About () {
 
         <div>
             <p className='text-2xl font-semibold'>Three Month Tentant Improvement</p>
-            <p>2330 Butano Drive Sacramento Country California United States 9280290 99</p>
+            <p>2330 Butano  Sacramento Country California United States 9280290 99</p>
             <br/><br/><br/>
             <div>
                 <h1 className='font-semibold text-2xl'>Active Sheets</h1>
