@@ -33,6 +33,8 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
   const [lastFloorImage, setLastFloorImage] = useState(localNote.lastFloorImages[0]);
   const [showChat, setShowChat] = useState(false); // State to control chat visibility
   const userStatus = useSelector((state) => state.UserSlice.status);
+  const [previousAssignee, setPreviousAssignee] = useState(note.assignee);
+  const [chatRoomCreated, setChatRoomCreated] = useState(false);
 
   useEffect(() => {
     if (userStatus === "idle") {
@@ -71,33 +73,47 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
 
    
     dispatch(updateTask({ taskId: localNote._id, updateData }))
-      .unwrap()
-      .then(() => {
-        setIsEditing(false);
+    .unwrap()
+    .then(() => {
+      setIsEditing(false);
 
-        // Show the chat if an assignee is selected
-        if (localNote.assignee) {
-          setShowChat(true); // Show chat after task is saved and assignee is selected
+      if (localNote.assignee) {
+        if (!chatRoomCreated) {
+          // Create the chat room once
           createChatRoom(localNote._id, localNote.assignee);
+          setChatRoomCreated(true); // Mark chat room as created
+          console.log('Chat room created for task');
         } else {
-          // setShowChat(false); // Hide chat if no assignee is selected
+          // If the room already exists, just update the participants
+          updateChatRoomParticipants(localNote._id, localNote.assignee);
+          console.log('Assignee updated in existing chat room');
         }
-      })
-      .catch((error) => {
-        console.error('Failed to update task:', error);
-      });
-  };
- // Create chat room based on task ID and assignee
- const createChatRoom = (taskId, assigneeId) => {
-  const chatRoomId = taskId; // Using task ID as chat room ID
+      } else {
+        console.log('No assignee selected');
+      }
+    })
+    .catch((error) => {
+      console.error('Failed to update task:', error);
+    });
+};
+
+// Function to create chat room once
+const createChatRoom = (taskId, assigneeId) => {
+  const chatRoomId = taskId; // Use task ID as chat room ID
   const participants = [assigneeId, localNote.userId]; // Assignee and assigner
 
   console.log(`Creating chat room with ID: ${chatRoomId}`);
   console.log(`Participants: ${participants.join(', ')}`);
 };
 
-// Check if an assignee is assigned and there are multiple participants
-const hasMultipleParticipants = localNote.assignee && localNote.userId && localNote.assignee !== localNote.userId;
+// Function to update chat room participants
+const updateChatRoomParticipants = (taskId, newAssigneeId) => {
+  const chatRoomId = taskId; // Using the same chat room ID
+  const participants = [newAssigneeId, localNote.userId]; // Updated assignee and assigner
+
+  console.log(`Updating chat room with ID: ${chatRoomId}`);
+  console.log(`New participants: ${participants.join(', ')}`);
+};
 
 
   const handleFileRemove = (index) => {
@@ -340,12 +356,12 @@ const hasMultipleParticipants = localNote.assignee && localNote.userId && localN
             </div>
               
       {/* Conditionally render ChatApp if there are multiple participants */}
-      {hasMultipleParticipants && (
+      
         <ChatApp
           chatRoomName={localNote.username} // Use task username (or name) here
           assignedUsers={[localNote.userId, localNote.assignee]} // Assigner and assignee
         />
-      )}
+      
     </div>
           {/* Right Section */}
           <div className="col-span-2 p-2 space-y-4">

@@ -17,6 +17,7 @@ const ChatApp = ({ chatRoomName, assignedUsers, currentUserId }) => {
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [showMessageDialog, setShowMessageDialog] = useState(false);
   const [selectedMessageIndex, setSelectedMessageIndex] = useState(null);
+  const [previousAssignee, setPreviousAssignee] = useState(null);
 
   const socket = useRef(null); // Socket instance as a ref to avoid re-initialization on re-renders
   const isConnected = useRef(false); // Flag to check if socket is connected
@@ -174,6 +175,57 @@ const ChatApp = ({ chatRoomName, assignedUsers, currentUserId }) => {
     }
   };
 
+  useEffect(() => {
+    // Load the last assigned user from localStorage
+    const storedAssignee = localStorage.getItem(`lastAssignee_${chatRoomName}`);
+    const currentAssignee = assignedUsers.length > 0 ? assignedUsers[assignedUsers.length - 1] : null;
+  
+    // Check if there's a change in assignee
+    if (storedAssignee && storedAssignee !== currentAssignee) {
+      // Send an unassign message if the previous assignee is different
+      const unassignMessage = {
+        text: `User ${storedAssignee} has been unassigned from this task.`,
+        sender: "System",
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        fullTimestamp: new Date().toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }),
+        isSystemMessage: true,
+      };
+  
+      setMessages((prevMessages) => {
+        const updatedMessages = [...prevMessages, unassignMessage];
+        localStorage.setItem(`chat_${chatRoomName}`, JSON.stringify(updatedMessages));
+        return updatedMessages;
+      });
+  
+      // Emit the unassign message to the server
+      socket.current.emit("sendMessage", unassignMessage);
+    }
+  
+    if (currentAssignee && storedAssignee !== currentAssignee) {
+      // Send an assign message if there's a new assignee
+      const assignMessage = {
+        text: `User ${currentAssignee} has been assigned to this task.`,
+        sender: "System",
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        fullTimestamp: new Date().toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }),
+        isSystemMessage: true,
+      };
+  
+      setMessages((prevMessages) => {
+        const updatedMessages = [...prevMessages, assignMessage];
+        localStorage.setItem(`chat_${chatRoomName}`, JSON.stringify(updatedMessages));
+        return updatedMessages;
+      });
+  
+      // Emit the assign message to the server
+      socket.current.emit("sendMessage", assignMessage);
+    }
+  
+    // Update `localStorage` with the current assignee
+    localStorage.setItem(`lastAssignee_${chatRoomName}`, currentAssignee);
+  }, [assignedUsers, chatRoomName]);
+  
+  
   return (
     <div className="w-full h-[600px] rounded-lg border border-gray-300 shadow-md flex flex-col">
       {/* Top Bar */}
@@ -225,9 +277,11 @@ const ChatApp = ({ chatRoomName, assignedUsers, currentUserId }) => {
           <div
             key={index}
             className={`w-fit max-w-[70%] p-3 rounded-lg ${
-              msg.senderId === currentUserId
-                ? "bg-blue-500 text-white ml-auto"
-                : "bg-gray-100 text-black mr-auto"
+              msg.isSystemMessage 
+                ? "bg-green-200 text-black mx-auto items-center gap-6  text-[9px] h-16 w-5"  // Styling for system messages
+                : msg.senderId === currentUserId
+                  ? "bg-blue-500 text-white ml-auto" // Styling for user's own messages
+                  : "bg-gray-100 text-black mr-auto" // Styling for other users' messages
             } relative`}
             onDoubleClick={() => openMessageDialog(index)}
           >
