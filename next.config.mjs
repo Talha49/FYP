@@ -16,6 +16,12 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'platform-lookaside.fbsbx.com', // Add Facebook platform domain here
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
