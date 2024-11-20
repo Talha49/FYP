@@ -125,6 +125,11 @@ export const authOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      authorization: {
+        params: {
+          prompt: "select_account", // Force Google to show the account picker
+        },
+      },
     }),
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID,
@@ -135,23 +140,23 @@ export const authOptions = {
     async signIn({ user, account, profile }) {
       try {
         await dbConnect();
-
+  
         const existingUser = await User.findOne({ email: user.email });
         let userData;
-
+  
         // Check if login is via a social provider (Google or Facebook)
         const isSocialLogin =
           account.provider !== "login" && account.provider !== "register"; // CredentialsProvider has id "login"
-
+  
         if (existingUser) {
           existingUser.fullName = user.name || existingUser.fullName;
           existingUser.image = user.image || existingUser.image;
-
+  
           // Update isSocialLogin only for social logins
           if (isSocialLogin) {
             existingUser.isSocialLogin = true;
           }
-
+  
           const token = jwt.sign(
             { userId: existingUser._id, email: existingUser.email },
             JWT_SECRET,
@@ -164,8 +169,12 @@ export const authOptions = {
             fullName: existingUser.fullName,
             email: existingUser.email,
             image: existingUser.image,
-            isSocialLogin: existingUser.isSocialLogin, // This will reflect the correct value
+            isSocialLogin: existingUser.isSocialLogin,
             token: existingUser.token,
+            contact: existingUser.contact,
+            address: existingUser.address,
+            city: existingUser.city,
+            createdAt: existingUser.createdAt,
           };
         } else {
           const newUser = new User({
@@ -188,45 +197,60 @@ export const authOptions = {
             image: newUser.image,
             isSocialLogin: newUser.isSocialLogin,
             token: newUser.token,
+            contact: newUser.contact,
+            address: newUser.address,
+            city: newUser.city,
+            createdAt: newUser.createdAt,
           };
         }
-
-        // Pass some data to the client-side via the token
+  
+        // Attach userData to the user object for JWT and session callbacks
         user.userData = userData;
-
+  
         return true;
       } catch (error) {
         console.error("Error during sign in:", error);
         return false;
       }
     },
-
-    async jwt({ token, user, account }) {
-      if (account) {
-        token.accessToken = account.access_token;
-        token.refreshToken = account.refresh_token;
-      }
-
+  
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.userData = user.userData;
+        token.userData = user.userData; // Pass all fields to the token
       }
-
+  
       return token;
     },
-
+  
     async session({ session, token }) {
       if (token) {
         session.accessToken = token.accessToken;
         session.refreshToken = token.refreshToken;
-        session.user.id = token.sub;
-        session.user.userData = token.userData;
+        session.user.id = token.id;
+    
+        // Fetch updated user data from the database
+        await dbConnect();
+        const updatedUser = await User.findOne({ email: token.userData.email }).lean();
+    
+        session.user.userData = {
+          id: updatedUser._id,
+          fullName: updatedUser.fullName,
+          email: updatedUser.email,
+          image: updatedUser.image,
+          isSocialLogin: updatedUser.isSocialLogin,
+          token: updatedUser.token,
+          contact: updatedUser.contact,
+          address: updatedUser.address,
+          city: updatedUser.city,
+          createdAt: updatedUser.createdAt,
+        };
       }
-
+    
       return session;
     },
   },
-
+  
   pages: {
     signIn: "/Auth",
   },

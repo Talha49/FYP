@@ -63,13 +63,6 @@ function FieldNoteModalCardsModal({ onClose, note, token, setShowChat, setChatRo
       });
   };
 
-  // ... rest of the component code
-
-  // Remove the ChatApp component from here
-
-  return (
-    // ... existing JSX
-  );
 }function FieldNoteModalCardsModal({ onClose, note, token, setShowChat, setChatRoomName, setAssignedUsers }) {
   // ... existing code
 
@@ -97,13 +90,7 @@ function FieldNoteModalCardsModal({ onClose, note, token, setShowChat, setChatRo
       });
   };
 
-  // ... rest of the component code
 
-  // Remove the ChatApp component from here
-
-  return (
-    // ... existing JSX
-  );
 }function FieldNoteModalCardsModal({ onClose, note, token, setShowChat, setChatRoomName, setAssignedUsers }) {
   // ... existing code
 
@@ -131,11 +118,5 @@ function FieldNoteModalCardsModal({ onClose, note, token, setShowChat, setChatRo
       });
   };
 
-  // ... rest of the component code
 
-  // Remove the ChatApp component from here
-
-  return (
-    // ... existing JSX
-  );
 }
