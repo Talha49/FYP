@@ -140,23 +140,28 @@ export const authOptions = {
     async signIn({ user, account, profile }) {
       try {
         await dbConnect();
-  
+
         const existingUser = await User.findOne({ email: user.email });
         let userData;
-  
+
         // Check if login is via a social provider (Google or Facebook)
         const isSocialLogin =
           account.provider !== "login" && account.provider !== "register"; // CredentialsProvider has id "login"
-  
+
         if (existingUser) {
-          existingUser.fullName = user.name || existingUser.fullName;
-          existingUser.image = user.image || existingUser.image;
-  
+          // Update existing user details (skip updating the image if it exists)
+          // existingUser.fullName = user.name || existingUser.fullName;
+
+          // Update only the image if it is not already set (this way it doesn't overwrite the image if already set)
+          if (!existingUser.image && user.image) {
+            existingUser.image = user.image;
+          }
+
           // Update isSocialLogin only for social logins
           if (isSocialLogin) {
             existingUser.isSocialLogin = true;
           }
-  
+
           const token = jwt.sign(
             { userId: existingUser._id, email: existingUser.email },
             JWT_SECRET,
@@ -164,6 +169,7 @@ export const authOptions = {
           );
           existingUser.token = token;
           await existingUser.save();
+
           userData = {
             id: existingUser._id,
             fullName: existingUser.fullName,
@@ -177,12 +183,14 @@ export const authOptions = {
             createdAt: existingUser.createdAt,
           };
         } else {
+          // For a new user, create one with the provided details, but don't overwrite image if it's already present
           const newUser = new User({
             fullName: user.name,
             email: user.email,
-            image: user.image,
+            image: user.image, // Only set the image if it's not already set in db
             isSocialLogin, // Set true if social login, false for credentials
           });
+
           const token = jwt.sign(
             { userId: newUser._id, email: newUser.email },
             JWT_SECRET,
@@ -190,6 +198,7 @@ export const authOptions = {
           );
           newUser.token = token;
           await newUser.save();
+
           userData = {
             id: newUser._id,
             fullName: newUser.fullName,
@@ -203,36 +212,38 @@ export const authOptions = {
             createdAt: newUser.createdAt,
           };
         }
-  
+
         // Attach userData to the user object for JWT and session callbacks
         user.userData = userData;
-  
+
         return true;
       } catch (error) {
         console.error("Error during sign in:", error);
         return false;
       }
     },
-  
+
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.userData = user.userData; // Pass all fields to the token
       }
-  
+
       return token;
     },
-  
+
     async session({ session, token }) {
       if (token) {
         session.accessToken = token.accessToken;
         session.refreshToken = token.refreshToken;
         session.user.id = token.id;
-    
+
         // Fetch updated user data from the database
         await dbConnect();
-        const updatedUser = await User.findOne({ email: token.userData.email }).lean();
-    
+        const updatedUser = await User.findOne({
+          email: token.userData.email,
+        }).lean();
+
         session.user.userData = {
           id: updatedUser._id,
           fullName: updatedUser.fullName,
@@ -246,11 +257,11 @@ export const authOptions = {
           createdAt: updatedUser.createdAt,
         };
       }
-    
+
       return session;
     },
   },
-  
+
   pages: {
     signIn: "/Auth",
   },
