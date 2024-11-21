@@ -61,6 +61,7 @@ function ProfileComp() {
   };
 
   const handleCrop = async () => {
+    setIsSaving(true); // Set saving state to true before starting the process
     if (editor) {
       const canvas = editor.getImageScaledToCanvas();
       canvas.toBlob(async (blob) => {
@@ -81,6 +82,9 @@ function ProfileComp() {
           });
         } catch (error) {
           console.error("Error uploading cropped image:", error);
+        }
+        finally {
+          setIsSaving(false); // Reset saving state
         }
       }, "image/png");
     }
@@ -140,6 +144,7 @@ function ProfileComp() {
       });
 
       if (response.ok) {
+        window.location.reload();
         setSuccessMessage("Your profile has been updated successfully.");
         setTimeout(() => setSuccessMessage(""), 3000); // Clear message after 3 seconds
         setIsEditing(false); // Switch back to edit mode
@@ -172,21 +177,33 @@ function ProfileComp() {
 
   if (!session)
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-100">
-        <p className="text-lg font-semibold text-gray-600">
-          Loading... Your Profile info will be shown soon.
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+        {/* Spinner Loader */}
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-75"></div>
+
+        {/* Loading Text */}
+        <p className="text-xl font-medium text-gray-700 mt-6">
+          Updating your profile, please wait...
         </p>
       </div>
+
     );
   const { userData } = session.user;
 
   return (
+
     <div className="flex justify-center py-10 min-h-screen">
       <div className="p-6 w-full max-w-5xl">
         <h1 className="text-2xl font-bold mb-2">Your Profile</h1>
         <p className="text-gray-600 mb-6">
           Joined {new Date(userData.createdAt).toLocaleDateString()}
         </p>
+        {/*message section*/}
+        {successMessage && (
+          <div className="mt-2 text-green-600 text-sm font-semibold">
+            {successMessage}
+          </div>
+        )}
         {/* Cropping Modal */}
         {file && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -204,15 +221,25 @@ function ProfileComp() {
                 rotate={0}
               />
               <div className="flex justify-end mt-4">
-                <button
-                  onClick={handleCrop}
-                  className="bg-blue-500 text-white py-2 px-4 rounded-lg mr-2"
-                >
-                  Save
-                </button>
+                {isSaving ? (
+                  <button
+                    disabled
+                    className="bg-blue-500 text-white py-2 px-4 rounded-lg mr-2 opacity-50 cursor-not-allowed"
+                  >
+                    Saving...
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleCrop}
+                    className="bg-blue-500 text-white py-2 px-4 rounded-lg mr-2"
+                  >
+                    Save
+                  </button>
+                )}
                 <button
                   onClick={handleCancelCrop}
                   className="bg-gray-300 text-gray-600 py-2 px-4 rounded-lg"
+                  disabled={isSaving} // Disable the cancel button during saving
                 >
                   Cancel
                 </button>
@@ -220,6 +247,7 @@ function ProfileComp() {
             </div>
           </div>
         )}
+
         <div className="flex gap-10 md:flex-row flex-col">
           {/* Left Section */}
 
@@ -251,12 +279,34 @@ function ProfileComp() {
                     className="hidden"
                   />
                   {isEditing && (
-                    <button
-                      onClick={handleUploadClick}
-                      className="text-blue-500 mt-2 hover:underline"
-                    >
-                      Upload photo
-                    </button>
+                      <div className="flex space-x-2">
+                      {/* Upload Button */}
+                      <button
+                        onClick={handleUploadClick}
+                        className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium py-1.5 px-3 rounded-md shadow-sm transition duration-200"
+                      >
+                        Upload
+                      </button>
+                
+                      {/* Hidden File Input */}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        ref={fileInputRef}
+                        className="hidden"
+                      />
+                
+                      {/* Delete Button */}
+                      {profileImage && (
+                        <button
+                          onClick={handleRemoveImage}
+                          className="bg-red-500 hover:bg-red-600 text-white text-sm font-medium py-1.5 px-3 rounded-md shadow-sm transition duration-200"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -352,33 +402,40 @@ function ProfileComp() {
               </div>
             </div>
           </div>
-          {/*message section*/}
-          {successMessage && (
-            <div className="mt-2 text-green-600 text-sm font-semibold">
-              {successMessage}
-            </div>
-          )}
+
 
 
           {/*Image perview section*/}
 
           {isPreviewOpen && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="relative bg-white rounded-lg shadow-lg p-4">
-                <button
-                  className="absolute top-2 right-2 text-gray-500 hover:text-black"
-                  onClick={closePreview}
-                >
-                  Close
-                </button>
-                <div className="w-full h-full">
+              <div className="relative bg-white rounded-lg shadow-lg flex overflow-hidden w-3/4 max-w-3xl h-96">
+                {/* Image Section */}
+                <div className="w-1/2 bg-gray-100 flex items-center justify-center">
                   <NextImage
                     src={profileImage}
                     alt="Profile Preview"
                     width={300}
                     height={300}
-                    className="object-contain"
+                    className="object-contain rounded-l-lg"
                   />
+                </div>
+
+                {/* User Info Section */}
+                <div className="w-1/2 p-6 flex flex-col justify-center space-y-4">
+                  <button
+                    className="absolute top-3 right-3 text-gray-500 hover:text-black"
+                    onClick={closePreview}
+                    aria-label="Close"
+                  >
+                    ✕
+                  </button>
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {session?.user?.userData?.fullName || "User Name"}
+                  </h2>
+                  <p className="text-md text-gray-600">
+                    {session?.user?.userData?.email || "user@example.com"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -391,42 +448,77 @@ function ProfileComp() {
               Manage how often you receive emails from your projects.
             </p>
             <ul>
-              {Object.entries(notificationPreferences).map(([key, value]) => (
-                <li key={key} className="mb-2">
-                  <NotificationItem
-                    title={key.replace(/([A-Z])/g, " $1")}
-                    checked={value}
-                    onChange={handleNotificationChange}
-                  />
-                </li>
-              ))}
+              <li className="mb-2">
+                <NotificationItem
+                  title="OpenSpace news"
+                  description="When OpenSpace announces relevant updates"
+                />
+              </li>
+              <li className="mb-2">
+                <NotificationItem
+                  title="Capture uploaded"
+                  description="When a capture has been moved to the cloud"
+                />
+              </li>
+              <li className="mb-2">
+                <NotificationItem
+                  title="Capture preview"
+                  description="When a capture is still processing"
+                />
+              </li>
+              <li className="mb-2">
+                <NotificationItem
+                  title="Capture published"
+                  description="When a capture is ready for viewing"
+                />
+              </li>
+              <li className="mb-2">
+                <NotificationItem
+                  title="Capture reminder"
+                  description="When a capture hasn't been taken in two weeks"
+                />
+              </li>
+              <li className="mb-2">
+                <NotificationItem
+                  title="3D capture uploaded"
+                  description="When a 3D capture is uploaded"
+                />
+              </li>
+              <li className="mb-2">
+                <NotificationItem
+                  title="BIM model ready"
+                  description="When a BIM model is ready for viewing"
+                />
+              </li>
+              <li className="mb-2">
+                <NotificationItem
+                  title="Watched Field Notes"
+                  description="When a Field Note is updated"
+                />
+              </li>
+              <li className="mb-2">
+                <NotificationItem
+                  title="Shared folder updates"
+                  description="When a capture is added to a shared folder"
+                />
+              </li>
             </ul>
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
 
-const NotificationItem = ({ title, checked, onChange }) => (
+const NotificationItem = ({ title, description }) => (
   <div className="flex justify-between items-center py-2 border-b border-gray-300">
     <div>
       <p className="font-semibold">{title}</p>
+      <p className="text-gray-600">{description}</p>
     </div>
-    <label className="relative inline-flex items-center cursor-pointer">
-      <input
-        type="checkbox"
-        className="sr-only"
-        checked={checked}
-        onChange={onChange}
-        name={title.replace(/\s/g, "")}
-      />
-      <div className="peer rounded-full w-12 h-6 bg-gray-300 peer-focus:ring-4 peer-focus:ring-blue-500">
-        <div
-          className={`w-6 h-6 rounded-full bg-white transform ${checked ? "translate-x-6" : ""
-            }`}
-        ></div>
-      </div>
+    <label class="relative inline-flex items-center cursor-pointer">
+      <input class="sr-only peer" value="" type="checkbox" />
+      <div class="peer rounded-full outline-none duration-100 after:duration-500 w-12 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-500  after:content-['No'] after:absolute after:outline-none after:rounded-full after:h-5 after:w-5 after:bg-white after:top-0.5 after:left-0.5 after:flex after:justify-center after:items-center  after:text-xs after:font-bold peer-checked:bg-blue-500 peer-checked:after:translate-x-6 peer-checked:after:content-['Yes'] peer-checked:after:border-white"></div>
     </label>
   </div>
 );
