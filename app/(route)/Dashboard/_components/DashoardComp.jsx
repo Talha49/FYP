@@ -16,6 +16,7 @@ import CircularChartComp from "./_charts/CircularChartComp";
 import DualAreaChart from "./_charts/AreaChart";
 import BarChartComp from "./_charts/BarChart";
 import BarGraphtwo from "./_charts/BarGraphtwo";
+import Taskdata from "./_datatable/taskdata";
 
 function Card({ icon: Icon, value, description, color, className, children }) {
   return (
@@ -51,17 +52,8 @@ function DashboardComp() {
   return (
     <div className="p-4 min-h-screen">
       <div className="flex justify-between items-center mb-4">
-        <div className="text-xl font-bold">Dashboard</div>
-        <div className="bg-white rounded-lg border border-blue-500 shadow-md p-2 w-64">
-          <div className="flex items-center">
-            <input
-              type="text"
-              placeholder="Search"
-              className="w-full bg-white outline-none text-sm"
-            />
-            <IoSearchOutline className="text-gray-500 ml-2" size={16} />
-          </div>
-        </div>
+        <div className="text-xl font-bold">Reports & Analytics System</div>
+        
       </div>
 
       <div className="flex flex-col space-y-4">
@@ -133,14 +125,20 @@ function DashboardComp() {
         </div>
 
         {/* Third row */}
-        <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
+        {/* <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
           <Card title="BarChartComp" className="h-full">
             <BarChartComp selectedDate={selectedDate} />
           </Card>
           <Card title="BarGraphtwo" className="h-full">
             <BarGraphtwo selectedDate={selectedDate} />
           </Card>
-        </div>
+        </div> */}
+     
+      </div>
+
+
+      <div>
+        <Taskdata />
       </div>
     </div>
   );
