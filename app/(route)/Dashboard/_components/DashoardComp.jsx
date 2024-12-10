@@ -111,7 +111,7 @@ function DashboardComp() {
         {/* Second row */}
         <div className="grid md:grid-cols-2 sm:grid-cols-2 grid-cols-1 gap-4">
           <Card className="h-[540px]">
-            <LineCharttwo selectedDate={selectedDate} />
+          <BarChartComp selectedDate={selectedDate} />
           </Card>
 
           <div className="flex flex-col gap-4">

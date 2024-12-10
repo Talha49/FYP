@@ -186,7 +186,7 @@ const TaskTable = ({ data: initialData, className, loading, noDataMessage, title
   
 
   return (
-    <div className={`bg-white rounded-xl shadow-lg overflow-hidden ${className}`}>
+    <div className={`bg-white rounded-xl shadow-lg overflow-hidden .custom-scrollbars ${className}`}>
       <div className="border border-gray-200 rounded-xl">
         <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -200,7 +200,7 @@ const TaskTable = ({ data: initialData, className, loading, noDataMessage, title
 >Genrerate Report</button>
         </div>
 
-        <div className="overflow-auto" style={{ maxHeight: '600px' }}>
+        <div className="overflow-auto .custom-scrollbars" style={{ maxHeight: '600px' }}>
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
