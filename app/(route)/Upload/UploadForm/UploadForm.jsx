@@ -14,7 +14,6 @@ const TaskCreationForm = () => {
   const { loading, error } = useSelector((state) => state.TaskSlice);
   const [formData, setFormData] = useState({
     description: "",
-    username: "",
     priority: "",
     room: "",
     floor: "",
@@ -34,9 +33,10 @@ const TaskCreationForm = () => {
   const { data: session } = useSession();
 
   useEffect(() => {
+    console.log('authuserdata:', session?.user?.userData);
     setAuthuserData(session?.user?.userData);
   }, [session]);
-
+  
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -50,7 +50,6 @@ const TaskCreationForm = () => {
   const resetForm = () => {
     setFormData({
       description: "",
-      username: "",
       priority: "",
       room: "",
       floor: "",
@@ -81,8 +80,10 @@ const TaskCreationForm = () => {
         taskFormData.append(key, formData[key] || "");
       }
     });
-
+    taskFormData.append("assignedBy", authuserdata?.id || "");
     taskFormData.append("userId", authuserdata?.id || "");
+    taskFormData.append("username", authuserdata?.fullName || "");
+
 
     groundFloorImages.forEach((img) =>
       taskFormData.append("groundFloorImages", img.file)
@@ -179,13 +180,14 @@ const TaskCreationForm = () => {
         </div>
 
         <div className="space-y-4">
-          <FormInput
-            label="Full Name"
-            id="username"
-            name="username"
-            value={formData.username}
-            onChange={handleInputChange}
-          />
+        <FormInput
+  label="Full Name"
+  id="username"
+  name="username"
+  value={authuserdata?.fullName || ""}
+  disabled
+/>
+
           <FormSelect
             label="Priority"
             id="priority"
