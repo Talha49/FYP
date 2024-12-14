@@ -17,6 +17,10 @@ import Dialog from "@/app/_components/Dialog/Dialog";
 import { ImSpinner3 } from "react-icons/im";
 import { MdClose } from "react-icons/md";
 import { BsGraphUpArrow } from "react-icons/bs";
+import { useDispatch, useSelector } from "react-redux";
+import { useSession } from "next-auth/react";
+import { getTasks } from "@/lib/Features/TaskSlice";
+import { fetchUsers } from "@/lib/Features/UserSlice";
 
 function DualAreaChart({ selectedDate }) {
   const [chartData, setChartData] = useState([]);
@@ -24,8 +28,21 @@ function DualAreaChart({ selectedDate }) {
   const [downloadMenuVisible, setDownloadMenuVisible] = useState(false);
   const [isOpenReportModal, setIsOpenReportModal] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState(false);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedBarData, setSelectedBarData] = useState(null);
+  const { data: session } = useSession();
+  const dispatch = useDispatch();
+  const users = useSelector((state) => state.UserSlice.users);
+
   const companyLogo = "/images/SIJM-LOGO.png";
   const companyName = "Smart Inspection & Job Monitoring System";
+  console.log("Users" , users)
+
+  useEffect(() => {
+    if (session?.user?.userData?.token) {
+      dispatch(fetchUsers(session.user.userData.token));
+    }
+  }, [dispatch, session?.user?.userData?.id]);
 
   const allData = [
     // January 2022
@@ -385,7 +402,7 @@ function DualAreaChart({ selectedDate }) {
     },
   ];
 
-  const memoizedAllData = useMemo(() => allData, []);
+  const memoizedAllData = useMemo(() => allData, []); 
 
   useEffect(() => {
     const updateChartData = () => {
@@ -417,6 +434,12 @@ function DualAreaChart({ selectedDate }) {
 
     updateChartData();
   }, [selectedDate, memoizedAllData]);
+
+  useEffect(() => {
+    if (session?.user?.userData?.id) {
+      dispatch(getTasks(session.user.userData.id));
+    }
+  }, [dispatch, session?.user?.userData?.id]);
 
   const generatePDF = async () => {
     setGeneratingPDF(true);

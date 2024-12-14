@@ -86,6 +86,7 @@ function BarChartComp({ selectedDate }) {
       return acc;
     }, {});
 
+    
     // Transform aggregated data for chart
     const transformedData = [
       {
@@ -101,7 +102,7 @@ function BarChartComp({ selectedDate }) {
 
     setChartData(transformedData);
   }, [filteredTasks]);
-
+ 
   // Custom tooltip component
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload || !payload.length) return null;
@@ -211,19 +212,22 @@ function BarChartComp({ selectedDate }) {
     { header: "Due Date", key: "dueDate", accessor: (item) => new Date(item.dueDate).toLocaleDateString() },
     { header: "Assignee", key: "assignee" }
   ];
-
+  const toggleDownloadMenu = () => {
+    setDownloadMenuVisible((prevState) => !prevState);
+  };
 
   return (
     <div className="">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-gray-800">Task Distribution</h2>
-        <div className="flex gap-2">
+        {/* <div className="flex gap-2">
           <button
             onClick={() => downloadCSV(chartData, `task_data_${selectedDate.toISOString().split('T')[0]}.csv`)}
             className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-2 rounded-lg "
             disabled={!dataAvailable}
           >
             <FaDownload size={10} />
+            
            
           </button>
           <button
@@ -234,7 +238,53 @@ function BarChartComp({ selectedDate }) {
             <BsGraphUpArrow size={10} />
 
           </button>
+        </div> */}
+        <div className="relative">
+          <button
+            onClick={toggleDownloadMenu}
+            className={`bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded flex items-center text-sm ${
+              !dataAvailable && "opacity-50 cursor-not-allowed"
+            }`}
+            disabled={!dataAvailable}
+          >
+            <FaDownload className="mr-1" size={12} />
+          </button>
+          {downloadMenuVisible && (
+            <div className="absolute right-0 mt-2 z-[50] w-64 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden transition-all duration-200 ease-in-out transform origin-top-right">
+              <div className="p-2 space-y-1">
+                <button
+                  onClick={() =>
+                    downloadCSV(
+                      chartData,
+                      `priority_chart_report_${selectedDate.toISOString().split("T")[0]}.csv`
+                    )
+                  }
+                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg transition-colors duration-150"
+                >
+                  <PiFileTextThin size={18} className="mr-2 text-blue-600" />
+                  <span>Extract Chosen Entries</span>
+                </button>
+                <button
+                  onClick={() => downloadCSV(tasks, "full_data_report.csv")}
+                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg transition-colors duration-150"
+                >
+                  <PiFileTextThin size={18} className="mr-2 text-blue-600" />
+                  <span>Retrieve Full Data</span>
+                </button>
+                <button
+                  onClick={() => setIsOpenReportModal(true)}
+                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg transition-colors duration-150"
+                >
+                  <BsGraphUpArrow size={18} className="mr-2 text-green-600" />
+                  <span>Generate Report</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          
         </div>
+
       </div>
 
       {!dataAvailable ? (

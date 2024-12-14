@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useSession } from 'next-auth/react';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
@@ -59,6 +58,7 @@ function LineChartComp({ selectedDate }) {
   }, [dispatch, session?.user?.userData?.id]);
 
   useEffect(() => {
+    
     const updateChartData = () => {
       const formattedSelectedDate = formatDate(selectedDate);
       const filteredTasks = tasks.filter(
@@ -78,8 +78,20 @@ function LineChartComp({ selectedDate }) {
     };
 
     updateChartData();
-  }, [selectedDate, tasks]);
+  }, [selectedDate, tasks]); 
   
+
+
+
+
+
+
+
+
+
+
+
+
   const handleDataPointClick = (taskDetails) => {
     setSelectedTaskDetails(taskDetails);
     setIsModalOpen(true);
@@ -218,9 +230,16 @@ function LineChartComp({ selectedDate }) {
               </div>
             </div>
           )}
+
+          
         </div>
       </div>
 
+      {!dataAvailable ? (
+        <div className="text-center py-10 text-gray-500">
+          No data available for {selectedDate.toLocaleDateString()}
+        </div>
+      ) :(
       <ResponsiveContainer width="100%" height={200}>
         <LineChart
           data={chartData}
@@ -247,7 +266,8 @@ function LineChartComp({ selectedDate }) {
           />
         </LineChart>
       </ResponsiveContainer>
-       
+      )}
+
       <DetailsModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
