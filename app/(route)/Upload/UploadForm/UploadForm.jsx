@@ -19,7 +19,7 @@ const TaskCreationForm = () => {
     floor: "",
     status: "",
     tags: [],
-    assignee: "Not Assign", // Default value
+    assignees: [], // Default value
     dueDate: "",
     emailAlerts: [],
     watchers: [],
@@ -55,7 +55,7 @@ const TaskCreationForm = () => {
       floor: "",
       status: "",
       tags: [],
-      assignee: "Not Assign", // Reset default value
+      assignees:[], // Reset default value
       dueDate: "",
       emailAlerts: [],
       watchers: [],

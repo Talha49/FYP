@@ -31,12 +31,16 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
   // State Management
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
-  const [localNote, setLocalNote] = useState(note);
+  const [localNote, setLocalNote] = useState({
+    ...note,
+    assignees: note.assignees || []
+  });
   const [originalNote, setOriginalNote] = useState({ ...note });
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [attachments, setAttachments] = useState(note.attachments || []);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Image Control States
   const [zoomLevel1, setZoomLevel1] = useState(1);
@@ -76,7 +80,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
 
   // Update local note when prop changes
   useEffect(() => {
-    setLocalNote(note);
+    setLocalNote({...note, assignees: note.assignees || []});
     setOriginalNote({ ...note });
   }, [note]);
 
@@ -91,12 +95,14 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
     );
   };
 
+  
+
   const getChangedFields = () => {
     const changes = [];
     const fieldsToCheck = {
       status: "Status",
       priority: "Priority",
-      assignee: "Assignee",
+      assignees: "Assignees",
       dueDate: "Due date",
       description: "Description",
       tags: "Tags",
@@ -117,7 +123,6 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
     return changes;
   };
 
-  
   const handleSave = async () => {
     // Validate required fields
     if (!localNote.description || !localNote.room || !localNote.floor) {
@@ -133,7 +138,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
     }
 
     setIsSaving(true);
-    console.log("LC" ,localNote);
+    console.log("LC", localNote);
     const updateData = {
       userId: localNote.userId,
       username: localNote.username,
@@ -143,7 +148,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
       floor: localNote.floor,
       status: localNote.status,
       tags: localNote.tags,
-      assignee: localNote.assignee,
+      assignees: localNote.assignees,
       dueDate: localNote.dueDate,
       emailAlerts: localNote.emailAlerts,
       watchers: localNote.watchers,
@@ -185,21 +190,21 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
       }
 
       setIsEditing(false);
-      if (localNote.assignee) {
+      if (localNote.assignees.length > 0) {
         if (!chatRoomCreated) {
           // Create the chat room once
-          createChatRoom(localNote._id, localNote.assignee);
-          setChatRoomCreated(true); // Mark chat room as created
+          createChatRoom(localNote._id, localNote.assignees);
+          setChatRoomCreated(true);
           console.log('Chat room created for task');
         } else {
           // If the room already exists, just update the participants
-          updateChatRoomParticipants(localNote._id, localNote.assignee);
-          console.log('Assignee updated in existing chat room');
+          updateChatRoomParticipants(localNote._id, localNote.assignees);
+          console.log('Assignees updated in existing chat room');
         }
       } else {
-        console.log('No assignee selected');
+        console.log('No assignees selected');
       }
-    
+
       setOriginalNote({ ...localNote });
     } catch (error) {
       console.error("Failed to update task:", error);
@@ -211,22 +216,27 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
       setIsSaving(false);
     }
   };
-// Function to create chat room once
- const createChatRoom = (taskId, assigneeId) => {
-  const chatRoomId = taskId; // Use task ID as chat room ID
-  const participants = [assigneeId, localNote.userId]; // Assignee and assigner
 
-  console.log(`Creating chat room with ID: ${chatRoomId}`);
-  console.log(`Participants: ${participants.join(', ')}`);
-};
-// Function to update chat room participants
-const updateChatRoomParticipants = (taskId, newAssigneeId) => {
-  const chatRoomId = taskId; // Using the same chat room ID
-  const participants = [newAssigneeId, localNote.userId]; // Updated assignee and assigner
+  // Function to create chat room once
+  const createChatRoom = (taskId, assignees) => {
+    const chatRoomId = taskId; // Use task ID as chat room ID
+    const participants = [...assignees.map(a => assignees.id), localNote.userId]; // Assignees and assigner
 
-  console.log(`Updating chat room with ID: ${chatRoomId}`);
-  console.log(`New participants: ${participants.join(', ')}`);
-};
+    console.log(`Creating chat room with ID: ${chatRoomId}`);
+    console.log(`Participants: ${participants.join(', ')}`);
+   
+  };
+
+  // Function to update chat room participants
+  const updateChatRoomParticipants = (taskId, newAssignees) => {
+    const chatRoomId = taskId; // Using the same chat room ID
+    const participants = [...newAssignees.map(assignee => assignee.name)]; // Updated assignees and assigner
+
+    console.log(`Updating chat room with ID: ${chatRoomId}`);
+    console.log(`New participants: ${participants.join(', ')}`);
+
+  };
+
   const toggleEditMode = () => {
     if (isEditing) {
       setLocalNote({ ...originalNote });
@@ -293,79 +303,35 @@ const updateChatRoomParticipants = (taskId, newAssigneeId) => {
     }
   };
 
-//   const handleFileRemove = async (index) => {
-//     if (!isEditing) return;
+  const handleFileRemove = async (index) => {
+    if (!isEditing) return;
 
-//     try {
-//         const attachmentToDelete = localNote.attachments[index];
-//         console.log("Attachment to delete:", attachmentToDelete); // Debug: Check attachment details
-//         console.log("Attachment ID:", attachmentToDelete?._id); // Debug: Ensure attachment has an ID
-//         console.log("TaskID:", localNote._id); // Debug: Check Task ID
-
-//         if (!attachmentToDelete || !attachmentToDelete._id) {
-//             throw new Error("Attachment ID not found.");
-//         }
-
-//         // Optimistically update UI
-//         const updatedAttachments = localNote.attachments.filter((_, i) => i !== index);
-//         setLocalNote((prev) => ({
-//             ...prev,
-//             attachments: updatedAttachments,
-//         }));
-//         console.log("Updated attachments after delete:", updatedAttachments); // Debug: Check updated UI state
-
-//         // Direct API call to delete from backend
-//         const response = await fetch(`/api/New/DeleteAttachment/${localNote._id}/${attachmentToDelete._id}`, {
-//             method: 'DELETE',
-//         });
-
-//         const result = await response.json();
-//         if (response.ok) {
-//             console.log("Response from deleteAttachment API:", result); // Debug: Check API response
-//             showToast("Attachment deleted successfully", "success");
-//         } else {
-//             throw new Error(result.error || "Failed to delete attachment");
-//         }
-//     } catch (error) {
-//         console.error("Error in handleFileRemove:", error.message || error); // Debug: Log any error encountered
-//         // Revert optimistic update on error
-//         setLocalNote((prev) => ({
-//             ...prev,
-//             attachments: originalNote.attachments,
-//         }));
-//         showToast(error.message || "Failed to delete attachment", "error");
-//     }
-// };
-
-const handleFileRemove = async (index) => {
-  if (!isEditing) return;
-
-  try {
+    try {
       const attachmentToDelete = localNote.attachments[index];
-      
+
       // Optimistically update UI
       const updatedAttachments = localNote.attachments.filter((_, i) => i !== index);
       setLocalNote(prev => ({
-          ...prev,
-          attachments: updatedAttachments
+        ...prev,
+        attachments: updatedAttachments
       }));
 
       // Call Redux action to delete from backend
       await dispatch(deleteAttachment({
-          taskId: localNote._id,
-          attachmentId: attachmentToDelete._id
+        taskId: localNote._id,
+        attachmentId: attachmentToDelete._id
       })).unwrap();
 
       showToast("Attachment deleted successfully", "success");
-  } catch (error) {
+    } catch (error) {
       // Revert optimistic update on error
       setLocalNote(prev => ({
-          ...prev,
-          attachments: originalNote.attachments
+        ...prev,
+        attachments: originalNote.attachments
       }));
       showToast(error.message || "Failed to delete attachment", "error");
-  }
-};
+    }
+  };
 
   const handleFileDownload = async (url) => {
     try {
@@ -466,6 +432,19 @@ const handleFileRemove = async (index) => {
     }
   };
 
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (isDropdownOpen && !event.target.closest('.relative')) {
+        setIsDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDropdownOpen]);
+
   return (
     <div>
       {/* Header Section */}
@@ -479,39 +458,12 @@ const handleFileRemove = async (index) => {
             <span>Created At: {formatDate(localNote.createdAt)}</span>
           </p>
         </div>
-        {/* <div className="flex items-center gap-x-2 gap-y-1 mt-2 sm:mt-0">
-          <button className="hover:bg-gray-200 p-2 rounded-md">
-            <FaHandLizard size={15} />
-          </button>
-          <button className="hover:bg-gray-200 p-2 rounded-md">
-            <ImBold size={15} />
-          </button>
-          <button className="hover:bg-gray-200 p-2 rounded-md">
-            <TbCapture size={15} />
-          </button>
-          <button className="hover:bg-gray-200 p-2 rounded-md">
-            <SiSquare size={15} />
-          </button>
-          <button className="hover:bg-gray-200 p-2 rounded-md">
-            <TbWorld size={15} />
-          </button>
-          <button className="hover:bg-gray-200 p-2 rounded-md">
-            <IoEllipsisHorizontalOutline size={15} />
-          </button>
-          <div className="bg-slate-300 h-6 w-[1px]"></div>
-          <button
-            className="hover:bg-gray-200 p-2 rounded-md"
-            onClick={onClose}
-          >
-            <VscClose size={20} />
-          </button>
-        </div> */}
-                  <button
-            className="hover:bg-gray-200 p-2 rounded-md"
-            onClick={onClose}
-          >
-            <VscClose size={20} />
-          </button>
+        <button
+          className="hover:bg-gray-200 p-2 rounded-md"
+          onClick={onClose}
+        >
+          <VscClose size={20} />
+        </button>
       </div>
 
       {/* Main Content */}
@@ -533,7 +485,6 @@ const handleFileRemove = async (index) => {
               onPrevious={handlePrevious}
               onNext={handleNext}
               images={localNote.groundFloorImages}
-             
               taskId={localNote._id}
               editmode={isEditing}
             />
@@ -555,14 +506,13 @@ const handleFileRemove = async (index) => {
                 </p>
               )}
             </div>
-             {/* Conditionally render ChatApp if there are multiple participants */}
-      
-        <ChatApp
-          chatRoomId={localNote._id}
-          chatRoomName={localNote.username} // Use task username (or name) here
-          assignedUsers={[localNote.userId, localNote.assignee]} // Assigner and assignee
-        />
-      
+
+            <ChatApp
+              chatRoomId={localNote._id}
+              chatRoomName={localNote.username}
+              assignedUsers={[ ...localNote.assignees.map(assignee => assignee.name)]}
+            />
+
           </div>
 
           {/* Right Section */}
@@ -603,24 +553,53 @@ const handleFileRemove = async (index) => {
             </div>
 
             {/* Assignee Section */}
-            <div>
-              <label className="block text-gray-600">Assignee</label>
+            <div className="relative">
+              <label className="block text-gray-600">Assignees</label>
               {isEditing ? (
-                <select
-                  className="w-full p-2 border border-gray-300 rounded outline-none"
-                  value={localNote.assignee || ""}
-                  onChange={(e) => updateField("assignee", e.target.value)}
-                >
-                  <option value="">Select Assignee</option>
-                  {users.map((user) => (
-                    <option key={user._id} value={user.fullName}>
-                      {user.fullName}
-                    </option>
-                  ))}
-                </select>
+                <>
+                  <div
+                    className="w-full p-2 border border-gray-300 rounded cursor-pointer flex flex-wrap"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  >
+                    {localNote.assignees.length > 0
+                      ? localNote.assignees.map((assignee) => (
+                          <span
+                            key={assignee.id}
+                            className="bg-blue-100 text-blue-800 px-2 py-1 rounded mr-2 mb-2"
+                          >
+                            {assignee.name}
+                          </span>
+                        ))
+                      : <span className="text-gray-500">Select Assignees</span>
+                    }
+                  </div>
+                  {isDropdownOpen && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto">
+                      {users.map((user) => (
+                        <div key={user._id} className="flex items-center p-2 hover:bg-gray-100">
+                          <input
+                            type="checkbox"
+                            id={`assignee-${user._id}`}
+                            checked={localNote.assignees.some(assignee => assignee.id === user._id)}
+                            onChange={() => {
+                              const updatedAssignees = localNote.assignees.some(assignee => assignee.id === user._id)
+                                ? localNote.assignees.filter(assignee => assignee.id !== user._id)
+                                : [...localNote.assignees, { id: user._id, name: user.fullName }];
+                              updateField("assignees", updatedAssignees);
+                            }}
+                            className="mr-2"
+                          />
+                          <label htmlFor={`assignee-${user._id}`}>{user.fullName}</label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
               ) : (
                 <p className="w-full p-2 border border-gray-300 rounded bg-gray-100">
-                  {localNote.assignee || "Not assigned"}
+                  {localNote.assignees.length > 0
+                    ? localNote.assignees.map(assignee => assignee.name).join(", ")
+                    : "Not assigned"}
                 </p>
               )}
             </div>
@@ -762,11 +741,11 @@ const handleFileRemove = async (index) => {
                             </button>
                             {isEditing && (
                               <button
-                              onClick={() => handleFileRemove(index)}
-                              className="ml-2 px-2 py-1 bg-red-600 text-white rounded"
-                            >
-                              Delete
-                            </button>
+                                onClick={() => handleFileRemove(index)}
+                                className="ml-2 px-2 py-1 bg-red-600 text-white rounded"
+                              >
+                                Delete
+                              </button>
                             )}
                           </>
                         )}
@@ -867,3 +846,4 @@ const handleFileRemove = async (index) => {
 }
 
 export default FieldNoteModalCardsModal;
+

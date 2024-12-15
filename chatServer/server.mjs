@@ -48,8 +48,8 @@ io.on('connection', (socket) => {
       const formattedFullTimestamp = fullTimestamp || new Date().toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
   
       const systemImagePath = 'https://firebasestorage.googleapis.com/v0/b/sijm-74506.appspot.com/o/systemImage%2Fsystem.jpg?alt=media&token=b2a0fdda-25e3-4a84-a7d5-40b48257869a';  // Adjust path accordingly
-const senderFallbackImagePath = 'https://firebasestorage.googleapis.com/v0/b/sijm-74506.appspot.com/o/systemImage%2Fpngwing.com.png?alt=media&token=1b0acd08-66ae-41ef-9775-3b27e4aa0aa7';  // Path for sender fallback
-const messageSenderImage = isSystemMessage ? systemImagePath : (senderImage || senderFallbackImagePath);
+      const senderFallbackImagePath = 'https://firebasestorage.googleapis.com/v0/b/sijm-74506.appspot.com/o/systemImage%2Fpngwing.com.png?alt=media&token=1b0acd08-66ae-41ef-9775-3b27e4aa0aa7';  // Path for sender fallback
+      const messageSenderImage = isSystemMessage ? systemImagePath : (senderImage || senderFallbackImagePath);
 
 
       // Convert chatRoomId to ObjectId

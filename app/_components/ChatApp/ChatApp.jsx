@@ -246,58 +246,67 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
     // If assignedUsers is empty, we don't proceed
     if (assignedUsers.length === 0) return;
   
-    const currentAssignee = assignedUsers[assignedUsers.length - 1];  // Get the last assigned user
+    // Get the previous assignees from the ref or initialize to an empty array
+    const previousAssignees = previousAssigneeRef.current || [];
   
-    // Initialize the previous assignee if it's null
-    if (previousAssigneeRef.current === null) {
-      previousAssigneeRef.current = currentAssignee;
-      return;  // No message needs to be sent at this stage
+    // Only proceed if the modal is being opened (no user interactions, just modal visibility)
+    if (previousAssignees.length === 0) {
+      // This is the initial opening without any actual changes in assignees
+      previousAssigneeRef.current = assignedUsers;
+      return;
     }
   
-    // Only proceed if the assignee has actually changed
-    if (currentAssignee !== previousAssigneeRef.current) {
-      // Check for unassign action (only if previous assignee exists)
-      if (previousAssigneeRef.current) {
-        const unassignMessage = {
-          text: `${previousAssigneeRef.current} unassigned`,
-          senderId: null,
-          senderName: "System",
-          senderImage: null,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          fullTimestamp: new Date().toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }),
-          isSystemMessage: true,
-          media: [],
-          chatRoomId
-        };
+    // Only send messages if there are actual changes
+    if (assignedUsers.length !== previousAssignees.length || !assignedUsers.every((user, index) => user === previousAssignees[index])) {
+      // Track the added and removed assignees
+      const addedAssignees = assignedUsers.filter(user => !previousAssignees.includes(user));
+      const removedAssignees = previousAssignees.filter(user => !assignedUsers.includes(user));
   
-        // Emit the unassign message to the server
-        socket.current.emit("sendMessage", unassignMessage);
+      // Handle unassigning users
+      if (removedAssignees.length > 0) {
+        removedAssignees.forEach(user => {
+          const unassignMessage = {
+            text: `${user} unassigned`,
+            senderId: null,
+            senderName: "System",
+            senderImage: null,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            fullTimestamp: new Date().toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }),
+            isSystemMessage: true,
+            media: [],
+            chatRoomId
+          };
+  
+          // Emit the unassign message to the server for each user removed
+          socket.current.emit("sendMessage", unassignMessage);
+        });
       }
   
-      // Check for assign action (only if there's a new assignee)
-      if (currentAssignee) {
-        const assignMessage = {
-          text: `${currentAssignee} assigned`,
-          senderId: null,
-          senderName: "System",
-          senderImage: null,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          fullTimestamp: new Date().toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }),
-          isSystemMessage: true,
-          media: [],
-          chatRoomId
-        };
+      // Handle assigning users
+      if (addedAssignees.length > 0) {
+        addedAssignees.forEach(user => {
+          const assignMessage = {
+            text: `${user} assigned`,
+            senderId: null,
+            senderName: "System",
+            senderImage: null,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            fullTimestamp: new Date().toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }),
+            isSystemMessage: true,
+            media: [],
+            chatRoomId
+          };
   
-        // Emit the assign message to the server
-        socket.current.emit("sendMessage", assignMessage);
+          // Emit the assign message to the server for each user added
+          socket.current.emit("sendMessage", assignMessage);
+        });
       }
+  
+      // Update the previousAssigneeRef with the current list for the next effect run
+      previousAssigneeRef.current = assignedUsers;
     }
+  }, [assignedUsers, chatRoomId, socket]); // Dependencies are assignedUsers, chatRoomId, socket
   
-    // Update the previousAssigneeRef with the current assignee for the next effect run
-    previousAssigneeRef.current = currentAssignee;
-  }, [assignedUsers, chatRoomId, socket]);  // Dependencies are assignedUsers and chatRoomId
-  
-
   return (
     <div className="w-full h-[600px] rounded-lg border border-gray-300 shadow-md flex flex-col">
       <header className="h-12 w-full border-b bg-gray-300 flex justify-between items-center p-3 gap-4 relative">
@@ -365,7 +374,7 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
               <div className="flex flex-col overflow-hidden">
                 {!msg.isSystemMessage && (
                   <strong className="text-sm truncate">
-                    {msg.senderId === (currentUserId || authenticatedUser?.id) ? "You" : msg.sender}
+                    {msg.senderId === (currentUserId || authenticatedUser?.id) ? "You" : msg.senderName}
                   </strong>
                 )}
 
@@ -470,32 +479,36 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
         </div>
       )}
 
-      {showMessageDialog && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
-          <div className="bg-white p-6 rounded-lg w-96 max-w-full">
-            <h2 className="text-xl font-semibold mb-4">Message Details</h2>
-            <p className="text-gray-700 mb-4">{messages[selectedMessageIndex]?.text}</p>
-            <div className="text-sm text-gray-500 mb-6">
-              <p>Sent by: {messages[selectedMessageIndex]?.sender}</p>
-              <p>Date and Time: {messages[selectedMessageIndex]?.fullTimestamp}</p>
-            </div>
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={closeMessageDialog}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDeleteMessage}
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+{showMessageDialog && (
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
+    <div className="bg-white p-6 rounded-lg w-96 max-w-full">
+      <h2 className="text-xl font-semibold mb-4">Message Details</h2>
+      <p className="text-gray-700 mb-4">{messages[selectedMessageIndex]?.text}</p>
+      <div className="text-sm text-gray-500 mb-6">
+        <p>Sent by: {messages[selectedMessageIndex]?.senderName}</p>
+        <p>Date and Time: {messages[selectedMessageIndex]?.fullTimestamp}</p>
+      </div>
+      <div className="flex justify-end space-x-4">
+        <button
+          onClick={closeMessageDialog}
+          className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+        >
+          Cancel
+        </button>
+
+        {/* Check if the authenticatedUser is the sender */}
+        {messages[selectedMessageIndex]?.senderId === authenticatedUser?.id && (
+          <button
+            onClick={confirmDeleteMessage}
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+          >
+            Delete
+          </button>
+        )}
+      </div>
+    </div>
+  </div>
+)}
 
       {showDeleteConfirmation && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-30">

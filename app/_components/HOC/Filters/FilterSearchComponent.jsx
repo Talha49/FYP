@@ -24,13 +24,20 @@ const FilterSearchComponent = ({
     setSearchParam(""); // Clear search when toggling filters
   };
 
-  const getSearchPlaceholder = () => {
-    if (activeFilters.length === 0) return `Search ${title}`;
-    if (activeFilters.length > 1) return "Search in selected filters";
+const getSearchPlaceholder = () => {
+  if (activeFilters.length === 0) return `Search ${title}`;
+  if (activeFilters.length > 1) return "Search in selected filters";
 
-    const activeFilter = activeFilters[0];
+  const activeFilter = activeFilters[0];
+  
+  // Check if activeFilter is a string before calling toLowerCase
+  if (typeof activeFilter === 'string') {
     return `Search ${activeFilter.toLowerCase()}`;
-  };
+  }
+
+  // Fallback if it's not a string
+  return 'Search';
+};
 
   return (
     <div className="border-b-2 bg-white sticky top-0 p-4 z-10">

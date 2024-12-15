@@ -39,6 +39,7 @@ export async function POST(req) {
 
         const taskData = {
             userId: body.get('userId'),
+            creatorId: body.get('userId'),  // Creator ID (same as userId)
             username: body.get('username'),
             description: body.get('description'),
             priority: body.get('priority'),
@@ -46,7 +47,7 @@ export async function POST(req) {
             floor: body.get('floor'),
             status: body.get('status'),
             tags: JSON.parse(body.get('tags') || '[]'),
-            assignee: body.get('assignee'),
+            assignees: body.get('assignees'),
             dueDate: body.get('dueDate'),
             emailAlerts: JSON.parse(body.get('emailAlerts') || '[]'),
             watchers: JSON.parse(body.get('watchers') || '[]'),

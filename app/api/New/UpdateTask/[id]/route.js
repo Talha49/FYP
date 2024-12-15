@@ -22,7 +22,7 @@ export async function PUT(req, { params }) {
             floor: body.floor,
             status: body.status,
             tags: body.tags,
-            assignee: body.assignee,
+             assignees: body.assignees,
             dueDate: body.dueDate,
             emailAlerts: body.emailAlerts,
             watchers: body.watchers,
