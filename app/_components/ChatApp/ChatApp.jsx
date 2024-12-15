@@ -51,89 +51,107 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
       setAuthenticatedUser(session?.user?.userData);
     }
   }, [session]);
-  
+
   const [hasJoined, setHasJoined] = useState(false);  // Track if the user has already joined the chat room
-  
+
   useEffect(() => {
     if (!socket.current) {
       socket.current = io('http://localhost:3001');
     }
-  
+
     if (!hasMounted.current) {
       socket.current.on('connect', () => {
         isConnected.current = true;
         console.log('Connected to socket server');
-  
+
         if (authenticatedUser?.id) {
           console.log(`Setting user: ${authenticatedUser.id}`);
           socket.current.emit('setUser', authenticatedUser?.id);
         }
-  
+
         if (!hasJoined) {
           // Join the chat room only once
           socket.current.emit('joinChatRoom', chatRoomId);
           setHasJoined(true);  // Mark as joined to prevent emitting multiple times
         }
       });
-  
+
       socket.current.on('disconnect', () => {
         isConnected.current = false;
         console.log('Disconnected from socket server');
       });
-  
+
       // Listen for new messages and append them
       const handleReceiveMessage = (message) => {
         console.log("Received new message:", message);
         setMessages((prevMessages) => [...prevMessages, message]);  // Append new message
       };
-  
+
       socket.current.on('receiveMessage', handleReceiveMessage);
-  
+
       // Listen for initial load of messages when the user joins the chat room
       socket.current.on('loadMessages', (messages) => {
         console.log("Messages loaded from server:", messages);
         setMessages(messages);  // Load previous messages
       });
-  
+
       return () => {
         socket.current.off('receiveMessage', handleReceiveMessage);
         socket.current.off('loadMessages');
       };
     }
-  
+
     hasMounted.current = true;  // Ensure connection setup happens only once
-  
+
   }, [chatRoomId, authenticatedUser, hasJoined]);
+
+
+  //delete messaage use effect
+  useEffect(() => {
+    // Listen for message deletion from the server
+    socket.current.on('messageDeleted', ({ messageId, deletedBy }) => {
+      // Remove the deleted message from the UI
+      setMessages((prevMessages) => prevMessages.filter(msg => msg._id !== messageId));
   
+      // Optionally, you can show a message in the UI indicating who deleted the message
+      console.log(`${deletedBy} deleted a message`);
+    });
+  
+    return () => {
+      socket.current.off('messageDeleted');
+    };
+  }, []);
+  
+
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;  // Auto-scroll to the bottom when messages change
     }
   }, [messages]);
-  
+
   const handleMediaSelect = (e) => {
     const files = Array.from(e.target.files);
     setSelectedMedia(files);
     setShowMediaPreview(true);
     e.target.value = null;
   };
-  
+
   const sendMessage = () => {
     if (isSending.current || !isConnected.current) return;
-  
+
     if (newMessage.trim() || selectedMedia.length > 0) {
       isSending.current = true;
-  
+
       const mediaFiles = selectedMedia.map((file) => ({
         url: URL.createObjectURL(file),
         type: file.type.startsWith("image")
           ? "image"
           : file.type.startsWith("video")
-          ? "video"
-          : "file",
+            ? "video"
+            : "file",
         name: file.name,
       }));
-  
+
       const messageObject = {
         chatRoomId: chatRoomId,
         text: newMessage,
@@ -145,19 +163,19 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
         fullTimestamp: new Date().toLocaleString([], { dateStyle: "medium", timeStyle: "short" }),
         senderImage: authenticatedUser?.image,
       };
-  
+
       // Emit the message to the server
       socket.current.emit("sendMessage", messageObject);
-  
+
       // Do not update local state yet, wait for confirmation from the server
-  
+
       // Reset message input and media state
       setNewMessage("");
       setSelectedMedia([]);
       setShowMediaPreview(false);
-  
+
       isSending.current = false;
-  
+
       // Scroll the chat container to the bottom after sending the message
       setTimeout(() => {
         if (chatContainerRef.current) {
@@ -166,7 +184,7 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
       }, 0);
     }
   };
-  
+
 
 
   const cancelSelectedMedia = () => {
@@ -221,17 +239,38 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
     setSelectedMessageIndex(null);
     setShowDeleteConfirmation(false);
   };
+  const handleMessageClick = (index) => {
+    setSelectedMessageIndex(index);  // Set the index of the clicked message
+    setShowMessageDialog(true);      // Show the message details modal
+  };
 
   const confirmDeleteMessage = () => {
     setShowDeleteConfirmation(true);
   };
 
-  const deleteMessage = () => {
-    const updatedMessages = messages.filter((_, index) => index !== selectedMessageIndex);
-    setMessages(updatedMessages);
-    localStorage.setItem(`chat_${chatRoomId}`, JSON.stringify(updatedMessages));
-    closeMessageDialog();
+  //delete the text message handle
+  const deleteMessage = async () => {
+    if (selectedMessageIndex !== null) {
+      const message = messages[selectedMessageIndex];
+      const messageId = message._id;
+
+      // Optimistically update the local UI (remove the message instantly)
+      const updatedMessages = messages.filter((msg, index) => index !== selectedMessageIndex);
+      setMessages(updatedMessages);
+
+      // Emit a delete message request to the server with the user who is deleting the message
+      socket.current.emit('deleteMessage', {
+        chatRoomId,
+        messageId,
+        deletedBy: authenticatedUser?.fullName || "Unknown User"  // Pass the user who deleted the message
+      });
+
+      // Close the message dialog after deletion
+      closeMessageDialog();
+    }
   };
+
+
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -245,23 +284,23 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
   useEffect(() => {
     // If assignedUsers is empty, we don't proceed
     if (assignedUsers.length === 0) return;
-  
+
     // Get the previous assignees from the ref or initialize to an empty array
     const previousAssignees = previousAssigneeRef.current || [];
-  
+
     // Only proceed if the modal is being opened (no user interactions, just modal visibility)
     if (previousAssignees.length === 0) {
       // This is the initial opening without any actual changes in assignees
       previousAssigneeRef.current = assignedUsers;
       return;
     }
-  
+
     // Only send messages if there are actual changes
     if (assignedUsers.length !== previousAssignees.length || !assignedUsers.every((user, index) => user === previousAssignees[index])) {
       // Track the added and removed assignees
       const addedAssignees = assignedUsers.filter(user => !previousAssignees.includes(user));
       const removedAssignees = previousAssignees.filter(user => !assignedUsers.includes(user));
-  
+
       // Handle unassigning users
       if (removedAssignees.length > 0) {
         removedAssignees.forEach(user => {
@@ -276,12 +315,12 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
             media: [],
             chatRoomId
           };
-  
+
           // Emit the unassign message to the server for each user removed
           socket.current.emit("sendMessage", unassignMessage);
         });
       }
-  
+
       // Handle assigning users
       if (addedAssignees.length > 0) {
         addedAssignees.forEach(user => {
@@ -296,17 +335,17 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
             media: [],
             chatRoomId
           };
-  
+
           // Emit the assign message to the server for each user added
           socket.current.emit("sendMessage", assignMessage);
         });
       }
-  
+
       // Update the previousAssigneeRef with the current list for the next effect run
       previousAssigneeRef.current = assignedUsers;
     }
   }, [assignedUsers, chatRoomId, socket]); // Dependencies are assignedUsers, chatRoomId, socket
-  
+
   return (
     <div className="w-full h-[600px] rounded-lg border border-gray-300 shadow-md flex flex-col">
       <header className="h-12 w-full border-b bg-gray-300 flex justify-between items-center p-3 gap-4 relative">
@@ -335,9 +374,10 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
                     <div
                       key={index}
                       className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
-                      onClick={() => setShowSearchDropdown(false)}
+
+                      onClick={() => handleMessageClick(index)} // Open message details on click
                     >
-                      <p className="font-semibold">{msg.sender}</p>
+                      <p className="font-semibold">{msg.senderName}</p>
                       <p className="text-gray-600 text-sm">{msg.text}</p>
                     </div>
                   ))
@@ -356,10 +396,10 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
             <div
               key={index}
               className={`flex items-start space-x-3 w-fit max-w-[70%] p-3 rounded-lg ${msg.isSystemMessage
-                  ? "bg-blue-100 text-blue-600 text-xs py-1 px-2 mx-auto"
-                  : msg.senderId === (currentUserId || authenticatedUser?.id)
-                    ? "bg-blue-500 text-white ml-auto"
-                    : "bg-gray-200 text-black mr-auto"
+                ? "bg-blue-100 text-blue-600 text-xs py-1 px-2 mx-auto"
+                : msg.senderId === (currentUserId || authenticatedUser?.id)
+                  ? "bg-blue-500 text-white ml-auto"
+                  : "bg-gray-200 text-black mr-auto"
                 } relative`}
               onDoubleClick={() => openMessageDialog(index)}
             >
@@ -479,36 +519,54 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
         </div>
       )}
 
-{showMessageDialog && (
-  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
-    <div className="bg-white p-6 rounded-lg w-96 max-w-full">
-      <h2 className="text-xl font-semibold mb-4">Message Details</h2>
-      <p className="text-gray-700 mb-4">{messages[selectedMessageIndex]?.text}</p>
-      <div className="text-sm text-gray-500 mb-6">
-        <p>Sent by: {messages[selectedMessageIndex]?.senderName}</p>
-        <p>Date and Time: {messages[selectedMessageIndex]?.fullTimestamp}</p>
-      </div>
-      <div className="flex justify-end space-x-4">
-        <button
-          onClick={closeMessageDialog}
-          className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
-        >
-          Cancel
-        </button>
+      {showMessageDialog && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
+          <div className="bg-white p-6 rounded-lg w-96 max-w-lg shadow-lg transform transition-all duration-300 ease-in-out">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Message Details</h2>
 
-        {/* Check if the authenticatedUser is the sender */}
-        {messages[selectedMessageIndex]?.senderId === authenticatedUser?.id && (
-          <button
-            onClick={confirmDeleteMessage}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-          >
-            Delete
-          </button>
-        )}
-      </div>
-    </div>
-  </div>
-)}
+            {/* Message Text */}
+            <div className="bg-blue-100 p-4 rounded-lg shadow-inner mb-6 max-h-60 overflow-y-auto">
+              <p className="text-lg text-gray-700 whitespace-pre-wrap break-words">
+                {messages[selectedMessageIndex]?.text}
+              </p>
+            </div>
+
+            {/* Sender Info */}
+            <div className="flex items-center space-x-4 mb-6">
+              <img
+                src={messages[selectedMessageIndex]?.senderImage} // Add default avatar if profile picture is missing
+                alt="Sender's avatar"
+                className="w-12 h-12 rounded-full object-cover"
+              />
+              <div>
+                <p className="font-semibold text-gray-800">{messages[selectedMessageIndex]?.senderName}</p>
+                <p className="text-sm text-gray-500">{messages[selectedMessageIndex]?.fullTimestamp}</p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={closeMessageDialog}
+                className="px-5 py-2 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+
+              {/* Delete button visible only if the authenticated user is the sender */}
+              {messages[selectedMessageIndex]?.senderId === authenticatedUser?.id && (
+                <button
+                  onClick={confirmDeleteMessage}
+                  className="px-5 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {showDeleteConfirmation && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-30">

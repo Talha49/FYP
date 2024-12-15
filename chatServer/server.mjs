@@ -128,6 +128,74 @@ io.on('connection', (socket) => {
     }
   });
   
+//delete the message 
+socket.on('deleteMessage', async ({ chatRoomId, messageId, deletedBy }) => {
+  try {
+    // Validate input
+    if (!chatRoomId || !messageId || !deletedBy) {
+      console.error('Invalid chatRoomId, messageId, or deletedBy');
+      return;
+    }
+
+    // Convert messageId to ObjectId if it's not already
+    let messageObjectId;
+    try {
+      messageObjectId = new mongoose.Types.ObjectId(messageId);
+    } catch (err) {
+      console.error('Invalid messageId format:', messageId);
+      return;
+    }
+
+    // Find the chat room by taskId (chatRoomId)
+    const chatRoom = await ChatRoom.findOne({ taskId: chatRoomId });
+
+    if (!chatRoom) {
+      console.error(`Chat room with id ${chatRoomId} not found`);
+      return;
+    }
+
+    // Find the index of the message to be deleted by its _id
+    const messageIndex = chatRoom.messages.findIndex(msg => msg._id.toString() === messageObjectId.toString());
+
+    if (messageIndex === -1) {
+      console.error(`Message with id ${messageId} not found in chat room ${chatRoomId}`);
+      return;
+    }
+
+    // Remove the message from the array
+    chatRoom.messages.splice(messageIndex, 1);
+
+    // Save the updated chat room document
+    await chatRoom.save();
+
+    // Emit message deleted to all clients in the room
+    io.to(chatRoomId).emit('messageDeleted', {
+      messageId, 
+      deletedBy,  // Send the name of the user who deleted the message
+    });
+
+    // Send a system message to notify others about the deletion
+    const systemMessage = {
+      text: `${deletedBy} deleted a message`,
+      senderId: null,  // System message does not have a sender
+      senderName: 'System',
+      senderImage: null,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      fullTimestamp: new Date().toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }),
+      isSystemMessage: true,
+      media: [],
+      chatRoomId
+    };
+
+    // Emit the system message to all users in the chat room
+    io.to(chatRoomId).emit('receiveMessage', systemMessage);
+
+    console.log(`Message with id ${messageId} deleted by ${deletedBy} from chat room ${chatRoomId}`);
+
+  } catch (error) {
+    console.error("Error deleting message:", error);
+  }
+});
 
   // Handle disconnection
   socket.on('disconnect', () => {
