@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 import { IoMdCall, IoMdVideocam, IoMdSearch } from "react-icons/io";
+import Picker from 'emoji-picker-react';
+
 import { IoSend } from "react-icons/io5";
-import { RiAttachment2, RiCloseLine, RiDownload2Line } from "react-icons/ri";
+import { RiAttachment2, RiCloseLine, RiDownload2Line, RiEmotionHappyLine, RiFullscreenExitLine, RiFullscreenLine, RiMicLine, RiMore2Fill } from "react-icons/ri";
 import { useSession } from "next-auth/react";
 const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => {
   const [messages, setMessages] = useState([]);
@@ -27,6 +29,24 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
   const chatContainerRef = useRef(null);
   const hasMounted = useRef(false); // Track component mount
   const textareaRef = useRef(null);
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  const [isEmojiModalOpen, setIsEmojiModalOpen] = useState(false);
+
+
+  const toggleEmojiPicker = () => {
+    setIsEmojiModalOpen((prev) => !prev); // Toggles between open and close
+  };
+
+
+
+  const handleEmojiSelect = (emojiObject) => {
+    if (emojiObject && emojiObject.emoji) {
+      setNewMessage((prevMessage) => (prevMessage || "") + emojiObject.emoji);
+    } else {
+      console.warn("Invalid emoji object or emoji not found:", emojiObject);
+    }
+    setIsEmojiModalOpen(false);
+  };
 
   // Adjust the height of the textarea based on its content
   const adjustHeight = () => {
@@ -40,6 +60,13 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
     setNewMessage(e.target.value);
   };
 
+
+  //media options
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const handleFullscreenToggle = () => {
+    setIsFullscreen(!isFullscreen);
+  };
 
   // Effect to adjust height when message changes
   useEffect(() => {
@@ -112,16 +139,16 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
     socket.current.on('messageDeleted', ({ messageId, deletedBy }) => {
       // Remove the deleted message from the UI
       setMessages((prevMessages) => prevMessages.filter(msg => msg._id !== messageId));
-  
+
       // Optionally, you can show a message in the UI indicating who deleted the message
       console.log(`${deletedBy} deleted a message`);
     });
-  
+
     return () => {
       socket.current.off('messageDeleted');
     };
   }, []);
-  
+
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -136,29 +163,66 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
     e.target.value = null;
   };
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (isSending.current || !isConnected.current) return;
 
+    // Check if there's a message (text or media)
     if (newMessage.trim() || selectedMedia.length > 0) {
       isSending.current = true;
 
-      const mediaFiles = selectedMedia.map((file) => ({
-        url: URL.createObjectURL(file),
-        type: file.type.startsWith("image")
-          ? "image"
-          : file.type.startsWith("video")
-            ? "video"
-            : "file",
-        name: file.name,
-      }));
+      let mediaFiles = [];
 
+      // If there are media files, upload them to the server
+      if (selectedMedia.length > 0) {
+        mediaFiles = await Promise.all(
+          selectedMedia.map(async (file) => {
+            // Create FormData to send the file to the server
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+              // Make a POST request to the API to upload the file
+              const response = await fetch("/api/New/chatMediaUpload", {
+                method: "POST",
+                body: formData,
+              });
+
+              // Check if the response is ok
+              if (!response.ok) {
+                throw new Error("Failed to upload media");
+              }
+
+              const data = await response.json();
+              const fileURL = data.url;
+
+              return {
+                url: fileURL,
+                type: file.type.startsWith("image")
+                  ? "image"
+                  : file.type.startsWith("video")
+                    ? "video"
+                    : "file",
+                name: file.name,
+              };
+            } catch (error) {
+              console.error("Error uploading media:", error);
+              return null;
+            }
+          })
+        );
+
+        // Filter out any failed uploads (null values)
+        mediaFiles = mediaFiles.filter((media) => media !== null);
+      }
+
+      // Create the message object, include media if available
       const messageObject = {
         chatRoomId: chatRoomId,
-        text: newMessage,
+        text: newMessage.trim() || " ",  // Default to a space if no text is entered
         sender: authenticatedUser?.fullName || "You",
         senderId: currentUserId || authenticatedUser?.id,
         senderName: authenticatedUser?.fullName || "You",
-        media: mediaFiles,
+        media: mediaFiles, // Attach media files if any
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         fullTimestamp: new Date().toLocaleString([], { dateStyle: "medium", timeStyle: "short" }),
         senderImage: authenticatedUser?.image,
@@ -167,9 +231,7 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
       // Emit the message to the server
       socket.current.emit("sendMessage", messageObject);
 
-      // Do not update local state yet, wait for confirmation from the server
-
-      // Reset message input and media state
+      // Reset input fields and media state
       setNewMessage("");
       setSelectedMedia([]);
       setShowMediaPreview(false);
@@ -190,6 +252,7 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
   const cancelSelectedMedia = () => {
     setSelectedMedia([]);
     setShowMediaPreview(false);
+
   };
 
   const openMediaPreview = (file, messageIndex) => {
@@ -204,19 +267,7 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
     setShowMediaPreview(false);
   };
 
-  const deleteMediaFromMessage = () => {
-    const updatedMessages = [...messages];
-    const message = updatedMessages[previewMediaIndex];
-    message.media = message.media.filter((file) => file.url !== previewMedia.url);
 
-    if (!message.text && message.media.length === 0) {
-      updatedMessages.splice(previewMediaIndex, 1);
-    }
-
-    setMessages(updatedMessages);
-    localStorage.setItem(`chat_${chatRoomId}`, JSON.stringify(updatedMessages));
-    closeMediaPreview();
-  };
 
   const toggleSearchDropdown = () => {
     setShowSearchDropdown((prev) => !prev);
@@ -243,6 +294,13 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
     setSelectedMessageIndex(index);  // Set the index of the clicked message
     setShowMessageDialog(true);      // Show the message details modal
   };
+  const handleDownload = (url) => {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = url.split('/').pop();  // Use the file name from the URL or provide a custom name
+    a.click();
+  };
+
 
   const confirmDeleteMessage = () => {
     setShowDeleteConfirmation(true);
@@ -270,7 +328,10 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
     }
   };
 
-
+  const openFileInContainer = (fileUrl) => {
+    // If it's a document file, you can open it in a new container or iframe
+    window.open(fileUrl, '_blank');
+  };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -352,12 +413,12 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
         <h1 className="text-sm font-bold">Discussion Panel - Assigned By :{chatRoomName}</h1>
         <div className="flex items-center gap-4">
           <IoMdSearch
-            size={20}
-            className="cursor-pointer text-gray-600 hover:text-gray-800"
+            size={25}
+            className="cursor-pointer text-black hover:text-blue-600 mr-5"
             onClick={toggleSearchDropdown}
           />
-          <IoMdCall size={20} className="cursor-pointer text-gray-600 hover:text-gray-800" />
-          <IoMdVideocam size={20} className="cursor-pointer text-gray-600 hover:text-gray-800" />
+          {/* <IoMdCall size={20} className="cursor-pointer text-gray-600 hover:text-gray-800" />
+          <IoMdVideocam size={20} className="cursor-pointer text-gray-600 hover:text-gray-800" /> */}
 
           {showSearchDropdown && (
             <div className="absolute top-12 right-4 w-64 bg-white border border-gray-300 shadow-lg rounded-lg p-2 z-10">
@@ -427,43 +488,48 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
                 {!msg.isSystemMessage && <small className="text-gray-400 text-xs mt-1">{msg.time}</small>}
 
                 {msg.media && (
-                  <div className="mt-2 space-y-2">
+                  <div className="mt-2 space-y-4">
                     {msg.media.map((file, idx) => (
-                      <div key={idx} className="cursor-pointer">
+                      <div key={idx} className="cursor-pointer relative">
+                        {/* Image Preview */}
                         {file.type === "image" ? (
                           <img
                             src={file.url}
                             alt="Media"
-                            className="w-full rounded-lg"
-                            onClick={() => openMediaPreview(file, index)}
+                            className="w-full rounded-lg hover:scale-105 transform transition-all duration-300"
+                            onClick={() => openMediaPreview(file, idx)}
                           />
                         ) : file.type === "video" ? (
                           <video
                             controls
                             src={file.url}
-                            className="w-full rounded-lg"
-                            onClick={() => openMediaPreview(file, index)}
+                            className="w-full sm:w-[500px] md:w-[700px] lg:w-[900px] rounded-lg hover:scale-105 transform transition-all duration-300"
+                            onClick={() => openMediaPreview(file, idx)}
                           />
+
                         ) : (
-                          <div className="flex items-center space-x-2 bg-gray-100 p-2 rounded-lg">
-                            <RiDownload2Line className="text-gray-600" />
-                            <a
-                              href={file.url}
-                              download={file.name}
-                              className="text-blue-500 underline truncate max-w-[150px]"
-                            >
-                              {file.name}
-                            </a>
+                          <div className="flex items-center justify-between bg-gray-100 p-3 rounded-lg shadow-md">
+                            <div className="flex items-center space-x-2">
+                              <RiDownload2Line className="text-gray-600" />
+                              <a
+                                download={file.name}
+                                className="text-black underline truncate max-w-[180px] sm:max-w-[200px]"
+                              >
+                                {file.name}
+                              </a>
+                            </div>
+                            {/* Three-Dot Icon for File Options */}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                openMediaPreview(file, index);
+                                openMediaPreview(file, idx);
                               }}
-                              className="text-red-500 ml-2"
+                              className="text-gray-600 hover:text-gray-800"
                             >
-                              <RiCloseLine />
+                              <RiMore2Fill size={24} />
                             </button>
                           </div>
+
                         )}
                       </div>
                     ))}
@@ -476,45 +542,80 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
       </div>
 
       {showMediaPreview && previewMedia && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
-          <div className="bg-white p-6 rounded-lg w-96 max-w-full relative">
+        <div
+          className={`fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20 ${isFullscreen ? "h-screen" : "h-auto"}`}
+        >
+          <div
+            className={`bg-white p-6 rounded-lg ${isFullscreen ? "w-full h-full" : "w-96 max-w-full"} relative overflow-hidden`}
+          >
+            {/* Close Button */}
             <button
               className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
               onClick={closeMediaPreview}
             >
               <RiCloseLine size={24} />
             </button>
-            <div className="mb-4">
+
+            {/* Fullscreen Toggle Button */}
+            <button
+              className="absolute top-2 left-2 text-gray-500 hover:text-gray-700"
+              onClick={handleFullscreenToggle}
+            >
+              {isFullscreen ? <RiFullscreenExitLine size={24} /> : <RiFullscreenLine size={24} />}
+            </button>
+
+            {/* Media Preview */}
+            <div className="mb-4 overflow-hidden flex justify-center items-center">
               {previewMedia.type === "image" ? (
-                <img src={previewMedia.url} alt="Media Preview" className="w-full rounded-lg" />
+                <img
+                  src={previewMedia.url}
+                  alt="Media Preview"
+                  className={`rounded-lg ${isFullscreen ? "object-contain max-h-[500px] max-w-max" : "object-contain max-h-96"}`}
+                />
               ) : previewMedia.type === "video" ? (
-                <video controls src={previewMedia.url} className="w-full rounded-lg" />
-              ) : (
-                <div className="flex items-center space-x-2 bg-gray-100 p-4 rounded-lg">
+                <video
+                  controls
+                  src={previewMedia.url}
+                  className={`rounded-lg ${isFullscreen ? "max-w-full max-h-full object-contain" : "w-full max-h-96 object-contain"}`}
+                />
+              ) : previewMedia.type === "file" ? (
+                <div
+                  className="flex items-center space-x-2 bg-gray-100 p-4 rounded-lg cursor-pointer"
+                  onClick={() => openFileInContainer(previewMedia.url)}
+                >
                   <RiDownload2Line className="text-gray-600" size={24} />
                   <span className="text-gray-800 font-medium">{previewMedia.name}</span>
+                  <span className="text-blue-500">Open File</span>
                 </div>
-              )}
+              ) : null}
+
             </div>
-            <div className="text-gray-600 text-sm mb-4">
-              <p>Sent by: You</p>
-              <p>Date and Time: {messages[previewMediaIndex]?.fullTimestamp}</p>
-            </div>
-            <div className="flex justify-between items-center">
-              <a
-                href={previewMedia.url}
-                download
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors"
-              >
-                <RiDownload2Line className="mr-2" /> Download
-              </a>
-              <button
-                onClick={deleteMediaFromMessage}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-              >
-                Delete Media
-              </button>
-            </div>
+
+            {/* Info Section (Visible Only in Normal Mode) */}
+            {!isFullscreen && (
+              <div className="text-gray-600 text-sm mb-4">
+                <p>Sent by: You</p>
+                <p>Date and Time: {messages[previewMediaIndex]?.fullTimestamp}</p>
+              </div>
+            )}
+
+            {/* Actions Section (Visible Only in Normal Mode) */}
+            {!isFullscreen && (
+              <div className="flex justify-between items-center">
+                <a
+                  onClick={() => handleDownload(previewMedia.url, previewMedia.name)}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg flex items-center justify-center hover:bg-blue-600 transition-colors cursor-pointer"
+                >
+                  <RiDownload2Line className="mr-2" /> Download
+                </a>
+                <button
+                  onClick={deleteMessage}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                >
+                  Delete Media
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -527,7 +628,7 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
             {/* Message Text */}
             <div className="bg-blue-100 p-4 rounded-lg shadow-inner mb-6 max-h-60 overflow-y-auto">
               <p className="text-lg text-gray-700 whitespace-pre-wrap break-words">
-                {messages[selectedMessageIndex]?.text}
+                {messages[selectedMessageIndex]?.text.trim() || "Media"}
               </p>
             </div>
 
@@ -556,7 +657,7 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
               {/* Delete button visible only if the authenticated user is the sender */}
               {messages[selectedMessageIndex]?.senderId === authenticatedUser?.id && (
                 <button
-                  onClick={confirmDeleteMessage}
+                  onClick={() => setShowDeleteConfirmation(true)}
                   className="px-5 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
                 >
                   Delete
@@ -591,13 +692,14 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
         </div>
       )}
 
-      <footer className="w-full flex p-3 items-center gap-2 bg-gray-300 rounded-b-lg">
+      <footer className="relative w-full flex p-3 items-center gap-2 bg-gray-300 rounded-b-lg">
+        {/* Attachment Icon */}
         <label
           className="relative text-2xl cursor-pointer text-gray-500 hover:text-gray-700"
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
         >
-          <RiAttachment2 className="text-gray-600" />
+          <RiAttachment2 className="text-3xl text-blue-600 hover:text-blue-400" />
           {selectedMedia.length > 0 && (
             <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
               {selectedMedia.length}
@@ -616,13 +718,21 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
                   e.stopPropagation();
                   cancelSelectedMedia();
                 }}
-                className="text-red-500 hover:text-red-700"
+                className="relative text-red-500 rounded-full hover:text-white hover:bg-red-500 transition-all duration-300 p-1 group"
               >
-                <RiCloseLine />
+                <RiCloseLine
+                  size={20}
+                  className="group-hover:rotate-90 transform transition-transform duration-300"
+                />
+                <span className="absolute -top-7 left-1/2 transform -translate-x-1/2 text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  Cancel
+                </span>
               </button>
             </div>
           )}
         </label>
+
+
 
         {/* Message Input */}
         <textarea
@@ -631,22 +741,54 @@ const ChatApp = ({ chatRoomId, chatRoomName, assignedUsers, currentUserId }) => 
           placeholder="Type your message"
           value={newMessage}
           onChange={handleInputChange}
-          rows="1" // Set the initial height (1 line)
+          rows="1"
           style={{
-            minHeight: '2rem', // Height for 1 line
-            maxHeight: '4rem', // Maximum height (2 lines)
-            overflowY: 'auto', // Enable scrolling after the second line
-            scrollbarWidth: 'none', // Hide scrollbar for Firefox
+            minHeight: '2rem',
+            maxHeight: '4rem',
+            overflowY: 'auto',
+            scrollbarWidth: 'none',
           }}
-          onKeyDown={handleKeyDown} // Handle Enter key to send message without increasing height
+          onKeyDown={handleKeyDown}
         />
+        {/* Emoji Picker Icon */}
+        {/* Emoji Picker Icon */}
+        <button
+          className="text-3xl text-blue-500 hover:text-blue-600"
+          onClick={toggleEmojiPicker} // Toggle Emoji Picker
+        >
+          <RiEmotionHappyLine />
+        </button>
 
 
+        {/* Emoji Picker Modal */}
+        {isEmojiModalOpen && (
+          <div className="absolute bottom-12 left-32 bg-white shadow-md rounded-lg p-2 w-fit">
+            <button
+              className="absolute top-1 right-1 text-gray-500 hover:text-gray-700"
+              onClick={() => setIsEmojiModalOpen(false)} // Close Modal
+            >
+              <RiCloseLine />
+            </button>
+            <Picker
+              onEmojiClick={(selectedEmoji, event) => {
+                handleEmojiSelect(selectedEmoji);
+              }}
+              style={{
+                height: '350px',
+                width: '300px',
+              }}
+            />
+          </div>
+        )}
+
+
+        {/* Send Button */}
         <IoSend
-          className="text-2xl cursor-pointer text-blue-500 hover:text-blue-600"
+          className="text-4xl cursor-pointer text-blue-500 hover:text-blue-600"
           onClick={sendMessage}
         />
       </footer>
+
     </div>
   );
 };
