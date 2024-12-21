@@ -121,6 +121,8 @@ const CircularChartComp = () => {
 
   return (
     <div className="relative">
+       <h2 className="text-xl font-bold text-gray-600">Task Deadline Insights
+</h2>
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie

@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useMemo, useState } from "react";
 import { FaDownload } from "react-icons/fa";
 import { PiFileTextThin } from "react-icons/pi";
@@ -17,561 +19,233 @@ import Dialog from "@/app/_components/Dialog/Dialog";
 import { ImSpinner3 } from "react-icons/im";
 import { MdClose } from "react-icons/md";
 import { BsGraphUpArrow } from "react-icons/bs";
-import { useDispatch, useSelector } from "react-redux";
 import { useSession } from "next-auth/react";
-import { getTasks } from "@/lib/Features/TaskSlice";
 import { fetchUsers } from "@/lib/Features/UserSlice";
+import { useDispatch, useSelector } from "react-redux";
+import DetailsModal from "../_datatable/DetailsModal";
 
-function DualAreaChart({ selectedDate }) {
+function AreaChartComponent({ selectedDate }) {
   const [chartData, setChartData] = useState([]);
   const [dataAvailable, setDataAvailable] = useState(true);
   const [downloadMenuVisible, setDownloadMenuVisible] = useState(false);
   const [isOpenReportModal, setIsOpenReportModal] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState(false);
-  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [selectedBarData, setSelectedBarData] = useState(null);
-  const { data: session } = useSession();
-  const dispatch = useDispatch();
-  const users = useSelector((state) => state.UserSlice.users);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const companyLogo = "/images/SIJM-LOGO.png";
   const companyName = "Smart Inspection & Job Monitoring System";
-  console.log("Users" , users)
+  const users = useSelector((state) => state.UserSlice.users);
+  const { data: session } = useSession();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (session?.user?.userData?.token) {
       dispatch(fetchUsers(session.user.userData.token));
     }
-  }, [dispatch, session?.user?.userData?.id]);
+  }, [dispatch, session?.user?.userData?.token]);
 
-  const allData = [
-    // January 2022
-    {
-      name: "Alpha Plaza",
-      date: "2022-01-02",
-      tasks: 150,
-      rfi: 40,
-    },
-    {
-      name: "Beta Complex",
-      date: "2022-01-02",
-      tasks: 130,
-      rfi: 50,
-    },
-    {
-      name: "Gamma Towers",
-      date: "2022-01-02",
-      tasks: 140,
-      rfi: 45,
-    },
-    {
-      name: "Delta Residences",
-      date: "2022-01-02",
-      tasks: 120,
-      rfi: 55,
-    },
-    {
-      name: "Epsilon Heights",
-      date: "2022-01-02",
-      tasks: 160,
-      rfi: 35,
-    },
-    {
-      name: "Zeta Apartments",
-      date: "2022-01-02",
-      tasks: 125,
-      rfi: 60,
-    },
-    {
-      name: "Eta Villas",
-      date: "2022-01-02",
-      tasks: 180,
-      rfi: 30,
-    },
-    {
-      name: "Theta Homes",
-      date: "2022-01-02",
-      tasks: 110,
-      rfi: 70,
-    },
+  const processUserData = useMemo(() => {
+    if (!users?.length) return [];
 
-    // January 2022
-    {
-      name: "Iota Mall",
-      date: "2022-01-04",
-      tasks: 155,
-      rfi: 42,
-    },
-    {
-      name: "Kappa Towers",
-      date: "2022-01-04",
-      tasks: 135,
-      rfi: 48,
-    },
-    {
-      name: "Lambda Residences",
-      date: "2022-01-04",
-      tasks: 145,
-      rfi: 52,
-    },
-    {
-      name: "Mu Complex",
-      date: "2022-01-04",
-      tasks: 125,
-      rfi: 56,
-    },
-    {
-      name: "Nu Homes",
-      date: "2022-01-04",
-      tasks: 165,
-      rfi: 34,
-    },
-    {
-      name: "Xi Villas",
-      date: "2022-01-04",
-      tasks: 128,
-      rfi: 64,
-    },
-    {
-      name: "Omicron Apartments",
-      date: "2022-01-04",
-      tasks: 185,
-      rfi: 29,
-    },
-    {
-      name: "Pi Estates",
-      date: "2022-01-04",
-      tasks: 112,
-      rfi: 75,
-    },
+    // Group users by hour to show meaningful trends
+    const groupedData = users.reduce((acc, user) => {
+      if (!user.createdAt) return acc; // Skip users without a valid createdAt
+    
+      const date = new Date(user.createdAt);
+      if (isNaN(date.getTime())) return acc; // Skip invalid dates
+    
+      const hour = date.getHours();
+      const key = `${date.toISOString().split('T')[0]}-${hour}`;
+    
+      if (!acc[key]) {
+        acc[key] = {
+          date: date.toISOString().split('T')[0],
+          hour,
+          time: `${hour.toString().padStart(2, '0')}:00`,
+          totalUsers: 0,
+          usersByCity: 0,
+          socialLoginUsers: 0,
+          users: [],
+        };
+      }
+    
+      acc[key].totalUsers += 1;
+      acc[key].usersByCity += user.city ? 1 : 0;
+      acc[key].socialLoginUsers += user.isSocialLogin ? 1 : 0;
+      acc[key].users.push(user);
+    
+      return acc;
+    }, {});
+    
 
-    // December 2022
-    {
-      name: "Rho Plaza",
-      date: "2022-12-11",
-      tasks: 290,
-      rfi: 110,
-    },
-    {
-      name: "Sigma Residences",
-      date: "2022-12-11",
-      tasks: 310,
-      rfi: 95,
-    },
-    {
-      name: "Tau Homes",
-      date: "2022-12-11",
-      tasks: 280,
-      rfi: 105,
-    },
-    {
-      name: "Upsilon Towers",
-      date: "2022-12-11",
-      tasks: 300,
-      rfi: 100,
-    },
-
-    // February 2023
-    {
-      name: "Phi Complex",
-      date: "2023-02-05",
-      tasks: 160,
-      rfi: 62,
-    },
-    {
-      name: "Chi Heights",
-      date: "2023-02-05",
-      tasks: 170,
-      rfi: 58,
-    },
-    {
-      name: "Psi Villas",
-      date: "2023-02-05",
-      tasks: 150,
-      rfi: 65,
-    },
-    {
-      name: "Omega Homes",
-      date: "2023-02-05",
-      tasks: 180,
-      rfi: 54,
-    },
-    {
-      name: "Zenith Plaza",
-      date: "2023-02-05",
-      tasks: 175,
-      rfi: 61,
-    },
-    {
-      name: "Apex Residences",
-      date: "2023-02-05",
-      tasks: 155,
-      rfi: 66,
-    },
-    {
-      name: "Summit Towers",
-      date: "2023-02-05",
-      tasks: 165,
-      rfi: 59,
-    },
-    {
-      name: "Vertex Apartments",
-      date: "2023-02-05",
-      tasks: 140,
-      rfi: 70,
-    },
-
-    // June 2023
-    {
-      name: "Zenith Plaza",
-      date: "2023-06-15",
-      tasks: 260,
-      rfi: 88,
-    },
-    {
-      name: "Nadir Villas",
-      date: "2023-06-15",
-      tasks: 250,
-      rfi: 80,
-    },
-    {
-      name: "Pinnacle Complex",
-      date: "2023-06-15",
-      tasks: 240,
-      rfi: 85,
-    },
-    {
-      name: "Acme Residences",
-      date: "2023-06-15",
-      tasks: 230,
-      rfi: 90,
-    },
-    {
-      name: "Crest Towers",
-      date: "2023-06-15",
-      tasks: 245,
-      rfi: 82,
-    },
-    {
-      name: "Peak Homes",
-      date: "2023-06-15",
-      tasks: 235,
-      rfi: 87,
-    },
-    {
-      name: "Crown Villas",
-      date: "2023-06-15",
-      tasks: 220,
-      rfi: 83,
-    },
-    {
-      name: "Apex Plaza",
-      date: "2023-06-15",
-      tasks: 250,
-      rfi: 84,
-    },
-
-    // October 2024
-    {
-      name: "Summit Villas",
-      date: "2024-10-01",
-      tasks: 300,
-      rfi: 120,
-    },
-    {
-      name: "Vertex Heights",
-      date: "2024-10-01",
-      tasks: 290,
-      rfi: 115,
-    },
-    {
-      name: "Peak Residences",
-      date: "2024-10-01",
-      tasks: 280,
-      rfi: 125,
-    },
-    {
-      name: "Crest Towers",
-      date: "2024-10-01",
-      tasks: 275,
-      rfi: 110,
-    },
-    {
-      name: "Apex Plaza",
-      date: "2024-10-01",
-      tasks: 310,
-      rfi: 130,
-    },
-    {
-      name: "Nadir Complex",
-      date: "2024-10-01",
-      tasks: 265,
-      rfi: 117,
-    },
-    {
-      name: "Ali Gardens",
-      date: "2024-10-01",
-      tasks: 285,
-      rfi: 128,
-    },
-    {
-      name: "Faisal Villas",
-      date: "2024-10-01",
-      tasks: 270,
-      rfi: 121,
-    },
-    {
-      name: "Kamran Residences",
-      date: "2024-10-01",
-      tasks: 295,
-      rfi: 119,
-    },
-    {
-      name: "Ahmed Towers",
-      date: "2024-10-01",
-      tasks: 300,
-      rfi: 122,
-    },
-    {
-      name: "Saqib Homes",
-      date: "2024-10-01",
-      tasks: 310,
-      rfi: 123,
-    },
-    {
-      name: "Umar Estates",
-      date: "2024-10-01",
-      tasks: 280,
-      rfi: 127,
-    },
-    {
-      name: "Bilal Apartments",
-      date: "2024-10-01",
-      tasks: 290,
-      rfi: 124,
-    },
-    {
-      name: "Omar Villas",
-      date: "2024-10-01",
-      tasks: 275,
-      rfi: 126,
-    },
-
-    // November 2024
-    {
-      name: "Hassan Complex",
-      date: "2024-11-02",
-      tasks: 230,
-      rfi: 75,
-    },
-    {
-      name: "Fahad Towers",
-      date: "2024-11-02",
-      tasks: 240,
-      rfi: 72,
-    },
-    {
-      name: "Rizwan City",
-      date: "2024-11-02",
-      tasks: 225,
-      rfi: 78,
-    },
-    {
-      name: "Ali Gardens",
-      date: "2024-11-02",
-      tasks: 250,
-      rfi: 70,
-    },
-    {
-      name: "Faisal Villas",
-      date: "2024-11-02",
-      tasks: 235,
-      rfi: 74,
-    },
-    {
-      name: "Kamran Apartments",
-      date: "2024-11-02",
-      tasks: 245,
-      rfi: 76,
-    },
-    {
-      name: "Ahmed Homes",
-      date: "2024-11-02",
-      tasks: 220,
-      rfi: 80,
-    },
-  ];
-
-  const memoizedAllData = useMemo(() => allData, []); 
+    return Object.values(groupedData).sort((a, b) => {
+      const dateA = new Date(`${a.date}T${a.time}`);
+      const dateB = new Date(`${b.date}T${b.time}`);
+      return dateA - dateB;
+    });
+  }, [users]);
 
   useEffect(() => {
-    const updateChartData = () => {
-      const formattedSelectedDate = new Date(
+    if (selectedDate && processUserData.length > 0) {
+      const formattedDate = new Date(
         selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000
-      )
-        .toISOString()
-        .split("T")[0];
+      ).toISOString().split('T')[0];
 
-      const filteredData = memoizedAllData.filter(
-        (item) => item.date === formattedSelectedDate
+      const filteredData = processUserData.filter(
+        (item) => item.date === formattedDate
       );
 
-      if (filteredData.length > 0) {
-        setChartData(filteredData);
-        setDataAvailable(true);
-      } else {
-        setChartData([
-          {
-            date: formattedSelectedDate,
-            sales: 0,
-            revenue: 0,
-            customers: 0,
-          },
-        ]);
-        setDataAvailable(false);
-      }
-    };
-
-    updateChartData();
-  }, [selectedDate, memoizedAllData]);
-
-  useEffect(() => {
-    if (session?.user?.userData?.id) {
-      dispatch(getTasks(session.user.userData.id));
+      setChartData(filteredData);
+      setDataAvailable(filteredData.length > 0);
+    } else {
+      setChartData(processUserData);
+      setDataAvailable(processUserData.length > 0);
     }
-  }, [dispatch, session?.user?.userData?.id]);
+  }, [selectedDate, processUserData]);
 
   const generatePDF = async () => {
     setGeneratingPDF(true);
     const element = document.getElementById("report-content");
-    if (!element) {
-      alert("Report content not found!");
+
+    try {
+      const canvas = await html2canvas(element, { scale: 2 });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`User_Analytics_${selectedDate.toISOString().split("T")[0]}.pdf`);
+    } catch (error) {
+      console.error("PDF generation error:", error);
+    } finally {
       setGeneratingPDF(false);
-      return;
     }
-
-    const pdf = new jsPDF("p", "mm", "a4");
-
-    // Capture the element using html2canvas
-    const canvas = await html2canvas(element, { scale: 2 });
-    const imgData = canvas.toDataURL("image/png");
-
-    // Set dimensions for the PDF
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width; // Scale height proportionally
-
-    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-    const formattedSelectedDate = new Date(
-      selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000
-    )
-      .toISOString()
-      .split("T")[0];
-    pdf.save(`Tasks_Report_${formattedSelectedDate}.pdf`);
-    setGeneratingPDF(false);
   };
 
-  function downloadCSV(dataToDownload, fileName) {
-    if (dataToDownload.length === 0) {
+  const downloadCSV = (data, filename) => {
+    if (!data?.length) {
       alert("No data available to download");
       return;
     }
 
-    const headers = Object.keys(dataToDownload[0]).join(",");
-    const csv = [
-      headers,
-      ...dataToDownload.map((row) => Object.values(row).join(",")),
+    const headers = ["Date", "Time", "Total Users", "Users By City", "Social Login Users"];
+    const csvContent = [
+      headers.join(","),
+      ...data.map((item) =>
+        [
+          item.date,
+          item.time,
+          item.totalUsers,
+          item.usersByCity,
+          item.socialLoginUsers
+        ].join(",")
+      ),
     ].join("\n");
 
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", fileName);
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${filename}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const CustomTooltip = ({ active, payload }) => {
+    if (!active || !payload || !payload.length) return null;
+
+    const data = payload[0].payload;
+    
+    return (
+      <div className="bg-white p-4 rounded-lg shadow-lg border">
+        <p className="font-semibold text-gray-800">Time: {data.time}</p>
+        <p className="text-blue-600">Total Users: {data.totalUsers}</p>
+        <p className="text-green-600">Users by City: {data.usersByCity}</p>
+        <p className="text-purple-600">Social Login Users: {data.socialLoginUsers}</p>
+        <p className="text-sm text-gray-500 mt-2">Click for detailed view</p>
+      </div>
+    );
+  };
+
+  const handleDataPointClick = (data) => {
+    if (data && data.users && data.users.length > 0) {
+      setSelectedUser({
+        ...data,
+        users: data.users.map(user => ({
+          ...user,
+          isSocialLogin: !!user.isSocialLogin // Ensure boolean value
+        }))
+      });
+      setIsModalOpen(true);
     }
-
-    setDownloadMenuVisible(!downloadMenuVisible);
-  }
-
-  function toggleDownloadMenu() {
-    setDownloadMenuVisible((prevState) => !prevState);
-  }
-
-  function formatXAxis(tickItem) {
-    const date = new Date(tickItem);
-    return `${date.getDate()}/${date.getMonth() + 1}`;
-  }
-
-  function customTooltip({ active, payload }) {
-    if (active && payload && payload.length) {
-      return (
-        <div
-          className="custom-tooltip"
-          style={{
-            backgroundColor: "#fff",
-            padding: "10px",
-            border: "1px solid #ccc",
-          }}
-        >
-          <p className="label text-purple-400">{`Name: ${payload[0].payload.name}`}</p>
-          <p className="desc">{`Tasks: ${payload[0].payload.tasks}`}</p>
-          <p className="desc">{`Rfi: ${payload[0].payload.rfi}`}</p>
-          <p className="desc">{`Date: ${payload[0].payload.date}`}</p>
-        </div>
-      );
+  };
+  const columns = [
+    { 
+      header: "User ID", 
+      key: "_id",
+      accessor: (user) => user._id?.$oid || user._id || 'N/A'
+    },
+    { 
+      header: "Name", 
+      key: "fullName",
+      accessor: (user) => user.fullName || 'N/A'
+    },
+    { 
+      header: "City", 
+      key: "city",
+      accessor: (user) => user.city || 'N/A'
+    },
+    { 
+      header: "Contact", 
+      key: "contact",
+      accessor: (user) => user.contact || 'N/A'
+    },
+    { 
+      header: "Social Login", 
+      key: "isSocialLogin",
+      accessor: (user) => user.isSocialLogin ? "Yes" : "No"
     }
-    return null;
-  }
+  ];
 
   return (
     <div>
-      <div className="flex justify-between mb-2">
-        <p>Area Chart</p>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold text-gray-600">User Analytics Area</h2>
         <div className="relative">
           <button
-            onClick={toggleDownloadMenu}
+            onClick={() => setDownloadMenuVisible(!downloadMenuVisible)}
             className={`bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded flex items-center text-sm ${
               !dataAvailable && "opacity-50 cursor-not-allowed"
             }`}
             disabled={!dataAvailable}
           >
-            <FaDownload className="mr-1" size={12} />
+            <FaDownload size={16} />
+            <span>Export</span>
           </button>
+
           {downloadMenuVisible && (
-            <div className="absolute right-0 mt-2 z-10 w-64 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden transition-all duration-200 ease-in-out transform origin-top-right">
+            <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border z-10">
               <div className="p-2 space-y-1">
                 <button
-                  onClick={() =>
-                    downloadCSV(
-                      chartData,
-                      `Area_chart_report_${
-                        selectedDate.toISOString().split("T")[0]
-                      }.csv`
-                    )
-                  }
-                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg transition-colors duration-150"
+                  onClick={() => downloadCSV(chartData, `user_analytics_${selectedDate?.toISOString().split("T")[0] || 'all'}`)}
+                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg"
                 >
                   <PiFileTextThin size={18} className="mr-2 text-blue-600" />
-                  <span>Extract Chosen Entries</span>
+                  <span>Export Current View</span>
                 </button>
                 <button
-                  onClick={() =>
-                    downloadCSV(memoizedAllData, "all_data_report.csv")
-                  }
-                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg transition-colors duration-150"
+                  onClick={() => downloadCSV(processUserData, 'complete_user_analytics')}
+                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg"
                 >
                   <PiFileTextThin size={18} className="mr-2 text-blue-600" />
-                  <span>Retrieve Full Data</span>
+                  <span>Export All Data</span>
                 </button>
                 <button
-                  onClick={() => {
-                    setIsOpenReportModal(true);
-                  }}
-                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg transition-colors duration-150"
+                  onClick={() => setIsOpenReportModal(true)}
+                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg"
                 >
                   <BsGraphUpArrow size={18} className="mr-2 text-green-600" />
                   <span>Generate Report</span>
@@ -581,228 +255,161 @@ function DualAreaChart({ selectedDate }) {
           )}
         </div>
       </div>
-      <ResponsiveContainer width="100%" height={200}>
-        <AreaChart data={chartData}>
-          {/* Horizontal grid lines only */}
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
 
-          {/* X and Y axes */}
-          <XAxis dataKey="date" tickFormatter={formatXAxis} type="category" />
-          <YAxis dataKey="rfi" />
-
-          {/* Area chart with smooth curves */}
-          <Area
-            type="monotone"
-            dataKey="tasks"
-            stroke="#8884d8"
-            fill="#8884d8"
-            fillOpacity={0.3}
-            strokeWidth={3}
-            activeDot={{ r: 8 }}
+      <ResponsiveContainer width="100%" height={400}>
+        <AreaChart 
+          data={chartData}
+          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+          onClick={(e) => e?.activePayload && handleDataPointClick(e.activePayload[0].payload)}
+        >
+          <defs>
+            <linearGradient id="totalUsers" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
+              <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+            </linearGradient>
+            <linearGradient id="usersByCity" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/>
+              <stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/>
+            </linearGradient>
+            <linearGradient id="socialLoginUsers" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#ffc658" stopOpacity={0.8}/>
+              <stop offset="95%" stopColor="#ffc658" stopOpacity={0}/>
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis 
+            dataKey="time"
+            tick={{ fill: '#666' }}
+            tickLine={{ stroke: '#666' }}
           />
-          <Area
-            type="monotone"
-            dataKey="rfi"
-            stroke="#82ca9d"
-            fill="#82ca9d"
-            fillOpacity={0.3}
-            strokeWidth={3}
-            activeDot={{ r: 8 }}
+          <YAxis
+            tick={{ fill: '#666' }}
+            tickLine={{ stroke: '#666' }}
           />
-
-          {/* Tooltip for interaction */}
-          <Tooltip content={customTooltip} />
-
-          {/* Custom legend */}
+          <Tooltip content={<CustomTooltip />} />
           <Legend />
+          <Area
+            type="monotone"
+            dataKey="totalUsers"
+            stroke="#8884d8"
+            fillOpacity={1}
+            fill="url(#totalUsers)"
+            name="Total Users"
+          />
+          <Area
+            type="monotone"
+            dataKey="usersByCity"
+            stroke="#82ca9d"
+            fillOpacity={1}
+            fill="url(#usersByCity)"
+            name="Users by City"
+          />
+          <Area
+            type="monotone"
+            dataKey="socialLoginUsers"
+            stroke="#ffc658"
+            fillOpacity={1}
+            fill="url(#socialLoginUsers)"
+            name="Social Login Users"
+          />
         </AreaChart>
       </ResponsiveContainer>
+
       {!dataAvailable && (
-        <div style={{ textAlign: "center", marginTop: "10px", color: "#666" }}>
-          No data available for{" "}
-          {selectedDate.toLocaleString("default", {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          })}
+        <div className="text-center mt-4 text-gray-600">
+          No data available for {selectedDate?.toLocaleDateString()}
         </div>
       )}
 
-      {/* Report Modal */}
       <Dialog
         isOpen={isOpenReportModal}
-        onClose={() => {
-          setIsOpenReportModal(false);
-        }}
+        onClose={() => setIsOpenReportModal(false)}
         isLeft={false}
-        widthClass={"w-[950px] rounded-lg p-4"}
-        padding={"p-12"}
-        withBlur={true}
-        minWidth={950}
+        widthClass="w-[950px]"
+        padding="p-6"
       >
-        {/* report header */}
-        <div className="flex items-center justify-between gap-3 border-b pb-4 mb-4">
-          <h1 className="text-2xl font-semibold">Report Preview</h1>
+        <div className="flex justify-between items-center mb-6 border-b pb-4">
+          <h2 className="text-2xl font-semibold">Analytics Report</h2>
           <div className="flex items-center gap-3">
             <button
-              className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-400 disabled:cursor-not-allowed text-white rounded transition-all px-2 py-1"
               onClick={generatePDF}
               disabled={generatingPDF}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50 flex items-center gap-2"
             >
               {generatingPDF ? (
-                <div className="flex items-center gap-2">
+                <>
                   <ImSpinner3 className="animate-spin" />
-                  Downloading...
-                </div>
+                  <span>Generating...</span>
+                </>
               ) : (
-                "Download as PDF"
+                <>
+                  <FaDownload />
+                  <span>Download PDF</span>
+                </>
               )}
             </button>
-            <MdClose
-              className="text-2xl cursor-pointer hover:scale-110"
-              onClick={() => {
-                setIsOpenReportModal(false);
-              }}
-            />
+            <button
+              onClick={() => setIsOpenReportModal(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <MdClose size={24} />
+            </button>
           </div>
         </div>
-        {/* report Content in Template Here */}
-        <div
-          id="report-content"
-          className="bg-white shadow-md rounded-lg p-6 border"
-        >
-          {/* Report Header */}
-          <div className="flex items-center justify-between gap-3 mb-6 border rounded-lg bg-neutral-50 shadow-lg">
-            <div className="flex items-center gap-4">
-              {companyLogo && (
-                <img
-                  src={companyLogo}
-                  alt={`${companyName} Logo`}
-                  className="h-32 w-32 object-contain"
-                />
-              )}
-              <h1 className="text-4xl font-semibold text-blue-700">
-                {companyName}
-              </h1>
-            </div>
+
+        <div id="report-content" className="bg-white p-6">
+          <div className="flex items-center justify-between mb-8">
+            <img src={companyLogo} alt="Company Logo" className="h-16" />
+            <h1 className="text-2xl font-bold">{companyName}</h1>
           </div>
-          <div className="flex flex-col items-center text-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">
-              Tasks Report
-            </h1>
+
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">User Analytics Report</h2>
             <p className="text-gray-600">
-              Report Date:{" "}
-              {selectedDate.toLocaleString("default", {
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}
+              Generated for: {selectedDate?.toLocaleDateString() || 'All Time'}
             </p>
           </div>
 
-          {/* Summary Section */}
-          <div className="my-6">
-            <h2 className="text-xl font-bold mb-2">Summary</h2>
-            <p className="text-gray-600">
-              This report provides information on task progress, including the
-              number of tasks completed, their alignment with project
-              milestones, and team performance, offering insights into overall
-              productivity and workflow efficiency.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-blue-100 p-4 rounded-lg text-center">
-              <h2 className="text-lg font-semibold text-blue-600">
-                Total Tasks
-              </h2>
-              <p className="text-2xl font-bold text-blue-800">
-                {chartData
-                  .reduce((sum, item) => sum + item.tasks, 0)
-                  .toLocaleString()}
+          <div className="grid grid-cols-3 gap-6 mb-8">
+            <div className="bg-blue-50 p-6 rounded-lg">
+              <h3 className="font-semibold text-blue-800">Total Users</h3>
+              <p className="text-3xl font-bold text-blue-600">
+                {chartData.reduce((sum, item) => sum + item.totalUsers, 0)}
               </p>
             </div>
-            <div className="bg-green-100 p-4 rounded-lg text-center">
-              <h2 className="text-lg font-semibold text-green-600">
-                Total RFI's
-              </h2>
-              <p className="text-2xl font-bold text-green-800">
-                {chartData
-                  .reduce((sum, item) => sum + item.rfi, 0)
-                  .toLocaleString()}
+            <div className="bg-green-50 p-6 rounded-lg">
+              <h3 className="font-semibold text-green-800">Users by City</h3>
+              <p className="text-3xl font-bold text-green-600">
+                {chartData.reduce((sum, item) => sum + item.usersByCity, 0)}
+              </p>
+            </div>
+            <div className="bg-yellow-50 p-6 rounded-lg">
+              <h3 className="font-semibold text-yellow-800">Social Login Users</h3>
+              <p className="text-3xl font-bold text-yellow-600">
+                {chartData.reduce((sum, item) => sum + item.socialLoginUsers, 0)}
               </p>
             </div>
           </div>
 
-          {/* Chart Section */}
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-2">
-              Performance Chart
-            </h2>
-            <div className="w-full h-64 bg-gray-100 rounded-lg p-4">
-              {/* Embed the LineChart component here */}
-              <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={chartData}>
-                  {/* Horizontal grid lines only */}
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-
-                  {/* X and Y axes */}
-                  <XAxis
-                    dataKey="date"
-                    tickFormatter={formatXAxis}
-                    type="category"
-                  />
-                  <YAxis dataKey="rfi" />
-
-                  {/* Area chart with smooth curves */}
-                  <Area
-                    type="monotone"
-                    dataKey="tasks"
-                    stroke="#8884d8"
-                    fill="#8884d8"
-                    fillOpacity={0.3}
-                    strokeWidth={3}
-                    activeDot={{ r: 8 }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="rfi"
-                    stroke="#82ca9d"
-                    fill="#82ca9d"
-                    fillOpacity={0.3}
-                    strokeWidth={3}
-                    activeDot={{ r: 8 }}
-                  />
-
-                  {/* Tooltip for interaction */}
-                  <Tooltip content={customTooltip} />
-
-                  {/* Custom legend */}
-                  <Legend />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Data Table */}
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-2">
-              Detailed Data
-            </h2>
-            <div className="overflow-auto border rounded-lg">
-              <table className="w-full text-sm text-left text-gray-800">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-4">Hourly Breakdown</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-2">Date</th>
-                    <th className="px-4 py-2">Tasks</th>
-                    <th className="px-4 py-2">RFI's</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Users</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Users by City</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Social Login Users</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="bg-white divide-y divide-gray-200">
                   {chartData.map((item, index) => (
-                    <tr key={index} className="bg-white border-b">
-                      <td className="px-4 py-2">{item.date}</td>
-                      <td className="px-4 py-2">{item.tasks}</td>
-                      <td className="px-4 py-2">{item.rfi}</td>
+                    <tr key={index}>
+                      <td className="px-6 py-4 whitespace-nowrap">{item.time}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{item.totalUsers}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{item.usersByCity}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">{item.socialLoginUsers}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -811,8 +418,16 @@ function DualAreaChart({ selectedDate }) {
           </div>
         </div>
       </Dialog>
+
+      <DetailsModal
+        isOpen={isModalOpen}
+        columns={columns}
+        onClose={() => setIsModalOpen(false)}
+        title="User Details"
+        data={selectedUser?.users || []}
+      />
     </div>
   );
 }
 
-export default DualAreaChart;
+export default AreaChartComponent;

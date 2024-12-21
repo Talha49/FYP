@@ -1,73 +1,83 @@
-import React from 'react';
-import { X } from 'lucide-react';
+import React from "react";
+import { X } from "lucide-react";
 
-/**
- * A reusable modal component for displaying detailed information in a table format
- * @param {Object} props - Component props
- * @param {boolean} props.isOpen - Controls the visibility of the modal
- * @param {Function} props.onClose - Function to close the modal
- * @param {string} props.title - Title of the modal
- * @param {Array} props.columns - Array of column definitions
- * @param {Array} props.data - Data to be displayed in the table
- * @param {Function} [props.renderRow] - Optional custom row rendering function
- */
-const DetailsModal = ({
-  isOpen,
-  onClose,
-  title,
-  columns,
-  data,
-  renderRow
-}) => {
+const DetailsModal = ({ isOpen, onClose, title, columns, data, renderRow }) => {
   if (!isOpen) return null;
 
-  // Default row renderer if no custom renderer is provided
+  // Enhanced row renderer to handle social login and other fields
   const defaultRowRenderer = (item, index) => (
-    <tr key={index} className="border-b hover:bg-gray-50">
-      {columns.map((column, colIndex) => (
-        <td key={colIndex} className="p-2">
-          {column.accessor ? column.accessor(item) : item[column.key]}
-        </td>
-      ))}
+    <tr
+      key={index}
+      className="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150"
+    >
+      {columns.map((column, colIndex) => {
+        let cellContent;
+        
+        if (column.accessor) {
+          cellContent = column.accessor(item);
+        } else if (column.key === "isSocialLogin") {
+          // Handle boolean values for social login
+          cellContent = item[column.key] ? "Yes" : "No";
+        } else {
+          cellContent = item[column.key] || "N/A";
+        }
+
+        return (
+          <td
+            key={colIndex}
+            className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate"
+          >
+            {cellContent}
+          </td>
+        );
+      })}
     </tr>
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-11/12 max-w-2xl max-h-[80vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* Modal Header */}
-        <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-xl font-semibold">{title}</h2>
-          <button 
-            onClick={onClose} 
-            className="text-gray-600 hover:text-gray-900"
+        <div className="flex justify-between items-center p-4 border-b bg-gray-50">
+          <h2 className="text-xl font-semibold text-gray-800 truncate max-w-[80%]">
+            {title}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100 transition-colors"
           >
-            <X />
+            <X className="w-6 h-6" />
           </button>
         </div>
-        
+
         {/* Modal Content */}
-        <div className="overflow-auto max-h-[60vh]">
-          <table className="w-full">
-            {/* Table Header */}
-            <thead className="bg-gray-100 sticky top-0">
-              <tr>
-                {columns.map((column, index) => (
-                  <th 
-                    key={index} 
-                    className="p-2 text-left"
-                  >
-                    {column.header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            
-            {/* Table Body */}
-            <tbody>
-              {data.map(renderRow || defaultRowRenderer)}
-            </tbody>
-          </table>
+        <div className="flex-grow overflow-auto relative">
+          {!data || data.length === 0 ? (
+            <div className="absolute inset-0 flex items-center justify-center text-gray-500 text-sm">
+              No data available
+            </div>
+          ) : (
+            <table className="w-full table-auto border-collapse">
+              {/* Table Header */}
+              <thead className="sticky top-0 bg-gray-100 z-10">
+                <tr>
+                  {columns.map((column, index) => (
+                    <th
+                      key={index}
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b"
+                    >
+                      {column.header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              {/* Table Body */}
+              <tbody className="divide-y divide-gray-200">
+                {data.map(renderRow || defaultRowRenderer)}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

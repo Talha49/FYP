@@ -18,9 +18,9 @@ import { BsGraphUpArrow } from "react-icons/bs";
 import Dialog from "@/app/_components/Dialog/Dialog";
 import { ImSpinner3 } from "react-icons/im";
 import { MdClose } from "react-icons/md";
-import { getTasks } from '@/lib/Features/TaskSlice';
-import { useSession } from 'next-auth/react';
-import { useDispatch, useSelector } from 'react-redux';
+import { getTasks } from "@/lib/Features/TaskSlice";
+import { useSession } from "next-auth/react";
+import { useDispatch, useSelector } from "react-redux";
 import DetailsModal from "../_datatable/DetailsModal";
 
 function BarChartComp({ selectedDate }) {
@@ -48,14 +48,16 @@ function BarChartComp({ selectedDate }) {
   // Process filtered tasks based on selected date
   const filteredTasks = useMemo(() => {
     if (!tasks || !selectedDate) return [];
-    
+
     const formattedSelectedDate = new Date(
       selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000
-    ).toISOString().split('T')[0];
+    )
+      .toISOString()
+      .split("T")[0];
 
-    return tasks.filter(task => 
-      task.dueDate?.split('T')[0] === formattedSelectedDate
-    ).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+    return tasks
+      .filter((task) => task.dueDate?.split("T")[0] === formattedSelectedDate)
+      .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
   }, [tasks, selectedDate]);
 
   // Update chart data when filtered tasks change
@@ -81,28 +83,28 @@ function BarChartComp({ selectedDate }) {
       acc[task.status] = (acc[task.status] || 0) + 1;
 
       // Priority statistics
-      acc[`${task.priority}Priority`] = (acc[`${task.priority}Priority`] || 0) + 1;
+      acc[`${task.priority}Priority`] =
+        (acc[`${task.priority}Priority`] || 0) + 1;
 
       return acc;
     }, {});
 
-    
     // Transform aggregated data for chart
     const transformedData = [
       {
         name: "Distribution",
         "First Floor": aggregatedData.firstFloor || 0,
         "Other Floors": aggregatedData.otherFloors || 0,
-        "Completed": aggregatedData.Completed || 0,
-        "Pending": aggregatedData.Pending || 0,
+        Completed: aggregatedData.Completed || 0,
+        Pending: aggregatedData.Pending || 0,
         "High Priority": aggregatedData.HighPriority || 0,
         "Low Priority": aggregatedData.LowPriority || 0,
-      }
+      },
     ];
 
     setChartData(transformedData);
   }, [filteredTasks]);
- 
+
   // Custom tooltip component
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload || !payload.length) return null;
@@ -126,16 +128,14 @@ function BarChartComp({ selectedDate }) {
       return;
     }
 
-    const headers = Object.keys(data[0]).join(',');
-    const csvData = data.map(row => 
-      Object.values(row).join(',')
-    );
+    const headers = Object.keys(data[0]).join(",");
+    const csvData = data.map((row) => Object.values(row).join(","));
 
-    const csv = [headers, ...csvData].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const csv = [headers, ...csvData].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = filename || 'chart_data.csv';
+    link.download = filename || "chart_data.csv";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -145,27 +145,27 @@ function BarChartComp({ selectedDate }) {
   const generatePDF = async () => {
     setGeneratingPDF(true);
     try {
-      const element = document.getElementById('report-content');
+      const element = document.getElementById("report-content");
       if (!element) {
-        throw new Error('Report content not found');
+        throw new Error("Report content not found");
       }
 
       const canvas = await html2canvas(element, {
         scale: 2,
         logging: false,
-        useCORS: true
+        useCORS: true,
       });
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Task_Report_${selectedDate.toISOString().split('T')[0]}.pdf`);
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Task_Report_${selectedDate.toISOString().split("T")[0]}.pdf`);
     } catch (error) {
-      console.error('PDF generation failed:', error);
-      alert('Failed to generate PDF. Please try again.');
+      console.error("PDF generation failed:", error);
+      alert("Failed to generate PDF. Please try again.");
     } finally {
       setGeneratingPDF(false);
     }
@@ -173,25 +173,29 @@ function BarChartComp({ selectedDate }) {
   const handleBarClick = (data, index) => {
     let filteredData = [];
     const category = data.name;
-    
+
     switch (category) {
       case "First Floor":
-        filteredData = filteredTasks.filter(task => task.floor === "First");
+        filteredData = filteredTasks.filter((task) => task.floor === "First");
         break;
       case "Other Floors":
-        filteredData = filteredTasks.filter(task => task.floor !== "First");
+        filteredData = filteredTasks.filter((task) => task.floor !== "First");
         break;
       case "Completed":
-        filteredData = filteredTasks.filter(task => task.status === "Completed");
+        filteredData = filteredTasks.filter(
+          (task) => task.status === "Completed"
+        );
         break;
       case "Pending":
-        filteredData = filteredTasks.filter(task => task.status === "Pending");
+        filteredData = filteredTasks.filter(
+          (task) => task.status === "Pending"
+        );
         break;
       case "High Priority":
-        filteredData = filteredTasks.filter(task => task.priority === "High");
+        filteredData = filteredTasks.filter((task) => task.priority === "High");
         break;
       case "Low Priority":
-        filteredData = filteredTasks.filter(task => task.priority === "Low");
+        filteredData = filteredTasks.filter((task) => task.priority === "Low");
         break;
       default:
         filteredData = filteredTasks;
@@ -199,7 +203,7 @@ function BarChartComp({ selectedDate }) {
 
     setSelectedBarData({
       title: `${category} Tasks`,
-      data: filteredData
+      data: filteredData,
     });
     setDetailsModalOpen(true);
   };
@@ -209,8 +213,12 @@ function BarChartComp({ selectedDate }) {
     { header: "Status", key: "status" },
     { header: "Priority", key: "priority" },
     { header: "Floor", key: "floor" },
-    { header: "Due Date", key: "dueDate", accessor: (item) => new Date(item.dueDate).toLocaleDateString() },
-    { header: "Assignee", key: "assignee" }
+    {
+      header: "Due Date",
+      key: "dueDate",
+      accessor: (item) => new Date(item.dueDate).toLocaleDateString(),
+    },
+    { header: "Assignee", key: "assignee" },
   ];
   const toggleDownloadMenu = () => {
     setDownloadMenuVisible((prevState) => !prevState);
@@ -219,26 +227,10 @@ function BarChartComp({ selectedDate }) {
   return (
     <div className="">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-800">Task Distribution</h2>
-        {/* <div className="flex gap-2">
-          <button
-            onClick={() => downloadCSV(chartData, `task_data_${selectedDate.toISOString().split('T')[0]}.csv`)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-2 py-2 rounded-lg "
-            disabled={!dataAvailable}
-          >
-            <FaDownload size={10} />
-            
-           
-          </button>
-          <button
-            onClick={() => setIsOpenReportModal(true)}
-            className="bg-green-500 hover:bg-green-600 text-white px-2 py-2 rounded-lg"
-            disabled={!dataAvailable}
-          >
-            <BsGraphUpArrow size={10} />
+      <h2 className="text-xl font-bold text-gray-600 leading-tight">
+      Task Distribution Chart
+</h2>
 
-          </button>
-        </div> */}
         <div className="relative">
           <button
             onClick={toggleDownloadMenu}
@@ -247,7 +239,8 @@ function BarChartComp({ selectedDate }) {
             }`}
             disabled={!dataAvailable}
           >
-            <FaDownload className="mr-1" size={12} />
+            <FaDownload size={16} />
+            <span>Export</span>
           </button>
           {downloadMenuVisible && (
             <div className="absolute right-0 mt-2 z-[50] w-64 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden transition-all duration-200 ease-in-out transform origin-top-right">
@@ -256,7 +249,9 @@ function BarChartComp({ selectedDate }) {
                   onClick={() =>
                     downloadCSV(
                       chartData,
-                      `priority_chart_report_${selectedDate.toISOString().split("T")[0]}.csv`
+                      `priority_chart_report_${
+                        selectedDate.toISOString().split("T")[0]
+                      }.csv`
                     )
                   }
                   className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg transition-colors duration-150"
@@ -281,10 +276,7 @@ function BarChartComp({ selectedDate }) {
               </div>
             </div>
           )}
-
-          
         </div>
-
       </div>
 
       {!dataAvailable ? (
@@ -292,23 +284,41 @@ function BarChartComp({ selectedDate }) {
           No data available for {selectedDate.toLocaleDateString()}
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+        <ResponsiveContainer width="100%" height={800}>
+          <BarChart
+            data={chartData}
+            margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+          >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
-            <Bar dataKey="First Floor" fill="#8884d8" onClick={handleBarClick} />
-            <Bar dataKey="Other Floors" fill="#82ca9d" onClick={handleBarClick} />
+            <Bar
+              dataKey="First Floor"
+              fill="#8884d8"
+              onClick={handleBarClick}
+            />
+            <Bar
+              dataKey="Other Floors"
+              fill="#82ca9d"
+              onClick={handleBarClick}
+            />
             <Bar dataKey="Completed" fill="#ffc658" onClick={handleBarClick} />
             <Bar dataKey="Pending" fill="#ff8042" onClick={handleBarClick} />
-            <Bar dataKey="High Priority" fill="#d0ed57" onClick={handleBarClick} />
-            <Bar dataKey="Low Priority" fill="#8dd1e1" onClick={handleBarClick} />
+            <Bar
+              dataKey="High Priority"
+              fill="#d0ed57"
+              onClick={handleBarClick}
+            />
+            <Bar
+              dataKey="Low Priority"
+              fill="#8dd1e1"
+              onClick={handleBarClick}
+            />
           </BarChart>
         </ResponsiveContainer>
       )}
-
 
       {/* Report Modal */}
       <Dialog
@@ -356,7 +366,9 @@ function BarChartComp({ selectedDate }) {
               className="h-20 w-20 object-contain"
             />
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">{companyName}</h1>
+              <h1 className="text-2xl font-bold text-gray-800">
+                {companyName}
+              </h1>
               <p className="text-gray-600">Task Distribution Report</p>
               <p className="text-gray-600">
                 Date: {selectedDate.toLocaleDateString()}
@@ -375,20 +387,30 @@ function BarChartComp({ selectedDate }) {
             <div className="bg-green-50 p-4 rounded-lg">
               <h3 className="font-semibold text-green-800">Completed Tasks</h3>
               <p className="text-2xl font-bold text-green-600">
-                {filteredTasks.filter(task => task.status === 'Completed').length}
+                {
+                  filteredTasks.filter((task) => task.status === "Completed")
+                    .length
+                }
               </p>
             </div>
             <div className="bg-yellow-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-yellow-800">High Priority Tasks</h3>
+              <h3 className="font-semibold text-yellow-800">
+                High Priority Tasks
+              </h3>
               <p className="text-2xl font-bold text-yellow-600">
-                {filteredTasks.filter(task => task.priority === 'High').length}
+                {
+                  filteredTasks.filter((task) => task.priority === "High")
+                    .length
+                }
               </p>
             </div>
           </div>
 
           {/* Chart */}
           <div className="mb-6">
-            <h3 className="text-xl font-semibold mb-4">Task Distribution Chart</h3>
+            <h3 className="text-xl font-semibold mb-4">
+              Task Distribution Chart
+            </h3>
             <div className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
@@ -433,7 +455,7 @@ function BarChartComp({ selectedDate }) {
                   {filteredTasks.map((task, index) => (
                     <tr key={index}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {task.description || 'N/A'}
+                        {task.description || "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {task.status}
@@ -460,9 +482,8 @@ function BarChartComp({ selectedDate }) {
         columns={columns}
         data={selectedBarData?.data || []}
       />
-
     </div>
   );
 }
 
-export default BarChartComp
+export default BarChartComp;
