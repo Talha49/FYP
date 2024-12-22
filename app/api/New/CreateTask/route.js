@@ -47,7 +47,7 @@ export async function POST(req) {
             floor: body.get('floor'),
             status: body.get('status'),
             tags: JSON.parse(body.get('tags') || '[]'),
-            assignees: body.get('assignees'),
+            assignees:  JSON.parse(body.get('assignees') || '[]'),
             dueDate: body.get('dueDate'),
             emailAlerts: JSON.parse(body.get('emailAlerts') || '[]'),
             watchers: JSON.parse(body.get('watchers') || '[]'),

@@ -208,7 +208,7 @@ const TaskCreationForm = () => {
             label="Assignee"
             id="assignee"
             name="assignee"
-            value={formData.assignee}
+            value={formData.assignees}
             readOnly
             style={{
               backgroundColor: "#f9f9f9",

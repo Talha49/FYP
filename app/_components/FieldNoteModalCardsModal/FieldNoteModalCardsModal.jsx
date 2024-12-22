@@ -52,7 +52,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
   const [position2, setPosition2] = useState({ x: 0, y: 0 });
   const [startPosition2, setStartPosition2] = useState({ x: 0, y: 0 });
 
-  const [previousAssignee, setPreviousAssignee] = useState(note.assignee);
+  const [previousAssignees, setPreviousAssignees] = useState(note.assignees);
   const [chatRoomCreated, setChatRoomCreated] = useState(false);
   const userStatus = useSelector((state) => state.UserSlice.status);
   const users = useSelector((state) => state.UserSlice.users);
@@ -175,7 +175,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
           case "priority":
             showToast(`Priority changed to ${newValue}`, "info");
             break;
-          case "assignee":
+          case "assignees":
             showToast(`Task assigned to ${newValue}`, "info");
             break;
           case "dueDate":
