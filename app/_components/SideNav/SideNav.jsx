@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaHome } from "react-icons/fa";
 import { GoProjectSymlink } from "react-icons/go";
 import { GiWorld } from "react-icons/gi";
@@ -20,6 +20,16 @@ const SideNav = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [openCaptures, setopenCaptures] = useState(false);
   const [openFieldnote, setopenFieldnote] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (status !== "loading" && status === "authenticated") {
+      setIsVisible(true);
+      console.log("Session =>", session);
+    }
+  }, [session, status]);
 
   const handleMouseEnter = () => {
     setIsOpen(true);

@@ -8,7 +8,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
 import { NextResponse } from "next/server";
-
+import Role from "@/lib/models/Role";
 const JWT_SECRET = process.env.JWT_SECRET_KEY;
 
 export const authOptions = {
@@ -159,14 +159,10 @@ export const authOptions = {
           );
           existingUser.token = token;
           await existingUser.save();
-          userData = {
-            id: existingUser._id,
-            fullName: existingUser.fullName,
-            email: existingUser.email,
-            image: existingUser.image,
-            isSocialLogin: existingUser.isSocialLogin, // This will reflect the correct value
-            token: existingUser.token,
-          };
+          const userWithRole = await User.findById(existingUser?._id)
+            .populate("role")
+            .exec();
+          userData = userWithRole;
         } else {
           const newUser = new User({
             fullName: user.name,
@@ -181,14 +177,10 @@ export const authOptions = {
           );
           newUser.token = token;
           await newUser.save();
-          userData = {
-            id: newUser._id,
-            fullName: newUser.fullName,
-            email: newUser.email,
-            image: newUser.image,
-            isSocialLogin: newUser.isSocialLogin,
-            token: newUser.token,
-          };
+          const userWithRole = await User.findById(existingUser?._id)
+            .populate("role")
+            .exec();
+          userData = userWithRole;
         }
 
         // Pass some data to the client-side via the token
