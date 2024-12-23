@@ -18,7 +18,6 @@ import { PiFileTextThin } from "react-icons/pi";
 import { ImSpinner3 } from "react-icons/im";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-
 import Dialog from "@/app/_components/Dialog/Dialog";
 import DetailsModal from "../_datatable/DetailsModal";
 import { getTasks } from '@/lib/Features/TaskSlice';
@@ -296,6 +295,8 @@ function LineChartComp({ selectedDate }) {
         title="Task Details"
         columns={columns}
         data={selectedTask || []}
+        session={session}
+        contextType="Tasks"
       />
       <Dialog
         isOpen={isOpenReportModal}

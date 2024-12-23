@@ -78,6 +78,8 @@ function AreaChartComponent({ selectedDate }) {
       return acc;
     }, {});
     
+  
+     console.log("Char", chartData); 
 
     return Object.values(groupedData).sort((a, b) => {
       const dateA = new Date(`${a.date}T${a.time}`);
@@ -425,6 +427,7 @@ function AreaChartComponent({ selectedDate }) {
         onClose={() => setIsModalOpen(false)}
         title="User Details"
         data={selectedUser?.users || []}
+        contextType="Users"
       />
     </div>
   );

@@ -481,6 +481,7 @@ function BarChartComp({ selectedDate }) {
         title={selectedBarData?.title || "Task Details"}
         columns={columns}
         data={selectedBarData?.data || []}
+        contextType="Tasks"
       />
     </div>
   );

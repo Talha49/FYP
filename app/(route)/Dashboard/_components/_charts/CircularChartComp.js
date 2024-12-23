@@ -166,6 +166,7 @@ const CircularChartComp = () => {
         title={selectedCategory ? `${selectedCategory.name} Tasks` : ''}
         columns={taskColumns}
         data={selectedCategory ? selectedCategory.tasks : []}
+        contextType="Tasks"
       />
     </div>
   );

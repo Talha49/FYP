@@ -386,6 +386,7 @@ function LineChartComponent({ selectedDate }) {
         onClose={() => setIsModalOpen(false)}
         title="User Details"
         data={selectedUser?.users || []}
+        contextType="Users"
       />
     </div>
   );

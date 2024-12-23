@@ -1,18 +1,37 @@
-import React from "react";
+import React, { useState } from "react";
 import { X } from "lucide-react";
+import Dialog from "@/app/_components/Dialog/Dialog";
+import FieldNoteModalCardsModal from "@/app/_components/FieldNoteModalCardsModal/FieldNoteModalCardsModal";
 
-const DetailsModal = ({ isOpen, onClose, title, columns, data, renderRow }) => {
+const DetailsModal = ({
+  isOpen,
+  onClose,
+  title,
+  columns,
+  data,
+  renderRow,
+  session,
+  contextType
+}) => {
+  const [isFieldCardNotesModalOpen, setIsFieldCardNotesModalOpen] =
+    useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+
   if (!isOpen) return null;
 
-  // Enhanced row renderer to handle social login and other fields
+  // Enhanced row renderer to handle row click
   const defaultRowRenderer = (item, index) => (
     <tr
       key={index}
-      className="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150"
+      className="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
+      onClick={() => {
+        setSelectedRow(item);
+        setIsFieldCardNotesModalOpen(true);
+      }}
     >
       {columns.map((column, colIndex) => {
         let cellContent;
-        
+
         if (column.accessor) {
           cellContent = column.accessor(item);
         } else if (column.key === "isSocialLogin") {
@@ -80,6 +99,21 @@ const DetailsModal = ({ isOpen, onClose, title, columns, data, renderRow }) => {
           )}
         </div>
       </div>
+
+      {contextType === "Tasks" && ( // Render modal only if contextType is 'Tasks'
+        <Dialog
+          isOpen={isFieldCardNotesModalOpen}
+          onClose={() => setIsFieldCardNotesModalOpen(false)}
+          isLeft={false}
+          widthClass="w-[950px]"
+          padding="p-6"
+        >
+          <FieldNoteModalCardsModal
+            note={selectedRow}
+            onClose={() => setIsFieldCardNotesModalOpen(false)}
+          />
+        </Dialog>
+      )}
     </div>
   );
 };
