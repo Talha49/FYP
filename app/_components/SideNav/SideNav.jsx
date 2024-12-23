@@ -14,7 +14,7 @@ import CaptureModal from "../CaptureModal/CaptureModal";
 import { PiVirtualRealityFill } from "react-icons/pi";
 import { MdOutlineSpaceDashboard } from "react-icons/md";
 import { LuWorkflow } from "react-icons/lu";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/CustomHooks/useSession";
 
 const SideNav = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,14 +22,17 @@ const SideNav = () => {
   const [openFieldnote, setopenFieldnote] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
-  const { data: session, status } = useSession();
+  const { session, status, isAuthenticated } = useSession();
+
+  console.log(session, status, isAuthenticated);
 
   useEffect(() => {
-    if (status !== "loading" && status === "authenticated") {
+    if (isAuthenticated) {
       setIsVisible(true);
-      console.log("Session =>", session);
+    } else {
+      setIsVisible(false);
     }
-  }, [session, status]);
+  }, [session, status, isAuthenticated]);
 
   const handleMouseEnter = () => {
     setIsOpen(true);
@@ -40,162 +43,172 @@ const SideNav = () => {
   };
 
   return (
-    <div
-      className={`bg-white shadow-lg h-screen fixed transition-all  duration-300 z-10
-                  ${isOpen ? "md:w-48 w-14" : "w-14"}`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <ul className="list-none p-0 flex flex-col  justify-center ">
-        <Link href="/" className="flex items-center hover:bg-blue-200">
-          <li className="flex items-center p-4  cursor-pointer">
-            <FaHome className="icon text-xl" />
-            {isOpen && (
-              <span className="ml-4 text-black text-sm hidden md:inline">
-                Home
-              </span>
-            )}
-          </li>
-        </Link>
-        <Link href="/Dashboard" className="flex items-center hover:bg-blue-200">
-          <li className="flex items-center p-4  cursor-pointer">
-            <MdOutlineSpaceDashboard className="icon text-xl" />
-            {isOpen && (
-              <span className="ml-4 text-black text-sm hidden md:inline">
-                Dashboard
-              </span>
-            )}
-          </li>
-        </Link>
-        <Link href="/Projects" className="flex items-center hover:bg-blue-200 ">
-          <li className="flex items-center p-4  cursor-pointer ">
-            <GoProjectSymlink className="icon text-xl" />
-            {isOpen && (
-              <span className="ml-4 text-black text-sm hidden md:inline">
-                Projects
-              </span>
-            )}
-          </li>
-        </Link>
-
-        <Link href="/Admin" className="flex items-center hover:bg-blue-200">
-          <li className="flex items-center p-4  cursor-pointer">
-            <RiAdminLine className="icon text-xl" />
-            {isOpen && (
-              <span className="ml-4 text-black text-sm hidden md:inline">
-                Admin
-              </span>
-            )}
-          </li>
-        </Link>
-
-        <Link
-          href={`http://localhost:3001`}
-          target="_blank"
-          className="flex items-center hover:bg-blue-200"
-        >
-          <li className="flex items-center p-4  cursor-pointer">
-            <LuWorkflow className="icon text-xl" />
-            {isOpen && (
-              <span className="ml-4 text-black text-sm hidden md:inline">
-                WorkFlow
-              </span>
-            )}
-          </li>
-        </Link>
-
-        <hr />
-
-        <Link href="/Active" className="flex items-center hover:bg-blue-200">
-          <li className="flex items-center p-4  cursor-pointer">
-            <PiRadioactive className="icon text-xl" />
-            {isOpen && (
-              <span className="ml-4 text-black text-sm hidden md:inline">
-                Active
-              </span>
-            )}
-          </li>
-        </Link>
-
-        <Link
-          href={""}
-          className="flex items-center hover:bg-blue-200"
-          onClick={() => {
-            setIsOpen(false);
-            setopenCaptures(true);
-          }}
-        >
-          <li className="flex items-center p-4  cursor-pointer">
-            <IoPricetagsOutline className="icon text-xl" />
-            {isOpen && (
-              <span className="ml-4 text-black text-sm hidden md:inline">
-                Captures
-              </span>
-            )}
-          </li>
-        </Link>
-
-        <Link
-          href={""}
-          className="flex items-center hover:bg-blue-200"
-          onClick={() => {
-            setIsOpen(false);
-            setopenFieldnote(true);
-          }}
-        >
-          <li className="flex items-center p-4 cursor-pointer">
-            <TbArrowRoundaboutLeft className="icon text-xl" />
-            {isOpen && (
-              <span className="ml-4 text-black text-sm hidden md:inline">
-                FieldNotes
-              </span>
-            )}
-          </li>
-        </Link>
-        <hr />
-        <Link
-          href={"/VirtualTour"}
-          className="flex items-center hover:bg-blue-200"
-        >
-          <li className="flex items-center p-4 cursor-pointer">
-            <PiVirtualRealityFill className="icon text-xl" />
-            {isOpen && (
-              <span className="ml-4 text-black text-sm hidden md:inline">
-                VirtualTour
-              </span>
-            )}
-          </li>
-        </Link>
-      </ul>
-      <Dialog
-        isOpen={openCaptures}
-        onClose={() => {
-          setopenCaptures(false);
-        }}
-        widthClass="w-[400px]"
+    <div className={`${isVisible ? "mr-14" : "hidden"}`}>
+      <div
+        className={`bg-white shadow-lg h-screen fixed transition-all  duration-300 z-10
+                ${isOpen ? "md:w-48 w-14" : "w-14"} ${
+          isVisible ? "" : "hidden"
+        }`}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
-        <div>
-          <CaptureModal
-            title={"Captures"}
-            onClose={() => setopenCaptures(false)}
-          />
-        </div>
-      </Dialog>
-      <Dialog
-        isOpen={openFieldnote}
-        onClose={() => {
-          setopenFieldnote(false);
-        }}
-        widthClass="w-[600px]"
-        minWidth="500"
-      >
-        <div>
-          <FieldNotesModal
-            title={"Field Notes"}
-            onClose={() => setopenFieldnote(false)}
-          />
-        </div>
-      </Dialog>
+        <ul className="list-none p-0 flex flex-col  justify-center ">
+          <Link href="/" className="flex items-center hover:bg-blue-200">
+            <li className="flex items-center p-4  cursor-pointer">
+              <FaHome className="icon text-xl" />
+              {isOpen && (
+                <span className="ml-4 text-black text-sm hidden md:inline">
+                  Home
+                </span>
+              )}
+            </li>
+          </Link>
+          <Link
+            href="/Dashboard"
+            className="flex items-center hover:bg-blue-200"
+          >
+            <li className="flex items-center p-4  cursor-pointer">
+              <MdOutlineSpaceDashboard className="icon text-xl" />
+              {isOpen && (
+                <span className="ml-4 text-black text-sm hidden md:inline">
+                  Dashboard
+                </span>
+              )}
+            </li>
+          </Link>
+          <Link
+            href="/Projects"
+            className="flex items-center hover:bg-blue-200 "
+          >
+            <li className="flex items-center p-4  cursor-pointer ">
+              <GoProjectSymlink className="icon text-xl" />
+              {isOpen && (
+                <span className="ml-4 text-black text-sm hidden md:inline">
+                  Projects
+                </span>
+              )}
+            </li>
+          </Link>
+
+          <Link href="/Admin" className="flex items-center hover:bg-blue-200">
+            <li className="flex items-center p-4  cursor-pointer">
+              <RiAdminLine className="icon text-xl" />
+              {isOpen && (
+                <span className="ml-4 text-black text-sm hidden md:inline">
+                  Admin
+                </span>
+              )}
+            </li>
+          </Link>
+
+          <Link
+            href={`http://localhost:3001`}
+            target="_blank"
+            className="flex items-center hover:bg-blue-200"
+          >
+            <li className="flex items-center p-4  cursor-pointer">
+              <LuWorkflow className="icon text-xl" />
+              {isOpen && (
+                <span className="ml-4 text-black text-sm hidden md:inline">
+                  WorkFlow
+                </span>
+              )}
+            </li>
+          </Link>
+
+          <hr />
+
+          <Link href="/Active" className="flex items-center hover:bg-blue-200">
+            <li className="flex items-center p-4  cursor-pointer">
+              <PiRadioactive className="icon text-xl" />
+              {isOpen && (
+                <span className="ml-4 text-black text-sm hidden md:inline">
+                  Active
+                </span>
+              )}
+            </li>
+          </Link>
+
+          <Link
+            href={""}
+            className="flex items-center hover:bg-blue-200"
+            onClick={() => {
+              setIsOpen(false);
+              setopenCaptures(true);
+            }}
+          >
+            <li className="flex items-center p-4  cursor-pointer">
+              <IoPricetagsOutline className="icon text-xl" />
+              {isOpen && (
+                <span className="ml-4 text-black text-sm hidden md:inline">
+                  Captures
+                </span>
+              )}
+            </li>
+          </Link>
+
+          <Link
+            href={""}
+            className="flex items-center hover:bg-blue-200"
+            onClick={() => {
+              setIsOpen(false);
+              setopenFieldnote(true);
+            }}
+          >
+            <li className="flex items-center p-4 cursor-pointer">
+              <TbArrowRoundaboutLeft className="icon text-xl" />
+              {isOpen && (
+                <span className="ml-4 text-black text-sm hidden md:inline">
+                  FieldNotes
+                </span>
+              )}
+            </li>
+          </Link>
+          <hr />
+          <Link
+            href={"/VirtualTour"}
+            className="flex items-center hover:bg-blue-200"
+          >
+            <li className="flex items-center p-4 cursor-pointer">
+              <PiVirtualRealityFill className="icon text-xl" />
+              {isOpen && (
+                <span className="ml-4 text-black text-sm hidden md:inline">
+                  VirtualTour
+                </span>
+              )}
+            </li>
+          </Link>
+        </ul>
+        <Dialog
+          isOpen={openCaptures}
+          onClose={() => {
+            setopenCaptures(false);
+          }}
+          widthClass="w-[400px]"
+        >
+          <div>
+            <CaptureModal
+              title={"Captures"}
+              onClose={() => setopenCaptures(false)}
+            />
+          </div>
+        </Dialog>
+        <Dialog
+          isOpen={openFieldnote}
+          onClose={() => {
+            setopenFieldnote(false);
+          }}
+          widthClass="w-[600px]"
+          minWidth="500"
+        >
+          <div>
+            <FieldNotesModal
+              title={"Field Notes"}
+              onClose={() => setopenFieldnote(false)}
+            />
+          </div>
+        </Dialog>
+      </div>
     </div>
   );
 };

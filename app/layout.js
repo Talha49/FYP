@@ -24,10 +24,10 @@ export default function RootLayout({ children }) {
             <ToastProvider>
             <Header />
             <div className="h-[100%] flex justify-between ">
-              <div className="w-[5%]">
+              <div className="w-fit">
                 <SideNav />
               </div>
-              <div className="w-[95%]">{children}</div>
+              <div className="w-full">{children}</div>
             </div>
             </ToastProvider>
           </ClientProvider>
