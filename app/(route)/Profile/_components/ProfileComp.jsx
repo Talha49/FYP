@@ -6,7 +6,6 @@ import { storage } from "../../../../lib/firebase/firebaseConfig"; // Path to yo
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import AvatarEditor from "react-avatar-editor";
 
-
 function ProfileComp() {
   const { data: session } = useSession();
   const [profileImage, setProfileImage] = useState(
@@ -28,10 +27,19 @@ function ProfileComp() {
     threeDCaptureUploaded: false,
     bimModelReady: false,
     fieldNotesUpdated: false,
-    sharedFolderUpdates: false,
   });
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef(null);
+  const [fieldsPermissions, setFieldsPermissions] = useState([]);
+
+  useEffect(() => {
+    const profileForm = Object.values(
+      session?.user?.userData?.role?.permissions?.formPermissions || {}
+    ).find((form) => form.name === "Profile Management Form");
+    if (profileForm) {
+      setFieldsPermissions(profileForm?.tabs[0]?.sections[0]?.fields);
+    }
+  }, [session]);
 
   // Fetch latest session data on page load
   useEffect(() => {
@@ -52,7 +60,6 @@ function ProfileComp() {
     fetchSession();
   }, []);
 
-
   const handleImageUpload = (event) => {
     const uploadedFile = event.target.files[0];
     if (uploadedFile) {
@@ -66,7 +73,10 @@ function ProfileComp() {
       canvas.toBlob(async (blob) => {
         try {
           const userId = session?.user?.userData?.id; // Unique identifier for user
-          const fileRef = ref(storage, `profileImages/${userId}_${Date.now()}.png`);
+          const fileRef = ref(
+            storage,
+            `profileImages/${userId}_${Date.now()}.png`
+          );
           await uploadBytes(fileRef, blob); // Upload cropped image
           const downloadURL = await getDownloadURL(fileRef);
 
@@ -96,7 +106,6 @@ function ProfileComp() {
   const [file, setFile] = useState(null);
   const [editor, setEditor] = useState(null); // For capturing the AvatarEditor reference
 
-
   const handleImageClick = () => {
     if (profileImage) {
       setIsPreviewOpen(true);
@@ -106,7 +115,6 @@ function ProfileComp() {
   const closePreview = () => {
     setIsPreviewOpen(false);
   };
-
 
   const handleRemoveImage = () => {
     setProfileImage(null);
@@ -153,8 +161,6 @@ function ProfileComp() {
     }
   };
 
-
-
   const handleCancel = () => {
     // Reset changes and exit editing mode
     if (session) {
@@ -168,6 +174,42 @@ function ProfileComp() {
       });
     }
     setIsEditing(false);
+  };
+
+  const hasEditPermission = (fieldName) => {
+    return Object.values(fieldsPermissions).some(
+      (field) => field.name === fieldName && field.permission === "edit"
+    );
+  };
+
+  const hasEditPermissionForSwitches = (fieldName) => {
+    // Map the notification keys to their corresponding permission field names
+    const permissionFieldMap = {
+      "news updates": "News Updates",
+      "capture uploaded": "Capture Uploaded",
+      "capture preview": "Capture Preview",
+      "capture published": "Capture Published",
+      "capture reminder": "Capture Reminder",
+      "three d capture uploaded": "3D Capture Uploaded",
+      "bim model ready": "BIM Model Ready",
+      "field notes updated": "Fieldnote Updated",
+    };
+
+    // Format the incoming field name to match our map keys
+    const formattedFieldName = fieldName.toLowerCase().trim();
+
+    const permissionFieldName = permissionFieldMap[formattedFieldName];
+
+    return Object.values(fieldsPermissions)?.some(
+      (field) =>
+        field.name === permissionFieldName && field.permission === "edit"
+    );
+  };
+
+  const shouldHideField = (fieldName) => {
+    return Object.values(fieldsPermissions)?.some(
+      (field) => field.name === fieldName && field.permission === "hidden"
+    );
   };
 
   if (!session)
@@ -261,19 +303,36 @@ function ProfileComp() {
                 </div>
               </div>
               <div className="w-full">
-                <h2 className="text-lg font-semibold mb-2">Personal Information</h2>
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-1">Full Name</label>
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleInputChange}
-                    readOnly={!isEditing}
-                    className={`w-full p-2 border ${isEditing ? "border-blue-300" : "border-gray-300"
-                      } rounded-md`}
-                  />
-                </div>
+                <h2 className="text-lg font-semibold mb-2">
+                  Personal Information
+                </h2>
+                {!shouldHideField("Full Name") && (
+                  <div className="mb-4">
+                    <label className="block text-gray-700 mb-1">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleInputChange}
+                      disabled={!isEditing || !hasEditPermission("Full Name")}
+                      className={`w-full p-2 border ${
+                        isEditing ? "border-blue-300" : "border-gray-300"
+                      } rounded-md ${
+                        !isEditing ||
+                        !Object.keys(fieldsPermissions).find(
+                          (field) =>
+                            field.name === "Full Name" &&
+                            field.permission === "edit"
+                        )
+                          ? "bg-gray-100"
+                          : ""
+                      }`}
+                    />
+                  </div>
+                )}
+
                 <div className="mb-4">
                   <label className="block text-gray-700 mb-1">Email</label>
                   <input
@@ -282,53 +341,96 @@ function ProfileComp() {
                     value={formData.email}
                     onChange={handleInputChange}
                     readOnly // Prevent editing
-                    className={`w-full p-2 border ${isEditing ? "border-black cursor-not-allowed" : "border-gray-300 "
-                      } rounded-md `}
+                    className={`w-full p-2 border ${
+                      isEditing
+                        ? "border-black cursor-not-allowed"
+                        : "border-gray-300 "
+                    } rounded-md `}
                   />
                 </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-1">Address</label>
-                  <input
-                    type="text"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    readOnly={!isEditing}
-                    className={`w-full p-2 border ${isEditing ? "border-blue-300" : "border-gray-300"
-                      } rounded-md`}
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-1">City</label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleInputChange}
-                    readOnly={!isEditing}
-                    className={`w-full p-2 border ${isEditing ? "border-blue-300" : "border-gray-300"
-                      } rounded-md`}
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-1">Contact</label>
-                  <input
-                    type="text"
-                    name="contact"
-                    value={formData.contact}
-                    onChange={handleInputChange}
-                    readOnly={!isEditing}
-                    className={`w-full p-2 border ${isEditing ? "border-blue-300" : "border-gray-300"
-                      } rounded-md`}
-                  />
-                </div>
+                {!shouldHideField("Address") && (
+                  <div className="mb-4">
+                    <label className="block text-gray-700 mb-1">Address</label>
+                    <input
+                      type="text"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      disabled={!isEditing || !hasEditPermission("Address")}
+                      className={`w-full p-2 border ${
+                        isEditing ? "border-blue-300" : "border-gray-300"
+                      } rounded-md ${
+                        !isEditing ||
+                        !Object.keys(fieldsPermissions).find(
+                          (field) =>
+                            field.name === "Address" &&
+                            field.permission === "edit"
+                        )
+                          ? "bg-gray-100"
+                          : ""
+                      }`}
+                    />
+                  </div>
+                )}
+
+                {!shouldHideField("City") && (
+                  <div className="mb-4">
+                    <label className="block text-gray-700 mb-1">City</label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      disabled={!isEditing || !hasEditPermission("City")}
+                      className={`w-full p-2 border ${
+                        isEditing ? "border-blue-300" : "border-gray-300"
+                      } rounded-md ${
+                        !isEditing ||
+                        !Object.keys(fieldsPermissions).find(
+                          (field) =>
+                            field.name === "City" && field.permission === "edit"
+                        )
+                          ? "bg-gray-100"
+                          : ""
+                      }`}
+                    />
+                  </div>
+                )}
+                {!shouldHideField("Contact") && (
+                  <div className="mb-4">
+                    <label className="block text-gray-700 mb-1">Contact</label>
+                    <input
+                      type="text"
+                      name="contact"
+                      value={formData.contact}
+                      onChange={handleInputChange}
+                      disabled={!isEditing || !hasEditPermission("Contact")}
+                      className={`w-full p-2 border ${
+                        isEditing ? "border-blue-300" : "border-gray-300"
+                      } rounded-md ${
+                        !isEditing ||
+                        !Object.keys(fieldsPermissions).find(
+                          (field) =>
+                            field.name === "Contact" &&
+                            field.permission === "edit"
+                        )
+                          ? "bg-gray-100"
+                          : ""
+                      }`}
+                    />
+                  </div>
+                )}
+
                 {isEditing ? (
                   <div className="flex space-x-4">
                     <button
                       onClick={handleSave}
                       disabled={isSaving} // Disable the button during saving
-                      className={`py-2 px-4 w-full rounded-3xl ${isSaving ? "bg-gray-500 text-gray-300" : "bg-blue-500 text-white"
-                        }`}
+                      className={`py-2 px-4 w-full rounded-3xl ${
+                        isSaving
+                          ? "bg-gray-500 text-gray-300"
+                          : "bg-blue-500 text-white"
+                      }`}
                     >
                       {isSaving ? "Saving..." : "Save"}
                     </button>
@@ -358,7 +460,6 @@ function ProfileComp() {
               {successMessage}
             </div>
           )}
-
 
           {/*Image perview section*/}
 
@@ -391,15 +492,26 @@ function ProfileComp() {
               Manage how often you receive emails from your projects.
             </p>
             <ul>
-              {Object.entries(notificationPreferences).map(([key, value]) => (
-                <li key={key} className="mb-2">
-                  <NotificationItem
-                    title={key.replace(/([A-Z])/g, " $1")}
-                    checked={value}
-                    onChange={handleNotificationChange}
-                  />
-                </li>
-              ))}
+              {Object.entries(notificationPreferences).map(([key, value]) => {
+                const title = key
+                  .replace(/([A-Z])/g, " $1")
+                  .trim()
+                  .toLowerCase();
+
+                const isDisabled =
+                  !isEditing || !hasEditPermissionForSwitches(title);
+
+                return (
+                  <li key={key} className="mb-2">
+                    <NotificationItem
+                      title={key.replace(/([A-Z])/g, " $1").trim()}
+                      checked={value}
+                      onChange={handleNotificationChange}
+                      disabled={isDisabled}
+                    />
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </div>
@@ -408,23 +520,36 @@ function ProfileComp() {
   );
 }
 
-const NotificationItem = ({ title, checked, onChange }) => (
-  <div className="flex justify-between items-center py-2 border-b border-gray-300">
+const NotificationItem = ({ title, checked, onChange, disabled }) => (
+  <div
+    className={`flex justify-between items-center py-2 border-b border-gray-300 
+    ${disabled ? "opacity-50" : ""}`}
+  >
     <div>
       <p className="font-semibold">{title}</p>
     </div>
-    <label className="relative inline-flex items-center cursor-pointer">
+    <label
+      className={`relative inline-flex items-center ${
+        disabled ? "cursor-not-allowed" : "cursor-pointer"
+      }`}
+    >
       <input
         type="checkbox"
         className="sr-only"
         checked={checked}
-        onChange={onChange}
+        onChange={(e) => !disabled && onChange(e)}
         name={title.replace(/\s/g, "")}
+        disabled={disabled}
       />
-      <div className="peer rounded-full w-12 h-6 bg-gray-300 peer-focus:ring-4 peer-focus:ring-blue-500">
+      <div
+        className={`peer rounded-full w-12 h-6 ${
+          disabled ? "bg-gray-200" : checked ? "bg-blue-500" : "bg-gray-300"
+        } peer-focus:ring-4 peer-focus:ring-blue-500 transition-colors duration-200`}
+      >
         <div
-          className={`w-6 h-6 rounded-full bg-white transform ${checked ? "translate-x-6" : ""
-            }`}
+          className={`w-6 h-6 rounded-full bg-white transform transition-transform duration-200 ${
+            checked ? "translate-x-6" : "translate-x-0"
+          }`}
         ></div>
       </div>
     </label>
