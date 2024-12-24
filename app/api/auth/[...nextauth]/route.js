@@ -125,11 +125,6 @@ export const authOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      authorization: {
-        params: {
-          prompt: "select_account", // Force Google to show the account picker
-        },
-      },
     }),
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID,
@@ -149,13 +144,8 @@ export const authOptions = {
           account.provider !== "login" && account.provider !== "register"; // CredentialsProvider has id "login"
 
         if (existingUser) {
-          // Update existing user details (skip updating the image if it exists)
-          // existingUser.fullName = user.name || existingUser.fullName;
-
-          // Update only the image if it is not already set (this way it doesn't overwrite the image if already set)
-          if (!existingUser.image && user.image) {
-            existingUser.image = user.image;
-          }
+          existingUser.fullName = user.name || existingUser.fullName;
+          existingUser.image = user.image || existingUser.image;
 
           // Update isSocialLogin only for social logins
           if (isSocialLogin) {
@@ -174,14 +164,12 @@ export const authOptions = {
             .exec();
           userData = userWithRole;
         } else {
-          // For a new user, create one with the provided details, but don't overwrite image if it's already present
           const newUser = new User({
             fullName: user.name,
             email: user.email,
-            image: user.image, // Only set the image if it's not already set in db
+            image: user.image,
             isSocialLogin, // Set true if social login, false for credentials
           });
-
           const token = jwt.sign(
             { userId: newUser._id, email: newUser.email },
             JWT_SECRET,
@@ -195,7 +183,7 @@ export const authOptions = {
           userData = userWithRole;
         }
 
-        // Attach userData to the user object for JWT and session callbacks
+        // Pass some data to the client-side via the token
         user.userData = userData;
 
         return true;
@@ -205,10 +193,15 @@ export const authOptions = {
       }
     },
 
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
+      if (account) {
+        token.accessToken = account.access_token;
+        token.refreshToken = account.refresh_token;
+      }
+
       if (user) {
         token.id = user.id;
-        token.userData = user.userData; // Pass all fields to the token
+        token.userData = user.userData;
       }
 
       return token;
@@ -218,26 +211,8 @@ export const authOptions = {
       if (token) {
         session.accessToken = token.accessToken;
         session.refreshToken = token.refreshToken;
-        session.user.id = token.id;
-
-        // Fetch updated user data from the database
-        await dbConnect();
-        const updatedUser = await User.findOne({
-          email: token.userData.email,
-        }).lean();
-
-        session.user.userData = {
-          id: updatedUser._id,
-          fullName: updatedUser.fullName,
-          email: updatedUser.email,
-          image: updatedUser.image,
-          isSocialLogin: updatedUser.isSocialLogin,
-          token: updatedUser.token,
-          contact: updatedUser.contact,
-          address: updatedUser.address,
-          city: updatedUser.city,
-          createdAt: updatedUser.createdAt,
-        };
+        session.user.id = token.sub;
+        session.user.userData = token.userData;
       }
 
       return session;
