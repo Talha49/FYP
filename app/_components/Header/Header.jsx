@@ -8,7 +8,7 @@ import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 
-function Header(){
+function Header() {
   const [showDialog, setShowDialog] = useState(false);
   const [authenticatedUser, setAuthenticatedUser] = useState(null);
   const pathname = usePathname();
@@ -42,14 +42,17 @@ function Header(){
         className="flex items-center gap-2 relative"
         onClick={() => setShowDialog(!showDialog)}
       >
-        <FaQuestion className="text-lg text-blue-500" />
-        <div className="bg-blue-500 rounded-full p-[2px]">
+        <span className="text-blue-500 font-bold text-base">
+          {authenticatedUser?.fullName || "Guest"}
+        </span>
+
+        <div className="bg-blue-500 rounded-full p-[2px] overflow-hidden w-[39px] h-[39px]">
           <Image
             src={profileImage}
             width={35}
             height={35}
             alt="Profile"
-            className="rounded-full"
+            className="rounded-full object-cover"
           />
         </div>
         {showDialog && (

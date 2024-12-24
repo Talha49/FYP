@@ -488,7 +488,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
               taskId={localNote._id}
               editmode={isEditing}
             />
-
+           
             {/* Description Input */}
             <div>
               <label className="block text-gray-600">Description</label>
@@ -609,6 +609,14 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
               <label className="block text-gray-600">Status</label>
               {isEditing ? (
                 <select
+                  className="w-full p-2 border border-gray-300 rounded outline-none"
+                  value={localNote.status}
+                  onChange={(e) => updateField("status", e.target.value)}
+                >
+                  <option value="Pending">Pending</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                </select>
                   className="w-full p-2 border border-gray-300 rounded outline-none"
                   value={localNote.status}
                   onChange={(e) => updateField("status", e.target.value)}

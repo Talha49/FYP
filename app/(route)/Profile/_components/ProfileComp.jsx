@@ -1,21 +1,112 @@
 "use client";
-import React, { useState, useRef } from "react";
-import Image from "next/image";
+import React, { useState, useRef, useEffect } from "react";
+import { useSession, getSession } from "next-auth/react";
+import NextImage from "next/image";
+import { storage } from "../../../../lib/firebase/firebaseConfig"; // Path to your firebase.js
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import AvatarEditor from "react-avatar-editor";
+
 
 function ProfileComp() {
-  const [profileImage, setProfileImage] = useState(null);
+  const { data: session } = useSession();
+  const [profileImage, setProfileImage] = useState(
+    session?.user?.userData?.image || null
+  );
+  const [formData, setFormData] = useState({
+    fullName: session?.user?.userData?.fullName || "",
+    email: session?.user?.userData?.email || "",
+    address: session?.user?.userData?.address || "",
+    city: session?.user?.userData?.city || "",
+    contact: session?.user?.userData?.contact || "",
+  });
+  const [notificationPreferences, setNotificationPreferences] = useState({
+    newsUpdates: false,
+    captureUploaded: false,
+    capturePreview: false,
+    capturePublished: false,
+    captureReminder: false,
+    threeDCaptureUploaded: false,
+    bimModelReady: false,
+    fieldNotesUpdated: false,
+    sharedFolderUpdates: false,
+  });
+  const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef(null);
 
+  // Fetch latest session data on page load
+  useEffect(() => {
+    const fetchSession = async () => {
+      const updatedSession = await getSession();
+      if (updatedSession) {
+        setProfileImage(updatedSession.user.userData.image || null);
+        setFormData({
+          fullName: updatedSession.user.userData.fullName || "",
+          email: updatedSession.user.userData.email || "",
+          address: updatedSession.user.userData.address || "",
+          city: updatedSession.user.userData.city || "",
+          contact: updatedSession.user.userData.contact || "",
+        });
+      }
+    };
+
+    fetchSession();
+  }, []);
+
+
   const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImage(reader.result);
-      };
-      reader.readAsDataURL(file);
+    const uploadedFile = event.target.files[0];
+    if (uploadedFile) {
+      setFile(uploadedFile); // Set the selected file for cropping
     }
   };
+
+  const handleCrop = async () => {
+    if (editor) {
+      const canvas = editor.getImageScaledToCanvas();
+      canvas.toBlob(async (blob) => {
+        try {
+          const userId = session?.user?.userData?.id; // Unique identifier for user
+          const fileRef = ref(storage, `profileImages/${userId}_${Date.now()}.png`);
+          await uploadBytes(fileRef, blob); // Upload cropped image
+          const downloadURL = await getDownloadURL(fileRef);
+
+          setProfileImage(downloadURL); // Update profile image
+          setFile(null); // Close cropping modal
+
+          // Save the cropped image URL in your database
+          await fetch("/api/updateProfile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ image: downloadURL }),
+          });
+        } catch (error) {
+          console.error("Error uploading cropped image:", error);
+        }
+      }, "image/png");
+    }
+  };
+
+  const handleCancelCrop = () => {
+    setFile(null); // Close the cropping modal
+  };
+
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [file, setFile] = useState(null);
+  const [editor, setEditor] = useState(null); // For capturing the AvatarEditor reference
+
+
+  const handleImageClick = () => {
+    if (profileImage) {
+      setIsPreviewOpen(true);
+    }
+  };
+
+  const closePreview = () => {
+    setIsPreviewOpen(false);
+  };
+
 
   const handleRemoveImage = () => {
     setProfileImage(null);
@@ -25,27 +116,130 @@ function ProfileComp() {
     fileInputRef.current.click();
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({ ...prevData, [name]: value }));
+  };
+
+  const handleNotificationChange = (e) => {
+    const { name, checked } = e.target;
+    setNotificationPreferences((prev) => ({ ...prev, [name]: checked }));
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true); // Start loading state
+    try {
+      const response = await fetch("/api/updateProfile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          image: profileImage, // Save the compressed image
+          notificationPreferences,
+        }),
+      });
+
+      if (response.ok) {
+        setSuccessMessage("Your profile has been updated successfully.");
+        setTimeout(() => setSuccessMessage(""), 3000); // Clear message after 3 seconds
+        setIsEditing(false); // Switch back to edit mode
+      } else {
+        console.error("Failed to update profile");
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    } finally {
+      setIsSaving(false); // End loading state
+    }
+  };
+
+
+
+  const handleCancel = () => {
+    // Reset changes and exit editing mode
+    if (session) {
+      setProfileImage(session?.user?.userData?.image || null);
+      setFormData({
+        fullName: session?.user?.userData?.fullName || "",
+        email: session?.user?.userData?.email || "",
+        address: session?.user?.userData?.address || "",
+        city: session?.user?.userData?.city || "",
+        contact: session?.user?.userData?.contact || "",
+      });
+    }
+    setIsEditing(false);
+  };
+
+  if (!session)
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <p className="text-lg font-semibold text-gray-600">
+          Loading... Your Profile info will be shown soon.
+        </p>
+      </div>
+    );
+  const { userData } = session.user;
+
   return (
-    <div className="flex justify-center py-10  min-h-screen">
-      <div className="p-6  w-full max-w-5xl">
-        <h1 className="text-2xl font-bold mb-2">Your profile</h1>
-        <p className="text-gray-600 mb-6">Joined December, 2022</p>
+    <div className="flex justify-center py-10 min-h-screen">
+      <div className="p-6 w-full max-w-5xl">
+        <h1 className="text-2xl font-bold mb-2">Your Profile</h1>
+        <p className="text-gray-600 mb-6">
+          Joined {new Date(userData.createdAt).toLocaleDateString()}
+        </p>
+        {/* Cropping Modal */}
+        {file && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-4 rounded-lg shadow-lg">
+              <h2 className="text-lg font-semibold mb-2">Crop Your Image</h2>
+              <AvatarEditor
+                ref={(ref) => setEditor(ref)}
+                image={file}
+                width={250}
+                height={250}
+                border={50}
+                borderRadius={125} // Circle crop
+                color={[255, 255, 255, 0.6]} // Transparent background
+                scale={1.2} // Zoom level
+                rotate={0}
+              />
+              <div className="flex justify-end mt-4">
+                <button
+                  onClick={handleCrop}
+                  className="bg-blue-500 text-white py-2 px-4 rounded-lg mr-2"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={handleCancelCrop}
+                  className="bg-gray-300 text-gray-600 py-2 px-4 rounded-lg"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="flex gap-10 md:flex-row flex-col">
           {/* Left Section */}
+
           <div className="md:w-1/2 w-full">
             <div>
               <p className="font-semibold mb-1">Profile Photo</p>
               <div className="mb-4 flex items-center space-x-4">
-                <div className="w-36 h-36 bg-gray-300 text-gray-700 rounded-full flex items-center justify-center text-4xl font-semibold overflow-hidden">
+                <div className="relative w-36 h-36 rounded-full overflow-hidden border border-gray-300">
                   {profileImage ? (
-                    <Image
+                    <NextImage
                       src={profileImage}
                       alt="Profile"
-                      width={100}
-                      height={100}
+                      layout="fill"
+                      onClick={handleImageClick}
+                      className="object-cover"
                     />
                   ) : (
-                    "Dp"
+                    <div className="flex items-center justify-center w-full h-full bg-gray-300 text-gray-500">
+                      <span className="text-sm">No Image Set</span>
+                    </div>
                   )}
                 </div>
                 <div>
@@ -56,14 +250,7 @@ function ProfileComp() {
                     ref={fileInputRef}
                     className="hidden"
                   />
-                  {profileImage ? (
-                    <button
-                      className="text-gray-500 mt-1 hover:underline"
-                      onClick={handleRemoveImage}
-                    >
-                      Remove
-                    </button>
-                  ) : (
+                  {isEditing && (
                     <button
                       onClick={handleUploadClick}
                       className="text-blue-500 mt-2 hover:underline"
@@ -74,63 +261,128 @@ function ProfileComp() {
                 </div>
               </div>
               <div className="w-full">
-                <h2 className="text-lg font-semibold mb-2">
-                  Personal information
-                </h2>
+                <h2 className="text-lg font-semibold mb-2">Personal Information</h2>
                 <div className="mb-4">
-                  <label className="block text-gray-700 mb-1">Full name</label>
+                  <label className="block text-gray-700 mb-1">Full Name</label>
                   <input
                     type="text"
-                    className="w-full p-2 border border-gray-300 rounded-md"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleInputChange}
+                    readOnly={!isEditing}
+                    className={`w-full p-2 border ${isEditing ? "border-blue-300" : "border-gray-300"
+                      } rounded-md`}
                   />
                 </div>
                 <div className="mb-4">
                   <label className="block text-gray-700 mb-1">Email</label>
                   <input
                     type="email"
-                    className="w-full p-2 border border-gray-300 rounded-md"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    readOnly // Prevent editing
+                    className={`w-full p-2 border ${isEditing ? "border-black cursor-not-allowed" : "border-gray-300 "
+                      } rounded-md `}
                   />
                 </div>
                 <div className="mb-4">
-                  <label className="block text-gray-700 mb-1">
-                    Company name
-                  </label>
+                  <label className="block text-gray-700 mb-1">Address</label>
                   <input
                     type="text"
-                    className="w-full p-2 border border-gray-300 rounded-md"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    readOnly={!isEditing}
+                    className={`w-full p-2 border ${isEditing ? "border-blue-300" : "border-gray-300"
+                      } rounded-md`}
                   />
                 </div>
                 <div className="mb-4">
-                  <label className="block text-gray-700 mb-1">
-                    Company type
-                  </label>
-                  <select className="w-full p-2 border border-gray-300 rounded-md">
-                    <option value="Other">Other</option>
-                    {/* Add other options as needed */}
-                  </select>
+                  <label className="block text-gray-700 mb-1">City</label>
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    readOnly={!isEditing}
+                    className={`w-full p-2 border ${isEditing ? "border-blue-300" : "border-gray-300"
+                      } rounded-md`}
+                  />
                 </div>
                 <div className="mb-4">
-                  <label className="block text-gray-700 mb-1">Job Title</label>
-                  <select className="w-full p-2 border border-gray-300 rounded-md">
-                    <option value="Manager">Manager</option>
-                    {/* Add other options as needed */}
-                  </select>
+                  <label className="block text-gray-700 mb-1">Contact</label>
+                  <input
+                    type="text"
+                    name="contact"
+                    value={formData.contact}
+                    onChange={handleInputChange}
+                    readOnly={!isEditing}
+                    className={`w-full p-2 border ${isEditing ? "border-blue-300" : "border-gray-300"
+                      } rounded-md`}
+                  />
                 </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-1">
-                    Country/Region
-                  </label>
-                  <select className="w-full p-2 border border-gray-300 rounded-md">
-                    <option value="Turkey">Turkey</option>
-                    {/* Add other options as needed */}
-                  </select>
-                </div>
-                <button className="bg-gray-300 text-white py-2 px-4 w-full rounded-3xl">
-                  Save
-                </button>
+                {isEditing ? (
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={handleSave}
+                      disabled={isSaving} // Disable the button during saving
+                      className={`py-2 px-4 w-full rounded-3xl ${isSaving ? "bg-gray-500 text-gray-300" : "bg-blue-500 text-white"
+                        }`}
+                    >
+                      {isSaving ? "Saving..." : "Save"}
+                    </button>
+
+                    <button
+                      onClick={handleCancel}
+                      className="bg-gray-300 text-gray-600 py-2 px-4 w-full rounded-3xl"
+                      disabled={isSaving} // Disable cancel button during saving
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="bg-blue-500 text-white py-2 px-4 w-full rounded-3xl"
+                  >
+                    Edit
+                  </button>
+                )}
               </div>
             </div>
           </div>
+          {/*message section*/}
+          {successMessage && (
+            <div className="mt-2 text-green-600 text-sm font-semibold">
+              {successMessage}
+            </div>
+          )}
+
+
+          {/*Image perview section*/}
+
+          {isPreviewOpen && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="relative bg-white rounded-lg shadow-lg p-4">
+                <button
+                  className="absolute top-2 right-2 text-gray-500 hover:text-black"
+                  onClick={closePreview}
+                >
+                  Close
+                </button>
+                <div className="w-full h-full">
+                  <NextImage
+                    src={profileImage}
+                    alt="Profile Preview"
+                    width={300}
+                    height={300}
+                    className="object-contain"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Right Section */}
           <div className="md:w-1/2 w-full">
@@ -139,77 +391,42 @@ function ProfileComp() {
               Manage how often you receive emails from your projects.
             </p>
             <ul>
-              <li className="mb-2">
-                <NotificationItem
-                  title="OpenSpace news"
-                  description="When OpenSpace announces relevant updates"
-                />
-              </li>
-              <li className="mb-2">
-                <NotificationItem
-                  title="Capture uploaded"
-                  description="When a capture has been moved to the cloud"
-                />
-              </li>
-              <li className="mb-2">
-                <NotificationItem
-                  title="Capture preview"
-                  description="When a capture is still processing"
-                />
-              </li>
-              <li className="mb-2">
-                <NotificationItem
-                  title="Capture published"
-                  description="When a capture is ready for viewing"
-                />
-              </li>
-              <li className="mb-2">
-                <NotificationItem
-                  title="Capture reminder"
-                  description="When a capture hasn't been taken in two weeks"
-                />
-              </li>
-              <li className="mb-2">
-                <NotificationItem
-                  title="3D capture uploaded"
-                  description="When a 3D capture is uploaded"
-                />
-              </li>
-              <li className="mb-2">
-                <NotificationItem
-                  title="BIM model ready"
-                  description="When a BIM model is ready for viewing"
-                />
-              </li>
-              <li className="mb-2">
-                <NotificationItem
-                  title="Watched Field Notes"
-                  description="When a Field Note is updated"
-                />
-              </li>
-              <li className="mb-2">
-                <NotificationItem
-                  title="Shared folder updates"
-                  description="When a capture is added to a shared folder"
-                />
-              </li>
+              {Object.entries(notificationPreferences).map(([key, value]) => (
+                <li key={key} className="mb-2">
+                  <NotificationItem
+                    title={key.replace(/([A-Z])/g, " $1")}
+                    checked={value}
+                    onChange={handleNotificationChange}
+                  />
+                </li>
+              ))}
             </ul>
           </div>
         </div>
       </div>
     </div>
   );
-};
+}
 
-const NotificationItem = ({ title, description }) => (
+const NotificationItem = ({ title, checked, onChange }) => (
   <div className="flex justify-between items-center py-2 border-b border-gray-300">
     <div>
       <p className="font-semibold">{title}</p>
-      <p className="text-gray-600">{description}</p>
     </div>
-    <label class="relative inline-flex items-center cursor-pointer">
-      <input class="sr-only peer" value="" type="checkbox" />
-      <div class="peer rounded-full outline-none duration-100 after:duration-500 w-12 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-500  after:content-['No'] after:absolute after:outline-none after:rounded-full after:h-5 after:w-5 after:bg-white after:top-0.5 after:left-0.5 after:flex after:justify-center after:items-center  after:text-xs after:font-bold peer-checked:bg-blue-500 peer-checked:after:translate-x-6 peer-checked:after:content-['Yes'] peer-checked:after:border-white"></div>
+    <label className="relative inline-flex items-center cursor-pointer">
+      <input
+        type="checkbox"
+        className="sr-only"
+        checked={checked}
+        onChange={onChange}
+        name={title.replace(/\s/g, "")}
+      />
+      <div className="peer rounded-full w-12 h-6 bg-gray-300 peer-focus:ring-4 peer-focus:ring-blue-500">
+        <div
+          className={`w-6 h-6 rounded-full bg-white transform ${checked ? "translate-x-6" : ""
+            }`}
+        ></div>
+      </div>
     </label>
   </div>
 );
