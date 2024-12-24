@@ -5,6 +5,8 @@ import NextImage from "next/image";
 import { storage } from "../../../../lib/firebase/firebaseConfig"; // Path to your firebase.js
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import AvatarEditor from "react-avatar-editor";
+import { usePathname } from "next/navigation";
+import { useToast } from "@/app/_components/CustomToast/Toast";
 
 function ProfileComp() {
   const { data: session } = useSession();
@@ -31,6 +33,9 @@ function ProfileComp() {
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef(null);
   const [fieldsPermissions, setFieldsPermissions] = useState([]);
+  const [menuPermissions, setMenuPermissions] = useState([]);
+  const pathName = usePathname();
+  const { showToast } = useToast();
 
   useEffect(() => {
     const profileForm = Object.values(
@@ -39,6 +44,12 @@ function ProfileComp() {
     if (profileForm) {
       setFieldsPermissions(profileForm?.tabs[0]?.sections[0]?.fields);
     }
+    const menuPerm =
+      session?.user?.userData?.role?.permissions?.menuPermissions?.basicMenu?.find(
+        (menu) => menu.path === pathName
+      );
+
+    setMenuPermissions(menuPerm?.permission);
   }, [session]);
 
   // Fetch latest session data on page load
@@ -135,29 +146,36 @@ function ProfileComp() {
   };
 
   const handleSave = async () => {
-    setIsSaving(true); // Start loading state
-    try {
-      const response = await fetch("/api/updateProfile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          image: profileImage, // Save the compressed image
-          notificationPreferences,
-        }),
-      });
+    if (!menuPermissions.includes("edit")) {
+      showToast(
+        "You dont have permissions to update your personal Information. Contact Admin",
+        "error"
+      );
+    } else {
+      setIsSaving(true); // Start loading state
+      try {
+        const response = await fetch("/api/updateProfile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...formData,
+            image: profileImage, // Save the compressed image
+            notificationPreferences,
+          }),
+        });
 
-      if (response.ok) {
-        setSuccessMessage("Your profile has been updated successfully.");
-        setTimeout(() => setSuccessMessage(""), 3000); // Clear message after 3 seconds
-        setIsEditing(false); // Switch back to edit mode
-      } else {
-        console.error("Failed to update profile");
+        if (response.ok) {
+          setSuccessMessage("Your profile has been updated successfully.");
+          setTimeout(() => setSuccessMessage(""), 3000); // Clear message after 3 seconds
+          setIsEditing(false); // Switch back to edit mode
+        } else {
+          console.error("Failed to update profile");
+        }
+      } catch (error) {
+        console.error("Error updating profile:", error);
+      } finally {
+        setIsSaving(false); // End loading state
       }
-    } catch (error) {
-      console.error("Error updating profile:", error);
-    } finally {
-      setIsSaving(false); // End loading state
     }
   };
 
