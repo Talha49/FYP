@@ -31,7 +31,7 @@ function Header(){
   const profileImage = authenticatedUser?.image || "/avatar.png";
 
   return (
-    <div className="flex w-full justify-between leading-[60px] border-b px-8 bg-white sticky top-0 z-10 cursor-pointer shadow-sm">
+    <div className="flex w-full justify-between leading-[60px] border-b px-8 bg-white sticky top-0 z-50 cursor-pointer shadow-sm">
       <div className="flex gap-2 items-center">
         <GiSpaceShuttle className="md:text-[35px] sm:text-sm icon" />
         <div className="md:text-[16px] sm:text-[12px] font-semibold">

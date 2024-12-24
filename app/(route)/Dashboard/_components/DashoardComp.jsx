@@ -17,6 +17,9 @@ import DualAreaChart from "./_charts/AreaChart";
 import BarChartComp from "./_charts/BarChart";
 import BarGraphtwo from "./_charts/BarGraphtwo";
 import Taskdata from "./_datatable/taskdata";
+import { useSession } from "next-auth/react";
+import { ImSpinner8 } from "react-icons/im";
+import { useRouter } from "next/navigation";
 
 function Card({ icon: Icon, value, description, color, className, children }) {
   return (
@@ -49,11 +52,23 @@ function DashboardComp() {
     setSelectedDate(date);
   }
 
+  const { data: session, status } = useSession();
+  if (status === "loading") {
+    return (
+      <div className="w-full h-32 flex items-center justify-center">
+        <ImSpinner8 className="text-2xl animate-spin" />
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return null;
+  }
+
   return (
     <div className="p-4 min-h-screen">
       <div className="flex justify-between items-center mb-4">
         <div className="text-xl font-bold">Reports & Analytics System</div>
-        
       </div>
 
       <div className="flex flex-col space-y-4">
@@ -111,7 +126,7 @@ function DashboardComp() {
         {/* Second row */}
         <div className="grid md:grid-cols-2 sm:grid-cols-2 grid-cols-1 gap-4">
           <Card className="h-[540px]">
-          <BarChartComp selectedDate={selectedDate} />
+            <BarChartComp selectedDate={selectedDate} />
           </Card>
 
           <div className="flex flex-col gap-4">
@@ -133,9 +148,7 @@ function DashboardComp() {
             <BarGraphtwo selectedDate={selectedDate} />
           </Card>
         </div> */}
-     
       </div>
-
 
       <div>
         <Taskdata />

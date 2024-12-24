@@ -12,9 +12,12 @@ import Dialog from "../Dialog/Dialog";
 import FieldNotesModal from "../FieldNotesModal/FieldNotesModal";
 import CaptureModal from "../CaptureModal/CaptureModal";
 import { PiVirtualRealityFill } from "react-icons/pi";
-import { MdOutlineSpaceDashboard } from "react-icons/md";
+import { MdOutlineFileUpload, MdOutlineSpaceDashboard } from "react-icons/md";
 import { LuWorkflow } from "react-icons/lu";
-import { useSession } from "@/lib/CustomHooks/useSession";
+import { CgProfile } from "react-icons/cg";
+
+import { usePathname, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const SideNav = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,23 +26,53 @@ const SideNav = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [menues, setMenues] = useState([]);
 
-  const { session, status, isAuthenticated } = useSession();
+  const { data: session, status } = useSession();
+  const pathName = usePathname();
+  const router = useRouter();
+  const publicPaths = ["/", "/Auth"];
+  // console.log(session);
 
   useEffect(() => {
-    if (isAuthenticated && session.role) {
-      setIsVisible(true);
-      const includedMenues =
-        session?.role?.permissions.menuPermissions?.basicMenu?.filter(
+    if (status !== "loading") {
+      if (status === "authenticated") {
+        // Check if menuPermissions exist and filter the allowed menus
+        const menuPermissions =
+          session?.user?.userData?.role?.permissions?.menuPermissions
+            ?.basicMenu || [];
+        const includedMenues = menuPermissions.filter(
           (menu) => menu.included === true
         );
-      setMenues(includedMenues);
-      console.log(session);
-    } else {
-      setIsVisible(false);
-    }
-  }, [session, status, isAuthenticated]);
+        setMenues(includedMenues);
+        if (menues.length <= 0) {
+          setIsVisible(false);
+        } else {
+          setIsVisible(true);
+        }
 
-  console.log("Menues =>", menues);
+        // Check if current path is in allowed menus
+        const allowedPaths = includedMenues.map((menu) => menu.path);
+        if (
+          !session?.user?.userData?.role &&
+          !allowedPaths.includes(pathName)
+        ) {
+          if (publicPaths.includes(pathName)) {
+            return;
+          }
+          router.push("/Access-Denied"); // Navigate to the "Access Denied" page
+        }
+      } else if (status === "unauthenticated") {
+        setIsVisible(false);
+
+        if (!publicPaths.includes(pathName)) {
+          router.push("/Auth");
+        }
+      } else {
+        setIsVisible(false);
+      }
+    }
+  }, [session, status, pathName, router]);
+
+  // console.log("Menues =>", menues);
 
   const handleMouseEnter = () => {
     setIsOpen(true);
@@ -52,8 +85,8 @@ const SideNav = () => {
   return (
     <div className={`${isVisible ? "mr-14" : "hidden"}`}>
       <div
-        className={`bg-white shadow-lg h-screen overflow-y-auto custom-scrollbars fixed transition-all  duration-300 z-10
-                ${isOpen ? "md:w-48 w-14" : "w-14"} ${
+        className={`bg-white shadow-lg h-screen overflow-y-auto scrollbar-hide fixed top-0 pt-16 border-r transition-all  duration-300 z-10
+                ${isOpen ? "md:w-52 w-14" : "w-14"} ${
           isVisible ? "" : "hidden"
         }`}
         onMouseEnter={handleMouseEnter}
@@ -86,6 +119,8 @@ const SideNav = () => {
                   {menu.name === "Captures" && <IoPricetagsOutline />}
                   {menu.name === "FieldNotes" && <TbArrowRoundaboutLeft />}
                   {menu.name === "VirtualTour" && <PiVirtualRealityFill />}
+                  {menu.name === "Profile" && <CgProfile />}
+                  {menu.name === "Upload Fieldnote" && <MdOutlineFileUpload />}
                   {/* Add more icons as needed */}
                 </span>
                 {isOpen && (

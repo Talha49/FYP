@@ -1,11 +1,25 @@
-"use client"
-import React, { useState } from 'react';
-import { IoMdSearch } from 'react-icons/io';
-import { AiOutlinePlus } from 'react-icons/ai';
-import ProjectCards from './_components/ProjectCards';
+"use client";
+import React, { useState } from "react";
+import { IoMdSearch } from "react-icons/io";
+import { AiOutlinePlus } from "react-icons/ai";
+import ProjectCards from "./_components/ProjectCards";
+import { useSession } from "next-auth/react";
+import { ImSpinner8 } from "react-icons/im";
 
 const Page = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const { data: session, status } = useSession();
+  if (status === "loading") {
+    return (
+      <div className="w-full h-32 flex items-center justify-center">
+        <ImSpinner8 className="text-2xl animate-spin" />
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return null;
+  }
 
   return (
     <section className="w-[95%] sm:w-full mt-10 md:ml-0 ml-5">
@@ -33,12 +47,7 @@ const Page = () => {
       </div>
 
       <div>
-      <ProjectCards 
-      searchQuery={searchQuery} 
-      
-    />      
-        
-     
+        <ProjectCards searchQuery={searchQuery} />
       </div>
     </section>
   );
