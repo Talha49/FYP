@@ -14,7 +14,8 @@ function FieldNotesModal({ onClose }) {
   const [activeFilters, setActiveFilters] = useState([]);
   const [authenticatedUser, setAuthenticatedUser] = useState(null);
   const [previousCount, setPreviousCount] = useState(0);
-  const [isOpenConfirmDeleteDialog, setIsOpenConfirmDeleteDialog] = useState(false);
+  const [isOpenConfirmDeleteDialog, setIsOpenConfirmDeleteDialog] =
+    useState(false);
   const [forMeData, setForMeData] = useState(null); // Store API response for "For me"
   const [isFetching, setIsFetching] = useState(false); // State to track fetching status
 
@@ -32,10 +33,10 @@ function FieldNotesModal({ onClose }) {
 
   // Fetch tasks when authenticatedUser changes
   useEffect(() => {
-    if (authenticatedUser?.id) {
-      dispatch(getTasks(authenticatedUser.id));
+    if (authenticatedUser?._id) {
+      dispatch(getTasks(authenticatedUser._id));
     }
-  }, [dispatch, authenticatedUser?.id]);
+  }, [dispatch, authenticatedUser?._id]);
 
   // Update previous count when notes change
   useEffect(() => {
@@ -46,15 +47,17 @@ function FieldNotesModal({ onClose }) {
 
   // API call function to filter tasks "For me"
   const handleForMeClick = async () => {
-    if (!authenticatedUser?.id) {
-      console.error('User ID is missing');
+    if (!authenticatedUser?._id) {
+      console.error("User ID is missing");
       return;
     }
 
     setIsFetching(true); // Set fetching state to true
     try {
       // Make API call to get tasks assigned to authenticated user
-      const response = await fetch(`/api/New/getAssignedTasks?id=${authenticatedUser.id}`);
+      const response = await fetch(
+        `/api/New/getAssignedTasks?id=${authenticatedUser._id}`
+      );
       const data = await response.json();
       setForMeData(data.data); // Store the response in state
     } catch (error) {
@@ -72,18 +75,26 @@ function FieldNotesModal({ onClose }) {
   };
 
   // Filter buttons with "For Me" option at the start
-  const filterButtons = useMemo(() => [
-    <button key="forMeButton" onClick={handleForMeClick} disabled={isFetching}>
-      {isFetching ? "Loading..." : "For Me"} {/* Show "Loading..." when fetching */}
-    </button>,
-    "Tags",
-    "Status",
-    "Due date",
-    "Assignee",
-    "Date created",
-    "Priority",
-    "Creator"
-  ], [handleForMeClick, isFetching]);
+  const filterButtons = useMemo(
+    () => [
+      <button
+        key="forMeButton"
+        onClick={handleForMeClick}
+        disabled={isFetching}
+      >
+        {isFetching ? "Loading..." : "For Me"}{" "}
+        {/* Show "Loading..." when fetching */}
+      </button>,
+      "Tags",
+      "Status",
+      "Due date",
+      "Assignee",
+      "Date created",
+      "Priority",
+      "Creator",
+    ],
+    [handleForMeClick, isFetching]
+  );
 
   // Filter notes based on active filters or "For me" data
   const filterNotes = useMemo(() => {
@@ -98,27 +109,49 @@ function FieldNotesModal({ onClose }) {
 
         // Search logic
         if (searchParam !== "") {
-          const searchFields = activeFilters.length > 0 ? activeFilters : filterButtons;
+          const searchFields =
+            activeFilters.length > 0 ? activeFilters : filterButtons;
           matchesSearch = searchFields.some((field) => {
             switch (field) {
               case "Assignee":
-                return note.assignee.toLowerCase().includes(searchParam.toLowerCase());
+                return note?.assignee
+                  .toLowerCase()
+                  .includes(searchParam.toLowerCase());
               case "Tags":
-                return note.tags.some((tag) => tag.toLowerCase().includes(searchParam.toLowerCase()));
+                return note.tags.some((tag) =>
+                  tag?.toLowerCase().includes(searchParam.toLowerCase())
+                );
               case "Status":
-                return note.status.toLowerCase().includes(searchParam.toLowerCase());
+                return note?.status
+                  .toLowerCase()
+                  .includes(searchParam.toLowerCase());
               case "Priority":
-                return note.priority.toLowerCase().includes(searchParam.toLowerCase());
+                return note?.priority
+                  .toLowerCase()
+                  .includes(searchParam.toLowerCase());
               case "Creator":
-                return note.username.toLowerCase().includes(searchParam.toLowerCase());
+                return note?.username
+                  .toLowerCase()
+                  .includes(searchParam.toLowerCase());
               case "Due date":
-                return note.dueDate && new Date(note.dueDate).toLocaleDateString().includes(searchParam);
+                return (
+                  note?.dueDate &&
+                  new Date(note.dueDate)
+                    .toLocaleDateString()
+                    .includes(searchParam)
+                );
               case "Date created":
-                return new Date(note.createdAt).toLocaleDateString().includes(searchParam);
+                return new Date(note?.createdAt)
+                  .toLocaleDateString()
+                  .includes(searchParam);
               default:
-                return note.description.toLowerCase().includes(searchParam.toLowerCase()) ||
-                       note.room.toLowerCase().includes(searchParam.toLowerCase()) ||
-                       note.floor.toLowerCase().includes(searchParam.toLowerCase());
+                return (
+                  note?.description
+                    .toLowerCase()
+                    .includes(searchParam.toLowerCase()) ||
+                  note.room.toLowerCase().includes(searchParam.toLowerCase()) ||
+                  note.floor.toLowerCase().includes(searchParam.toLowerCase())
+                );
             }
           });
         }
@@ -180,38 +213,36 @@ function FieldNotesModal({ onClose }) {
       <div className="bg-white h-full overflow-auto">
         {/* "Go Back" Button below the filters */}
         {forMeData && (
-            <button
-              className="mt-2 ml-5 p-2 text-xs bg-gray-300 rounded-md"
-              onClick={handleGoBack}
-            >
-              Go Back
-            </button>
-          )}
-          
-          {/* "For Me" Button at the start */}
-          <FilterSearchComponent
-            title="FieldNotes"
-            onClose={onClose}
-            searchParam={searchParam}
-            setSearchParam={handleSearchChange}
-            activeFilters={activeFilters}
-            setActiveFilters={handleFilterChange}
-            filterButtons={filterButtons}
-            resultCount={filterNotes?.length}
-            onClearFilters={handleClearFilters}
-          />
-          
-        
-          {/* Cards Component to display the tasks */}
-          <CardsComponent
-            cards={filterNotes}
-            onCardClick={handleCardClick}
-            emptyStateMessage="No Matches For Your Results"
-            isLoading={loading || isFetching} // Show loading spinner if either is fetching
-            previousCount={previousCount}
-          />
-        </div>
-      
+          <button
+            className="mt-2 ml-5 p-2 text-xs bg-gray-300 rounded-md"
+            onClick={handleGoBack}
+          >
+            Go Back
+          </button>
+        )}
+
+        {/* "For Me" Button at the start */}
+        <FilterSearchComponent
+          title="FieldNotes"
+          onClose={onClose}
+          searchParam={searchParam}
+          setSearchParam={handleSearchChange}
+          activeFilters={activeFilters}
+          setActiveFilters={handleFilterChange}
+          filterButtons={filterButtons}
+          resultCount={filterNotes?.length}
+          onClearFilters={handleClearFilters}
+        />
+
+        {/* Cards Component to display the tasks */}
+        <CardsComponent
+          cards={filterNotes}
+          onCardClick={handleCardClick}
+          emptyStateMessage="No Matches For Your Results"
+          isLoading={loading || isFetching} // Show loading spinner if either is fetching
+          previousCount={previousCount}
+        />
+      </div>
 
       {isOpen && selectedNote && (
         <Dialog

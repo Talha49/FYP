@@ -8,6 +8,7 @@ import { FormSelect } from "../_components/FormSelect";
 import { AttachmentSection } from "../_components/AttachmentSection";
 import { createTask } from "@/lib/Features/TaskSlice";
 import { useToast } from "@/app/_components/CustomToast/Toast";
+import { usePathname, useRouter } from "next/navigation";
 
 const TaskCreationForm = () => {
   const dispatch = useDispatch();
@@ -31,12 +32,24 @@ const TaskCreationForm = () => {
   const [authuserdata, setAuthuserData] = useState(null);
   const { showToast } = useToast();
   const { data: session } = useSession();
+  const [menuPermissionsForPage, setMenuPermissions] = useState(null);
+  const pathName = usePathname();
+  const router = useRouter;
 
   useEffect(() => {
-    console.log('authuserdata:', session?.user?.userData);
     setAuthuserData(session?.user?.userData);
   }, [session]);
-  
+
+  useEffect(() => {
+    if (authuserdata) {
+      const menuPerm =
+        authuserdata?.role?.permissions?.menuPermissions?.basicMenu?.find(
+          (menu) => menu.path === pathName
+        );
+      setMenuPermissions(menuPerm?.permission || null);
+    }
+  }, [authuserdata, pathName]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -55,7 +68,7 @@ const TaskCreationForm = () => {
       floor: "",
       status: "",
       tags: [],
-      assignees:[], // Reset default value
+      assignees: [], // Reset default value
       dueDate: "",
       emailAlerts: [],
       watchers: [],
@@ -66,11 +79,15 @@ const TaskCreationForm = () => {
   };
 
   const handleSubmit = async (e) => {
-    if (!groundFloorImages.length || !lastFloorImage.length) {
-      showToast('Please upload all required images', 'warning');
+    e.preventDefault();
+    if (!menuPermissionsForPage?.includes("create")) {
+      showToast("You don't have permission to create task", "error");
       return;
     }
-    e.preventDefault();
+    if (!groundFloorImages.length || !lastFloorImage.length) {
+      showToast("Please upload all required images", "warning");
+      return;
+    }
 
     const taskFormData = new FormData();
     Object.keys(formData).forEach((key) => {
@@ -80,10 +97,9 @@ const TaskCreationForm = () => {
         taskFormData.append(key, formData[key] || "");
       }
     });
-    taskFormData.append("assignedBy", authuserdata?.id || "");
-    taskFormData.append("userId", authuserdata?.id || "");
+    taskFormData.append("assignedBy", authuserdata?._id || "");
+    taskFormData.append("userId", authuserdata?._id || "");
     taskFormData.append("username", authuserdata?.fullName || "");
-
 
     groundFloorImages.forEach((img) =>
       taskFormData.append("groundFloorImages", img.file)
@@ -101,8 +117,10 @@ const TaskCreationForm = () => {
       resetForm();
     } catch (error) {
       console.error("Error submitting form:", error);
-      showToast(error.message || 'Failed to create RFI. Please try again.', 'error');
-
+      showToast(
+        error.message || "Failed to create RFI. Please try again.",
+        "error"
+      );
     }
   };
 
@@ -151,7 +169,7 @@ const TaskCreationForm = () => {
             label="User ID"
             id="userId"
             name="userId"
-            value={authuserdata?.id || ""}
+            value={authuserdata?._id || ""}
             disabled
           />
           <FormInput
@@ -162,6 +180,7 @@ const TaskCreationForm = () => {
             onChange={handleInputChange}
             as="textarea"
             rows="3"
+            disabled={!menuPermissionsForPage?.includes("create")}
           />
           <FormInput
             label="Room"
@@ -169,6 +188,7 @@ const TaskCreationForm = () => {
             name="room"
             value={formData.room}
             onChange={handleInputChange}
+            disabled={!menuPermissionsForPage?.includes("create")}
           />
           <FormInput
             label="Floor"
@@ -176,17 +196,18 @@ const TaskCreationForm = () => {
             name="floor"
             value={formData.floor}
             onChange={handleInputChange}
+            disabled={!menuPermissionsForPage?.includes("create")}
           />
         </div>
 
         <div className="space-y-4">
-        <FormInput
-  label="Full Name"
-  id="username"
-  name="username"
-  value={authuserdata?.fullName || ""}
-  disabled
-/>
+          <FormInput
+            label="Full Name"
+            id="username"
+            name="username"
+            value={authuserdata?.fullName || ""}
+            disabled
+          />
 
           <FormSelect
             label="Priority"
@@ -226,6 +247,7 @@ const TaskCreationForm = () => {
           name="tags"
           value={formData.tags.join(", ")}
           onChange={(e) => handleArrayInputChange(e, "tags")}
+          disabled={!menuPermissionsForPage?.includes("create")}
         />
         <FormInput
           label="Due Date"
@@ -234,6 +256,7 @@ const TaskCreationForm = () => {
           type="date"
           value={formData.dueDate}
           onChange={handleInputChange}
+          disabled={!menuPermissionsForPage?.includes("create")}
         />
       </div>
 
@@ -245,7 +268,7 @@ const TaskCreationForm = () => {
       <div className="mt-8 flex justify-end">
         <button
           type="submit"
-          className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors relative"
+          className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors relative disabled:bg-opacity-70 disabled:cursor-not-allowed"
           disabled={
             loading || !(groundFloorImages.length && lastFloorImage.length)
           }

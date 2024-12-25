@@ -92,10 +92,10 @@ const CardsComponent = ({
         >
           <div className="flex justify-between items-center relative">
             <div>
-              <h3 className="font-semibold">{card.username}</h3>
+              <h3 className="font-semibold">{card?.username}</h3>
               <p className="text-sm text-gray-600">
-                <b> Room:</b> {card.room} &nbsp;&nbsp; <b>Ceated At:</b>{" "}
-                {formatDate(card.createdAt)}
+                <b> Room:</b> {card?.room} &nbsp;&nbsp; <b>Ceated At:</b>{" "}
+                {formatDate(card?.createdAt)}
               </p>
             </div>
             <div className="flex space-x-2 items-center absolute top-0 right-0">
@@ -108,13 +108,13 @@ const CardsComponent = ({
                 className="text-gray-600 text-xl cursor-pointer hover:text-red-500 hover:rotate-12 transition-all"
                 onClick={() => {
                   setIsOpenConfirmDeleteDialog(true);
-                  setDeletingTaskId(card._id);
+                  setDeletingTaskId(card?._id);
                 }}
               />
             </div>
           </div>
           <p className="text-sm text-gray-600 mt-1">
-            <b>Floor:</b> {card.floor}
+            <b>Floor:</b> {card?.floor}
           </p>
           <div className="my-2 bg-gray-200 p-2 rounded-md">
             <span
