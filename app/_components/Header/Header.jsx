@@ -33,86 +33,92 @@ function Header() {
   return (
     <div className="flex w-full justify-between leading-[60px] border-b px-8 bg-white sticky top-0 z-50 cursor-pointer shadow-sm">
       <div className="flex gap-2 items-center">
-        <GiSpaceShuttle className="md:text-[35px] sm:text-sm icon" />
-        <div className="md:text-[16px] sm:text-[12px] font-semibold">
-          SIJM - Home
-        </div>
+        <Image src={"/images/logo.png"} height={50} width={50} />
+        <div className="md:text-[16px] sm:text-[12px]">SIJM - Home</div>
       </div>
-      <div
-        className="flex items-center gap-2 relative"
-        onClick={() => setShowDialog(!showDialog)}
-      >
-        <span className="text-blue-500 font-bold text-base">
-          {authenticatedUser?.fullName || "Guest"}
-        </span>
+      {session ? (
+        <div
+          className="flex items-center gap-2 relative"
+          onClick={() => setShowDialog(!showDialog)}
+        >
+          <span className="text-blue-500  text-base">
+            {authenticatedUser?.fullName || "Guest"}
+          </span>
 
-        <div className="bg-blue-500 rounded-full p-[2px] overflow-hidden w-[39px] h-[39px]">
-          <Image
-            src={profileImage}
-            width={35}
-            height={35}
-            alt="Profile"
-            className="rounded-full object-cover"
-          />
-        </div>
-        {showDialog && (
-          <div className="absolute top-14 right-0 w-[300px] bg-white shadow-lg border border-gray-200 rounded-lg py-3 px-4 transform transition-transform duration-300 ease-in-out">
-            {authenticatedUser ? (
-              <>
-                <div className="py-4">
-                  <p className="font-semibold leading-tight">
-                    {authenticatedUser.fullName}
-                  </p>
-                  <p className="text-gray-500 leading-tight">
-                    {authenticatedUser.email}
-                  </p>
-                </div>
-                <hr className="border-t border-gray-300 my-0" />
-                <div className="flex justify-between gap-2 text-gray-500 py-3 px-1 text-sm">
-                  <button
-                    className="bg-blue-50 hover:bg-blue-100 hover:shadow-lg transition-all border border-blue-300 p-2 rounded-lg text-blue-500 w-full"
-                    onClick={() => {
-                      router.push("/Profile");
-                    }}
-                  >
-                    View Profile
-                  </button>
-                  <button
-                    className="bg-blue-500 hover:bg-blue-600 hover:shadow-lg transition-all p-2 rounded-lg text-white w-full"
-                    onClick={handleSignOut}
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="text-center mb-3">
-                  <p className="text-base font-semibold text-gray-800">
-                    Welcome to OpenSpace.ai
-                  </p>
-                </div>
-                <div className="flex gap-2 mb-3">
-                  <Link
-                    href="/Auth"
-                    className="w-full bg-blue-50 hover:bg-blue-100 border border-blue-400 transition-colors duration-200 py-1.5 rounded-md text-blue-500 text-center text-sm font-medium"
-                  >
-                    Sign in
-                  </Link>
-                  <Link
-                    href="/Auth"
-                    className="w-full bg-blue-500 hover:bg-blue-600 transition-colors duration-200 py-1.5 rounded-md text-white text-center text-sm font-medium"
-                  >
-                    Register
-                  </Link>
-                </div>
-              </>
-            )}
+          <div className="bg-blue-500 rounded-full shadow-md overflow-hidden w-fit h-fit">
+            <Image
+              src={profileImage}
+              width={40}
+              height={40}
+              alt="Profile"
+              className="rounded-full object-cover"
+            />
           </div>
-        )}
-      </div>
+          {showDialog && (
+            <div className="absolute top-14 right-0 w-[300px] bg-white shadow-lg border border-gray-200 rounded-lg py-3 px-4 transform transition-transform duration-300 ease-in-out">
+              {authenticatedUser ? (
+                <>
+                  <div className="py-4">
+                    <p className="font-semibold leading-tight">
+                      {authenticatedUser.fullName}
+                    </p>
+                    <p className="text-gray-500 leading-tight">
+                      {authenticatedUser.email}
+                    </p>
+                  </div>
+                  <hr className="border-t border-gray-300 my-0" />
+                  <div className="flex justify-between gap-2 text-gray-500 py-3 px-1 text-sm">
+                    <button
+                      className="bg-blue-50 hover:bg-blue-100 hover:shadow-lg transition-all border border-blue-300 p-2 rounded-lg text-blue-500 w-full"
+                      onClick={() => {
+                        router.push("/Profile");
+                      }}
+                    >
+                      View Profile
+                    </button>
+                    <button
+                      className="bg-blue-500 hover:bg-blue-600 hover:shadow-lg transition-all p-2 rounded-lg text-white w-full"
+                      onClick={handleSignOut}
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="text-center mb-3">
+                    <p className="text-base font-semibold text-gray-800">
+                      Welcome to OpenSpace.ai
+                    </p>
+                  </div>
+                  <div className="flex gap-2 mb-3">
+                    <Link
+                      href="/Auth"
+                      className="w-full bg-blue-50 hover:bg-blue-100 border border-blue-400 transition-colors duration-200 py-1.5 rounded-md text-blue-500 text-center text-sm font-medium"
+                    >
+                      Sign in
+                    </Link>
+                    <Link
+                      href="/Auth"
+                      className="w-full bg-blue-500 hover:bg-blue-600 transition-colors duration-200 py-1.5 rounded-md text-white text-center text-sm font-medium"
+                    >
+                      Register
+                    </Link>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      ) : (
+        <Link href="/Auth">
+          <button className="px-3 py-2 bg-blue-600 hover:bg-blue-500 transition-colors duration-200 rounded-md text-white text-center text-sm font-medium">
+            Get Started
+          </button>
+        </Link>
+      )}
     </div>
   );
-};
+}
 
 export default Header;

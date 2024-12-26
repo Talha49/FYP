@@ -22,6 +22,7 @@ import {
 import { useToast } from "../CustomToast/Toast";
 import { useSession } from "next-auth/react";
 import ChatApp from "../ChatApp/ChatApp";
+import { usePathname } from "next/navigation";
 
 function FieldNoteModalCardsModal({ onClose, note, token }) {
   const dispatch = useDispatch();
@@ -33,7 +34,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
   const [isEditing, setIsEditing] = useState(false);
   const [localNote, setLocalNote] = useState({
     ...note,
-    assignees: note.assignees || []
+    assignees: note.assignees || [],
   });
   const [originalNote, setOriginalNote] = useState({ ...note });
   const [isSaving, setIsSaving] = useState(false);
@@ -58,6 +59,10 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
   const users = useSelector((state) => state.UserSlice.users);
   const { data: session } = useSession();
   const [authenticatedUser, setAuthenticatedUser] = useState(null);
+  const [menuPermissionsForPage, setMenuPermissionsForPage] = useState(null);
+  const pathName = usePathname();
+
+  console.log("Menu Permissions =>", menuPermissionsForPage);
 
   useEffect(() => {
     if (session) {
@@ -66,10 +71,20 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
   }, [session]);
 
   useEffect(() => {
-    if (authenticatedUser?.id) {
-      dispatch(getTasks(authenticatedUser.id));
+    if (authenticatedUser) {
+      const menuPerm =
+        authenticatedUser?.role?.permissions?.menuPermissions?.basicMenu?.find(
+          (menu) => menu.name === "FieldNotes"
+        );
+      setMenuPermissionsForPage(menuPerm?.permission || null);
     }
-  }, [dispatch, authenticatedUser?.id, localNote.attachments]);
+  }, [authenticatedUser, pathName]);
+
+  useEffect(() => {
+    if (authenticatedUser?._id) {
+      dispatch(getTasks(authenticatedUser._id));
+    }
+  }, [dispatch, authenticatedUser?._id, localNote.attachments]);
 
   // Fetch users if needed
   useEffect(() => {
@@ -80,7 +95,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
 
   // Update local note when prop changes
   useEffect(() => {
-    setLocalNote({...note, assignees: note.assignees || []});
+    setLocalNote({ ...note, assignees: note.assignees || [] });
     setOriginalNote({ ...note });
   }, [note]);
 
@@ -94,8 +109,6 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
       JSON.stringify(originalNote[field]) !== JSON.stringify(localNote[field])
     );
   };
-
-  
 
   const getChangedFields = () => {
     const changes = [];
@@ -195,14 +208,14 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
           // Create the chat room once
           createChatRoom(localNote._id, localNote.assignees);
           setChatRoomCreated(true);
-          console.log('Chat room created for task');
+          console.log("Chat room created for task");
         } else {
           // If the room already exists, just update the participants
           updateChatRoomParticipants(localNote._id, localNote.assignees);
-          console.log('Assignees updated in existing chat room');
+          console.log("Assignees updated in existing chat room");
         }
       } else {
-        console.log('No assignees selected');
+        console.log("No assignees selected");
       }
 
       setOriginalNote({ ...localNote });
@@ -220,28 +233,33 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
   // Function to create chat room once
   const createChatRoom = (taskId, assignees) => {
     const chatRoomId = taskId; // Use task ID as chat room ID
-    const participants = [...assignees.map(a => assignees.id), localNote.userId]; // Assignees and assigner
+    const participants = [
+      ...assignees.map((a) => assignees.id),
+      localNote.userId,
+    ]; // Assignees and assigner
 
     console.log(`Creating chat room with ID: ${chatRoomId}`);
-    console.log(`Participants: ${participants.join(', ')}`);
-   
+    console.log(`Participants: ${participants.join(", ")}`);
   };
 
   // Function to update chat room participants
   const updateChatRoomParticipants = (taskId, newAssignees) => {
     const chatRoomId = taskId; // Using the same chat room ID
-    const participants = [...newAssignees.map(assignee => assignee.name)]; // Updated assignees and assigner
+    const participants = [...newAssignees.map((assignee) => assignee.name)]; // Updated assignees and assigner
 
     console.log(`Updating chat room with ID: ${chatRoomId}`);
-    console.log(`New participants: ${participants.join(', ')}`);
-
+    console.log(`New participants: ${participants.join(", ")}`);
   };
 
   const toggleEditMode = () => {
-    if (isEditing) {
-      setLocalNote({ ...originalNote });
+    if (menuPermissionsForPage.includes("edit")) {
+      if (isEditing) {
+        setLocalNote({ ...originalNote });
+      }
+      setIsEditing(!isEditing);
+    } else {
+      showToast("You don't have permission to edit this task", "error");
     }
-    setIsEditing(!isEditing);
   };
 
   // File Handling Functions
@@ -310,24 +328,28 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
       const attachmentToDelete = localNote.attachments[index];
 
       // Optimistically update UI
-      const updatedAttachments = localNote.attachments.filter((_, i) => i !== index);
-      setLocalNote(prev => ({
+      const updatedAttachments = localNote.attachments.filter(
+        (_, i) => i !== index
+      );
+      setLocalNote((prev) => ({
         ...prev,
-        attachments: updatedAttachments
+        attachments: updatedAttachments,
       }));
 
       // Call Redux action to delete from backend
-      await dispatch(deleteAttachment({
-        taskId: localNote._id,
-        attachmentId: attachmentToDelete._id
-      })).unwrap();
+      await dispatch(
+        deleteAttachment({
+          taskId: localNote._id,
+          attachmentId: attachmentToDelete._id,
+        })
+      ).unwrap();
 
       showToast("Attachment deleted successfully", "success");
     } catch (error) {
       // Revert optimistic update on error
-      setLocalNote(prev => ({
+      setLocalNote((prev) => ({
         ...prev,
-        attachments: originalNote.attachments
+        attachments: originalNote.attachments,
       }));
       showToast(error.message || "Failed to delete attachment", "error");
     }
@@ -434,14 +456,14 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
 
   useEffect(() => {
     function handleClickOutside(event) {
-      if (isDropdownOpen && !event.target.closest('.relative')) {
+      if (isDropdownOpen && !event.target.closest(".relative")) {
         setIsDropdownOpen(false);
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isDropdownOpen]);
 
@@ -458,10 +480,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
             <span>Created At: {formatDate(localNote.createdAt)}</span>
           </p>
         </div>
-        <button
-          className="hover:bg-gray-200 p-2 rounded-md"
-          onClick={onClose}
-        >
+        <button className="hover:bg-gray-200 p-2 rounded-md" onClick={onClose}>
           <VscClose size={20} />
         </button>
       </div>
@@ -488,11 +507,11 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
               taskId={localNote._id}
               editmode={isEditing}
             />
-           
+
             {/* Description Input */}
             <div>
               <label className="block text-gray-600">Description</label>
-              {isEditing ? (
+              {isEditing && menuPermissionsForPage.includes("edit") ? (
                 <input
                   type="text"
                   className="w-full p-2 border border-gray-300 rounded outline-none"
@@ -510,9 +529,10 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
             <ChatApp
               chatRoomId={localNote._id}
               chatRoomName={localNote.username}
-              assignedUsers={[ ...localNote.assignees.map(assignee => assignee.name)]}
+              assignedUsers={[
+                ...localNote.assignees.map((assignee) => assignee.name),
+              ]}
             />
-
           </div>
 
           {/* Right Section */}
@@ -535,7 +555,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
             {/* Priority Section */}
             <div>
               <label className="block text-gray-600">Priority</label>
-              {isEditing ? (
+              {isEditing && menuPermissionsForPage.includes("edit") ? (
                 <select
                   className="w-full p-2 border border-gray-300 rounded outline-none"
                   value={localNote.priority}
@@ -555,41 +575,56 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
             {/* Assignee Section */}
             <div className="relative">
               <label className="block text-gray-600">Assignees</label>
-              {isEditing ? (
+              {isEditing && menuPermissionsForPage.includes("edit") ? (
                 <>
                   <div
                     className="w-full p-2 border border-gray-300 rounded cursor-pointer flex flex-wrap"
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   >
-                    {localNote.assignees.length > 0
-                      ? localNote.assignees.map((assignee) => (
-                          <span
-                            key={assignee.id}
-                            className="bg-blue-100 text-blue-800 px-2 py-1 rounded mr-2 mb-2"
-                          >
-                            {assignee.name}
-                          </span>
-                        ))
-                      : <span className="text-gray-500">Select Assignees</span>
-                    }
+                    {localNote.assignees.length > 0 ? (
+                      localNote.assignees.map((assignee) => (
+                        <span
+                          key={assignee.id}
+                          className="bg-blue-100 text-blue-800 px-2 py-1 rounded mr-2 mb-2"
+                        >
+                          {assignee.name}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-gray-500">Select Assignees</span>
+                    )}
                   </div>
                   {isDropdownOpen && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto">
                       {users.map((user) => (
-                        <div key={user._id} className="flex items-center p-2 hover:bg-gray-100">
+                        <div
+                          key={user._id}
+                          className="flex items-center p-2 hover:bg-gray-100"
+                        >
                           <input
                             type="checkbox"
                             id={`assignee-${user._id}`}
-                            checked={localNote.assignees.some(assignee => assignee.id === user._id)}
+                            checked={localNote.assignees.some(
+                              (assignee) => assignee.id === user._id
+                            )}
                             onChange={() => {
-                              const updatedAssignees = localNote.assignees.some(assignee => assignee.id === user._id)
-                                ? localNote.assignees.filter(assignee => assignee.id !== user._id)
-                                : [...localNote.assignees, { id: user._id, name: user.fullName }];
+                              const updatedAssignees = localNote.assignees.some(
+                                (assignee) => assignee.id === user._id
+                              )
+                                ? localNote.assignees.filter(
+                                    (assignee) => assignee.id !== user._id
+                                  )
+                                : [
+                                    ...localNote.assignees,
+                                    { id: user._id, name: user.fullName },
+                                  ];
                               updateField("assignees", updatedAssignees);
                             }}
                             className="mr-2"
                           />
-                          <label htmlFor={`assignee-${user._id}`}>{user.fullName}</label>
+                          <label htmlFor={`assignee-${user._id}`}>
+                            {user.fullName}
+                          </label>
                         </div>
                       ))}
                     </div>
@@ -598,7 +633,9 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
               ) : (
                 <p className="w-full p-2 border border-gray-300 rounded bg-gray-100">
                   {localNote.assignees.length > 0
-                    ? localNote.assignees.map(assignee => assignee.name).join(", ")
+                    ? localNote.assignees
+                        .map((assignee) => assignee.name)
+                        .join(", ")
                     : "Not assigned"}
                 </p>
               )}
@@ -606,7 +643,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
             {/* Status Section */}
             <div>
               <label className="block text-gray-600">Status</label>
-              {isEditing ? (
+              {isEditing && menuPermissionsForPage.includes("edit") ? (
                 <select
                   className="w-full p-2 border border-gray-300 rounded outline-none"
                   value={localNote.status}
@@ -627,7 +664,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
             <div>
               <label className="block text-gray-600">Email alerts</label>
               <div className="flex items-center mt-1">
-                {isEditing ? (
+                {isEditing && menuPermissionsForPage.includes("edit") ? (
                   <select
                     className="w-full p-2 border border-gray-300 rounded outline-none"
                     value={localNote.watchers.length}
@@ -656,7 +693,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
             <div>
               <label className="block text-gray-600">Tags</label>
               <div className="flex items-center mt-1">
-                {isEditing ? (
+                {isEditing && menuPermissionsForPage.includes("edit") ? (
                   <input
                     type="text"
                     value={localNote.tags.join(", ")}
@@ -680,7 +717,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
             {/* Due Date */}
             <div>
               <label className="block text-gray-600">Due date</label>
-              {isEditing ? (
+              {isEditing && menuPermissionsForPage.includes("edit") ? (
                 <input
                   type="date"
                   className="w-full p-2 border border-gray-300 rounded"
@@ -706,14 +743,16 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
                     <p className="mt-2 text-gray-600">
                       No attachments added yet.
                     </p>
-                    {isEditing && !isUploadingFiles && (
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                      >
-                        Add Attachment
-                      </button>
-                    )}
+                    {isEditing &&
+                      !isUploadingFiles &&
+                      menuPermissionsForPage.includes("edit") && (
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                        >
+                          Add Attachment
+                        </button>
+                      )}
                   </div>
                 ) : (
                   <div>
@@ -750,16 +789,18 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
                         )}
                       </div>
                     ))}
-                    {isEditing && !isUploadingFiles && (
-                      <button
-                        onClick={() => {
-                          fileInputRef.current?.click();
-                        }}
-                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                      >
-                        Add More Attachments
-                      </button>
-                    )}
+                    {isEditing &&
+                      !isUploadingFiles &&
+                      menuPermissionsForPage.includes("edit") && (
+                        <button
+                          onClick={() => {
+                            fileInputRef.current?.click();
+                          }}
+                          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                        >
+                          Add More Attachments
+                        </button>
+                      )}
                     {isUploadingFiles && (
                       <div className="mt-4">
                         <div className="w-full bg-gray-200 rounded-full h-2.5">
@@ -845,4 +886,3 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
 }
 
 export default FieldNoteModalCardsModal;
-

@@ -34,7 +34,7 @@ const TaskCreationForm = () => {
   const { data: session } = useSession();
   const [menuPermissionsForPage, setMenuPermissions] = useState(null);
   const pathName = usePathname();
-  const router = useRouter;
+
 
   useEffect(() => {
     setAuthuserData(session?.user?.userData);

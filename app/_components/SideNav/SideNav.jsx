@@ -97,6 +97,9 @@ const SideNav = () => {
             <Link
               key={menu.id}
               href={menu.path || ""}
+              target={
+                (menu.name === "Admin" || menu.name === "Workflow") && "_blank"
+              }
               className={`flex items-center hover:bg-blue-200 ${
                 !menu.path && "cursor-not-allowed"
               }`}
