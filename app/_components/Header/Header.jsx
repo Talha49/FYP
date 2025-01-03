@@ -70,8 +70,11 @@ function Header() {
                       className="rounded-full object-cover"
                     />
                     <div className="py-4">
-                      <p className="font-semibold leading-tight">
+                      <p className="font-semibold leading-tight flex items-center gap-1">
                         {authenticatedUser.fullName}
+                        <span className="text-xs font-normal shadow-md shadow-neutral-700 border-blue-600 text-white bg-blue-500 px-1 rounded-full">
+                          {authenticatedUser?.role?.name}
+                        </span>
                       </p>
                       <p className="text-gray-500 leading-tight text-xs">
                         {authenticatedUser.email}
