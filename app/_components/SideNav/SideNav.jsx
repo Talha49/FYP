@@ -30,7 +30,7 @@ const SideNav = () => {
   const pathName = usePathname();
   const router = useRouter();
   const publicPaths = ["/", "/Auth"];
-  console.log("Session =>", session);
+  // console.log("Session =>", session);
 
   useEffect(() => {
     if (status !== "loading") {

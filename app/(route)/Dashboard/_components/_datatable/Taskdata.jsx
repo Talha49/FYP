@@ -1,22 +1,29 @@
-"use client"
+"use client";
 
-import { getTasks } from '@/lib/Features/TaskSlice';
-import { useSession } from 'next-auth/react';
-import { useCallback, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { 
-  CheckCircle2, 
-  Clock, 
+import { getTasks } from "@/lib/Features/TaskSlice";
+import { useSession } from "next-auth/react";
+import { useCallback, useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  CheckCircle2,
+  Clock,
   AlertCircle,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  User
-} from 'lucide-react';
+  User,
+} from "lucide-react";
 
-const TaskTable = ({ data: initialData, className, loading, noDataMessage, title }) => {
+const TaskTable = ({
+  data: initialData,
+  className,
+  loading,
+  noDataMessage,
+  title,
+  permissionToGenerateReport,
+}) => {
   const [data, setData] = useState(initialData);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [draggedItem, setDraggedItem] = useState(null);
   const [dragOverItem, setDragOverItem] = useState(null);
 
@@ -26,11 +33,11 @@ const TaskTable = ({ data: initialData, className, loading, noDataMessage, title
 
   const getStatusIcon = (status) => {
     switch (status?.toLowerCase()) {
-      case 'completed':
+      case "completed":
         return <CheckCircle2 className="w-4 h-4 text-green-500" />;
-      case 'in progress':
+      case "in progress":
         return <Clock className="w-4 h-4 text-blue-500" />;
-      case 'pending':
+      case "pending":
         return <AlertCircle className="w-4 h-4 text-yellow-500" />;
       default:
         return null;
@@ -39,39 +46,41 @@ const TaskTable = ({ data: initialData, className, loading, noDataMessage, title
 
   const getPriorityColor = (priority) => {
     switch (priority?.toLowerCase()) {
-      case 'high':
-        return 'text-red-600 bg-red-50';
-      case 'medium':
-        return 'text-yellow-600 bg-yellow-50';
-      case 'low':
-        return 'text-green-600 bg-green-50';
+      case "high":
+        return "text-red-600 bg-red-50";
+      case "medium":
+        return "text-yellow-600 bg-yellow-50";
+      case "low":
+        return "text-green-600 bg-green-50";
       default:
-        return 'text-gray-600 bg-gray-50';
+        return "text-gray-600 bg-gray-50";
     }
   };
 
   const handleSort = (key) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
     }
     setSortConfig({ key, direction });
 
     const sortedData = [...data].sort((a, b) => {
-      if (key === 'createdAt' || key === 'dueDate') {
-        return direction === 'asc'
+      if (key === "createdAt" || key === "dueDate") {
+        return direction === "asc"
           ? new Date(a[key]) - new Date(b[key])
           : new Date(b[key]) - new Date(a[key]);
       }
 
-      if (key === 'priority') {
+      if (key === "priority") {
         const priorityOrder = { high: 3, medium: 2, low: 1 };
-        return direction === 'asc'
-          ? priorityOrder[a[key].toLowerCase()] - priorityOrder[b[key].toLowerCase()]
-          : priorityOrder[b[key].toLowerCase()] - priorityOrder[a[key].toLowerCase()];
+        return direction === "asc"
+          ? priorityOrder[a[key].toLowerCase()] -
+              priorityOrder[b[key].toLowerCase()]
+          : priorityOrder[b[key].toLowerCase()] -
+              priorityOrder[a[key].toLowerCase()];
       }
 
-      return direction === 'asc'
+      return direction === "asc"
         ? String(a[key]).localeCompare(String(b[key]))
         : String(b[key]).localeCompare(String(a[key]));
     });
@@ -81,18 +90,18 @@ const TaskTable = ({ data: initialData, className, loading, noDataMessage, title
 
   const handleDragStart = (e, index) => {
     setDraggedItem(index);
-    e.currentTarget.style.opacity = '0.5';
+    e.currentTarget.style.opacity = "0.5";
   };
 
   const handleDragEnter = (e, index) => {
     setDragOverItem(index);
-    e.currentTarget.style.transform = 'translateY(2px)';
+    e.currentTarget.style.transform = "translateY(2px)";
   };
 
   const handleDragEnd = (e) => {
-    e.currentTarget.style.opacity = '1';
-    e.currentTarget.style.transform = 'none';
-    
+    e.currentTarget.style.opacity = "1";
+    e.currentTarget.style.transform = "none";
+
     if (draggedItem !== null && dragOverItem !== null) {
       const newData = [...data];
       const draggedRow = newData[draggedItem];
@@ -100,7 +109,7 @@ const TaskTable = ({ data: initialData, className, loading, noDataMessage, title
       newData.splice(dragOverItem, 0, draggedRow);
       setData(newData);
     }
-    
+
     setDraggedItem(null);
     setDragOverItem(null);
   };
@@ -111,22 +120,24 @@ const TaskTable = ({ data: initialData, className, loading, noDataMessage, title
 
   const getSortIcon = (key) => {
     if (sortConfig.key !== key) return <ArrowUpDown className="w-3 h-3" />;
-    return sortConfig.direction === 'asc' 
-      ? <ArrowUp className="w-3 h-3" /> 
-      : <ArrowDown className="w-3 h-3" />;
+    return sortConfig.direction === "asc" ? (
+      <ArrowUp className="w-3 h-3" />
+    ) : (
+      <ArrowDown className="w-3 h-3" />
+    );
   };
 
   const columns = [
-    { key: 'index', label: 'No.', sortable: false },
-    { key: 'createdAt', label: 'Created At', sortable: true },
-    { key: 'username', label: 'Username', sortable: true },
-    { key: 'status', label: 'Status', sortable: true },
-    { key: 'priority', label: 'Priority', sortable: true },
-    { key: 'dueDate', label: 'Due Date', sortable: true },
+    { key: "index", label: "No.", sortable: false },
+    { key: "createdAt", label: "Created At", sortable: true },
+    { key: "username", label: "Username", sortable: true },
+    { key: "status", label: "Status", sortable: true },
+    { key: "priority", label: "Priority", sortable: true },
+    { key: "dueDate", label: "Due Date", sortable: true },
   ];
- 
+
   const generatePDF = useCallback(() => {
-    const printWindow = window.open('', '_blank');
+    const printWindow = window.open("", "_blank");
     const html = `
       <!DOCTYPE html>
       <html>
@@ -160,7 +171,9 @@ const TaskTable = ({ data: initialData, className, loading, noDataMessage, title
               </tr>
             </thead>
             <tbody>
-              ${data.map(note => `
+              ${data
+                .map(
+                  (note) => `
                 <tr>
                   <td>${note._id}</td>
                   <td>${new Date(note.createdAt).toLocaleDateString()}</td>
@@ -169,7 +182,9 @@ const TaskTable = ({ data: initialData, className, loading, noDataMessage, title
                   <td>${note.priority}</td>
                   <td>${new Date(note.dueDate).toLocaleDateString()}</td>
                 </tr>
-              `).join('')}
+              `
+                )
+                .join("")}
             </tbody>
           </table>
           <div class="footer">
@@ -178,15 +193,16 @@ const TaskTable = ({ data: initialData, className, loading, noDataMessage, title
         </body>
       </html>
     `;
-  
+
     printWindow.document.write(html);
     printWindow.document.close();
     printWindow.print();
   }, [data, title]);
-  
 
   return (
-    <div className={`bg-white rounded-xl shadow-lg overflow-hidden .custom-scrollbars ${className}`}>
+    <div
+      className={`bg-white rounded-xl shadow-lg overflow-hidden .custom-scrollbars ${className}`}
+    >
       <div className="border border-gray-200 rounded-xl">
         <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -196,11 +212,20 @@ const TaskTable = ({ data: initialData, className, loading, noDataMessage, title
               ({data.length} tasks)
             </span>
           </h3>
-           <button onClick={generatePDF} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
->Genrerate Report</button>
+          {permissionToGenerateReport && (
+            <button
+              onClick={generatePDF}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            >
+              Genrerate Report
+            </button>
+          )}
         </div>
 
-        <div className="overflow-auto .custom-scrollbars" style={{ maxHeight: '600px' }}>
+        <div
+          className="overflow-auto .custom-scrollbars"
+          style={{ maxHeight: "600px" }}
+        >
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -215,13 +240,15 @@ const TaskTable = ({ data: initialData, className, loading, noDataMessage, title
               <thead className="sticky top-0 bg-gray-50">
                 <tr className="border-b border-gray-200">
                   {columns.map((column) => (
-                    <th 
+                    <th
                       key={column.key}
                       className="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
                       <button
                         className="flex items-center gap-2 hover:text-gray-700 focus:outline-none"
-                        onClick={() => column.sortable && handleSort(column.key)}
+                        onClick={() =>
+                          column.sortable && handleSort(column.key)
+                        }
                         disabled={!column.sortable}
                       >
                         {column.label}
@@ -246,10 +273,10 @@ const TaskTable = ({ data: initialData, className, loading, noDataMessage, title
                       {index + 1}
                     </td>
                     <td className="py-4 px-6 text-sm text-gray-500">
-                      {new Date(note.createdAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
+                      {new Date(note.createdAt).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
                       })}
                     </td>
                     <td className="py-4 px-6">
@@ -269,19 +296,25 @@ const TaskTable = ({ data: initialData, className, loading, noDataMessage, title
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-2">
                         {getStatusIcon(note.status)}
-                        <span className="text-sm text-gray-900">{note.status}</span>
+                        <span className="text-sm text-gray-900">
+                          {note.status}
+                        </span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(note.priority)}`}>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(
+                          note.priority
+                        )}`}
+                      >
                         {note.priority}
                       </span>
                     </td>
                     <td className="py-4 px-6 text-sm text-gray-500">
-                      {new Date(note.dueDate).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
+                      {new Date(note.dueDate).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
                       })}
                     </td>
                   </tr>
@@ -296,21 +329,41 @@ const TaskTable = ({ data: initialData, className, loading, noDataMessage, title
 };
 
 const Taskdata = () => {
-  const { data: session } = useSession();
   const dispatch = useDispatch();
   const { tasks, loading } = useSelector((state) => state.TaskSlice);
   const [completedNotes, setCompletedNotes] = useState([]);
   const [pendingNotes, setPendingNotes] = useState([]);
+  const { data: session, status } = useSession();
+  const [tabularReport, setTabularReport] = useState();
+  const [graphicalReport, setGraphicalReport] = useState();
+
+  // console.log("Session =>", session);
+  // console.log("Tabular Report Permissions =>", tabularReport);
+  // console.log("Graphical Report Permissions =>", graphicalReport);
+  // console.log(tabularReport?.included)
 
   useEffect(() => {
-    if (session?.user?.userData?.id) {
-      dispatch(getTasks(session.user.userData.id));
+    const tabRep =
+      session?.user?.userData?.role?.permissions?.reportPermissions.find(
+        (report) => report.name === "Tabular Report"
+      );
+    const graphRep =
+      session?.user?.userData?.role?.permissions?.reportPermissions.find(
+        (report) => report.name === "Graphical Report"
+      );
+    setTabularReport(tabRep);
+    setGraphicalReport(graphRep);
+  }, [session, status]);
+
+  useEffect(() => {
+    if (session?.user?.userData?._id) {
+      dispatch(getTasks(session.user.userData._id));
     }
-  }, [dispatch, session?.user?.userData?.id]);
+  }, [dispatch, session?.user?.userData?._id]);
 
   useEffect(() => {
-    setCompletedNotes(tasks.filter((note) => note.status === 'Completed'));
-    setPendingNotes(tasks.filter((note) => note.status !== 'Completed'));
+    setCompletedNotes(tasks.filter((note) => note.status === "Completed"));
+    setPendingNotes(tasks.filter((note) => note.status !== "Completed"));
   }, [tasks]);
 
   return (
@@ -320,13 +373,15 @@ const Taskdata = () => {
           data={completedNotes}
           loading={loading}
           noDataMessage="No completed tasks"
-          title='Completed Tasks'
+          title="Completed Tasks"
+          permissionToGenerateReport={tabularReport?.included}
         />
         <TaskTable
           data={pendingNotes}
           loading={loading}
           noDataMessage="No pending or in-progress tasks"
-          title='Pending Tasks'
+          title="Pending Tasks"
+          permissionToGenerateReport={tabularReport?.included}
         />
       </div>
     </div>

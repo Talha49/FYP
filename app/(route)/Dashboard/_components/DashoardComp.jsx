@@ -20,6 +20,7 @@ import Taskdata from "./_datatable/taskdata";
 import { useSession } from "next-auth/react";
 import { ImSpinner8 } from "react-icons/im";
 import { useRouter } from "next/navigation";
+import { setDefaultOptions } from "date-fns";
 
 function Card({ icon: Icon, value, description, color, className, children }) {
   return (
@@ -47,12 +48,32 @@ function Card({ icon: Icon, value, description, color, className, children }) {
 
 function DashboardComp() {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const { data: session, status } = useSession();
+  const [tabularReport, setTabularReport] = useState();
+  const [graphicalReport, setGraphicalReport] = useState();
+
+  // console.log("Session =>", session);
+  // console.log("Tabular Report Permissions =>", tabularReport);
+  // console.log("Graphical Report Permissions =>", graphicalReport);
+
+  useEffect(() => {
+    const tabRep =
+      session?.user?.userData?.role?.permissions?.reportPermissions.find(
+        (report) => report.name === "Tabular Report"
+      );
+    const graphRep =
+      session?.user?.userData?.role?.permissions?.reportPermissions.find(
+        (report) => report.name === "Graphical Report"
+      );
+    setTabularReport(tabRep);
+    setGraphicalReport(graphRep);
+  }, [session, status]);
+
   function handleDateChange(date) {
     console.log("Date changed:", date);
     setSelectedDate(date);
   }
 
-  const { data: session, status } = useSession();
   if (status === "loading") {
     return (
       <div className="w-full h-32 flex items-center justify-center">

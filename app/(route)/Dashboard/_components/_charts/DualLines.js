@@ -18,6 +18,7 @@ import {
 } from "recharts";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { useSession } from "next-auth/react";
 
 function DualLines({ selectedDate }) {
   const [chartData, setChartData] = useState([]);
@@ -25,6 +26,27 @@ function DualLines({ selectedDate }) {
   const [downloadMenuVisible, setDownloadMenuVisible] = useState(false);
   const [isOpenReportModal, setIsOpenReportModal] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState(false);
+  const { data: session, status } = useSession();
+  const [tabularReport, setTabularReport] = useState();
+  const [graphicalReport, setGraphicalReport] = useState();
+
+  // console.log("Session =>", session);
+  // console.log("Tabular Report Permissions =>", tabularReport);
+  // console.log("Graphical Report Permissions =>", graphicalReport);
+
+  useEffect(() => {
+    const tabRep =
+      session?.user?.userData?.role?.permissions?.reportPermissions.find(
+        (report) => report.name === "Tabular Report"
+      );
+    const graphRep =
+      session?.user?.userData?.role?.permissions?.reportPermissions.find(
+        (report) => report.name === "Graphical Report"
+      );
+    setTabularReport(tabRep);
+    setGraphicalReport(graphRep);
+  }, [session, status]);
+
   const companyLogo = "/images/SIJM-LOGO.png";
   const companyName = "Smart Inspection & Job Monitoring System";
 
@@ -2405,43 +2427,59 @@ function DualLines({ selectedDate }) {
             }`}
             disabled={!dataAvailable}
           >
-            <FaDownload className="mr-1" size={12} />
+            <FaDownload size={12} />
           </button>
           {downloadMenuVisible && (
             <div className="absolute right-0 mt-2 z-10 w-64 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden transition-all duration-200 ease-in-out transform origin-top-right">
               <div className="p-2 space-y-1">
-                <button
-                  onClick={() =>
-                    downloadCSV(
-                      chartData,
-                      `dual_lines_report_${
-                        selectedDate.toISOString().split("T")[0]
-                      }.csv`
-                    )
-                  }
-                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg transition-colors duration-150"
-                >
-                  <PiFileTextThin size={18} className="mr-2 text-blue-600" />
-                  <span>Extract Chosen Entries</span>
-                </button>
-                <button
-                  onClick={() =>
-                    downloadCSV(memoizedAllData, "all_data_report.csv")
-                  }
-                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg transition-colors duration-150"
-                >
-                  <PiFileTextThin size={18} className="mr-2 text-blue-600" />
-                  <span>Retrieve Full Data</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setIsOpenReportModal(true);
-                  }}
-                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg transition-colors duration-150"
-                >
-                  <BsGraphUpArrow size={18} className="mr-2 text-green-600" />
-                  <span>Generate Report</span>
-                </button>
+                {tabularReport?.included &&
+                  tabularReport?.subReports[1]?.expport && (
+                    <button
+                      onClick={() =>
+                        downloadCSV(
+                          chartData,
+                          `priority_chart_report_${
+                            selectedDate.toISOString().split("T")[0]
+                          }.csv`
+                        )
+                      }
+                      className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg transition-colors duration-150"
+                    >
+                      <PiFileTextThin
+                        size={18}
+                        className="mr-2 text-blue-600"
+                      />
+                      <span>Extract Chosen Entries</span>
+                    </button>
+                  )}
+
+                {tabularReport?.included &&
+                  tabularReport?.subReports[0]?.expport && (
+                    <button
+                      onClick={() => downloadCSV(tasks, "full_data_report.csv")}
+                      className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg transition-colors duration-150"
+                    >
+                      <PiFileTextThin
+                        size={18}
+                        className="mr-2 text-blue-600"
+                      />
+                      <span>Retrieve Full Data</span>
+                    </button>
+                  )}
+
+                {graphicalReport?.included &&
+                  graphicalReport?.subReports[1]?.view && (
+                    <button
+                      onClick={() => setIsOpenReportModal(true)}
+                      className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg transition-colors duration-150"
+                    >
+                      <BsGraphUpArrow
+                        size={18}
+                        className="mr-2 text-green-600"
+                      />
+                      <span>View Report</span>
+                    </button>
+                  )}
               </div>
             </div>
           )}

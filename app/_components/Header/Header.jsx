@@ -7,6 +7,9 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
+import { GoLinkExternal } from "react-icons/go";
+import { CiLogout } from "react-icons/ci";
+import { ImSpinner8 } from "react-icons/im";
 
 function Header() {
   const [showDialog, setShowDialog] = useState(false);
@@ -14,7 +17,7 @@ function Header() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   // console.log("Session =>", session);
 
   useEffect(() => {
@@ -55,31 +58,42 @@ function Header() {
             />
           </div>
           {showDialog && (
-            <div className="absolute top-14 right-0 w-[300px] bg-white shadow-lg border border-gray-200 rounded-lg py-3 px-4 transform transition-transform duration-300 ease-in-out">
+            <div className="animate-fade-in absolute top-14 right-0 w-[350px] bg-white shadow-lg border border-gray-200 rounded-xl p-4 transform transition-transform duration-300 ease-in-out">
               {authenticatedUser ? (
                 <>
-                  <div className="py-4">
-                    <p className="font-semibold leading-tight">
-                      {authenticatedUser.fullName}
-                    </p>
-                    <p className="text-gray-500 leading-tight">
-                      {authenticatedUser.email}
-                    </p>
+                  <div className="flex items-center gap-2">
+                    <Image
+                      src={profileImage}
+                      width={50}
+                      height={50}
+                      alt="Profile"
+                      className="rounded-full object-cover"
+                    />
+                    <div className="py-4">
+                      <p className="font-semibold leading-tight">
+                        {authenticatedUser.fullName}
+                      </p>
+                      <p className="text-gray-500 leading-tight text-xs">
+                        {authenticatedUser.email}
+                      </p>
+                    </div>
                   </div>
                   <hr className="border-t border-gray-300 my-0" />
-                  <div className="flex justify-between gap-2 text-gray-500 py-3 px-1 text-sm">
+                  <div className="flex justify-between text-gray-500 pt-3 text-sm rounded-lg">
                     <button
-                      className="bg-blue-50 hover:bg-blue-100 hover:shadow-lg transition-all border border-blue-300 p-2 rounded-lg text-blue-500 w-full"
+                      className="flex items-center justify-center gap-1 bg-blue-50 hover:bg-blue-100 hover:shadow-lg transition-all border border-blue-300 px-2 py-2 text-xs rounded-l-lg text-blue-500 w-full"
                       onClick={() => {
                         router.push("/Profile");
                       }}
                     >
+                      <GoLinkExternal className="text-lg" />
                       View Profile
                     </button>
                     <button
-                      className="bg-blue-500 hover:bg-blue-600 hover:shadow-lg transition-all p-2 rounded-lg text-white w-full"
+                      className="flex items-center justify-center gap-1 bg-blue-500 hover:bg-blue-600 hover:shadow-lg transition-all px-2 py-2 text-xs rounded-r-lg text-white w-full"
                       onClick={handleSignOut}
                     >
+                      <CiLogout className="text-lg" />
                       Sign Out
                     </button>
                   </div>
@@ -110,6 +124,10 @@ function Header() {
             </div>
           )}
         </div>
+      ) : status === "loading" ? (
+        <button className="px-3 py-2">
+          <ImSpinner8 className="animate-spin" />
+        </button>
       ) : (
         <Link href="/Auth">
           <button className="px-3 py-2 bg-blue-600 hover:bg-blue-500 transition-colors duration-200 rounded-md text-white text-center text-sm font-medium">
