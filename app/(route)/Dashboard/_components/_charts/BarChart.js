@@ -21,9 +21,6 @@ import { MdClose } from "react-icons/md";
 import { getTasks } from "@/lib/Features/TaskSlice";
 import { useSession } from "next-auth/react";
 import { useDispatch, useSelector } from "react-redux";
-import { getTasks } from "@/lib/Features/TaskSlice";
-import { useSession } from "next-auth/react";
-import { useDispatch, useSelector } from "react-redux";
 import DetailsModal from "../_datatable/DetailsModal";
 
 function BarChartComp({ selectedDate }) {
@@ -73,9 +70,6 @@ function BarChartComp({ selectedDate }) {
 
     const formattedSelectedDate = new Date(
       selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000
-    )
-      .toISOString()
-      .split("T")[0];
     )
       .toISOString()
       .split("T")[0];
@@ -132,7 +126,6 @@ function BarChartComp({ selectedDate }) {
         "High Priority": aggregatedData.HighPriority || 0,
         "Low Priority": aggregatedData.LowPriority || 0,
       },
-      },
     ];
 
     setChartData(transformedData);
@@ -156,25 +149,31 @@ function BarChartComp({ selectedDate }) {
 
   // Download functions
   const downloadCSV = (data, filename) => {
-    if (!data || data.length === 0) {
+    if (!data || !Array.isArray(data) || data.length === 0) {
       alert("No data available to download");
       return;
     }
 
+    // Create CSV headers
     const headers = Object.keys(data[0]).join(",");
-    const csvData = data.map((row) => Object.values(row).join(","));
-    const headers = Object.keys(data[0]).join(",");
-    const csvData = data.map((row) => Object.values(row).join(","));
 
+    // Map data to CSV rows
+    const csvData = data.map((row) =>
+      Object.values(row)
+        .map((value) => `"${value.toString().replace(/"/g, '""')}"`) // Escape double quotes
+        .join(",")
+    );
+
+    // Combine headers and rows
     const csv = [headers, ...csvData].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const csv = [headers, ...csvData].join("\n");
+
+    // Create a Blob and download link
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = filename || "chart_data.csv";
-    link.download = filename || "chart_data.csv";
+
+    // Trigger download
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -184,7 +183,6 @@ function BarChartComp({ selectedDate }) {
   const generatePDF = async () => {
     setGeneratingPDF(true);
     try {
-      const element = document.getElementById("report-content");
       const element = document.getElementById("report-content");
       if (!element) {
         throw new Error("Report content not found");
@@ -198,8 +196,6 @@ function BarChartComp({ selectedDate }) {
         useCORS: true,
       });
 
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("p", "mm", "a4");
       const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -221,7 +217,6 @@ function BarChartComp({ selectedDate }) {
   const handleBarClick = (data, index) => {
     let filteredData = [];
     const category = data.name;
-
 
     switch (category) {
       case "First Floor":
@@ -278,13 +273,7 @@ function BarChartComp({ selectedDate }) {
       key: "dueDate",
       accessor: (item) => new Date(item.dueDate).toLocaleDateString(),
     },
-    { header: "Assignee", key: "assignee" },
-    {
-      header: "Due Date",
-      key: "dueDate",
-      accessor: (item) => new Date(item.dueDate).toLocaleDateString(),
-    },
-    { header: "Assignee", key: "assignee" },
+    { header: "Assignees", key: "assignees" },
   ];
   const toggleDownloadMenu = () => {
     setDownloadMenuVisible((prevState) => !prevState);
@@ -293,9 +282,9 @@ function BarChartComp({ selectedDate }) {
   return (
     <div className="">
       <div className="flex justify-between items-center mb-6">
-      <h2 className="text-xl font-bold text-gray-600 leading-tight">
-      Task Distribution Chart
-</h2>
+        <h2 className="text-xl font-bold text-gray-600 leading-tight">
+          Task Distribution Chart
+        </h2>
 
         <div className="relative">
           <button
@@ -309,36 +298,56 @@ function BarChartComp({ selectedDate }) {
             <span>Export</span>
           </button>
           {downloadMenuVisible && (
-            <div className="absolute right-0 mt-2 z-[50] w-64 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden transition-all duration-200 ease-in-out transform origin-top-right">
+            <div className="absolute right-0 mt-2 z-10 w-64 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden transition-all duration-200 ease-in-out transform origin-top-right">
               <div className="p-2 space-y-1">
-                <button
-                  onClick={() =>
-                    downloadCSV(
-                      chartData,
-                      `priority_chart_report_${
-                        selectedDate.toISOString().split("T")[0]
-                      }.csv`
-                    )
-                  }
-                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg transition-colors duration-150"
-                >
-                  <PiFileTextThin size={18} className="mr-2 text-blue-600" />
-                  <span>Extract Chosen Entries</span>
-                </button>
-                <button
-                  onClick={() => downloadCSV(tasks, "full_data_report.csv")}
-                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg transition-colors duration-150"
-                >
-                  <PiFileTextThin size={18} className="mr-2 text-blue-600" />
-                  <span>Retrieve Full Data</span>
-                </button>
-                <button
-                  onClick={() => setIsOpenReportModal(true)}
-                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg transition-colors duration-150"
-                >
-                  <BsGraphUpArrow size={18} className="mr-2 text-green-600" />
-                  <span>Generate Report</span>
-                </button>
+                {tabularReport?.included &&
+                  tabularReport?.subReports[1]?.expport && (
+                    <button
+                      onClick={() =>
+                        downloadCSV(
+                          chartData,
+                          `priority_chart_report_${
+                            selectedDate.toISOString().split("T")[0]
+                          }.csv`
+                        )
+                      }
+                      className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg transition-colors duration-150"
+                    >
+                      <PiFileTextThin
+                        size={18}
+                        className="mr-2 text-blue-600"
+                      />
+                      <span>Extract Chosen Entries</span>
+                    </button>
+                  )}
+
+                {tabularReport?.included &&
+                  tabularReport?.subReports[0]?.expport && (
+                    <button
+                      onClick={() => downloadCSV(tasks, "full_data_report.csv")}
+                      className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg transition-colors duration-150"
+                    >
+                      <PiFileTextThin
+                        size={18}
+                        className="mr-2 text-blue-600"
+                      />
+                      <span>Retrieve Full Data</span>
+                    </button>
+                  )}
+
+                {graphicalReport?.included &&
+                  graphicalReport?.subReports[1]?.view && (
+                    <button
+                      onClick={() => setIsOpenReportModal(true)}
+                      className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg transition-colors duration-150"
+                    >
+                      <BsGraphUpArrow
+                        size={18}
+                        className="mr-2 text-green-600"
+                      />
+                      <span>View Report</span>
+                    </button>
+                  )}
               </div>
             </div>
           )}
@@ -594,7 +603,5 @@ function BarChartComp({ selectedDate }) {
     </div>
   );
 }
-
-export default BarChartComp;
 
 export default BarChartComp;

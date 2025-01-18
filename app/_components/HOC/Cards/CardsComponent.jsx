@@ -87,7 +87,7 @@ const CardsComponent = ({
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {cards?.map((card) => (
         <div
-          key={card._id}
+          key={card?._id}
           className="bg-white shadow-md rounded-md p-4 hover:shadow-lg transition-shadow"
         >
           <div className="flex justify-between items-center relative">
@@ -119,20 +119,20 @@ const CardsComponent = ({
           <div className="my-2 bg-gray-200 p-2 rounded-md">
             <span
               className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                card.priority === "High"
+                card?.priority === "High"
                   ? "bg-red-200 text-red-800"
-                  : card.priority === "Medium"
+                  : card?.priority === "Medium"
                   ? "bg-yellow-200 text-yellow-800"
                   : "bg-green-200 text-green-800"
               }`}
             >
-              {card.priority}
+              {card?.priority}
             </span>
           </div>
-          {card.groundFloorImages && card.groundFloorImages.length > 0 && (
+          {card?.groundFloorImages && card?.groundFloorImages.length > 0 && (
             <div className="my-2 relative w-full h-48">
               <Image
-                src={card.groundFloorImages[0].url}
+                src={card?.groundFloorImages[0].url}
                 alt="Ground Floor Image"
                 layout="fill"
                 objectFit="cover"
@@ -141,7 +141,7 @@ const CardsComponent = ({
             </div>
           )}
           <div className="my-2 flex flex-wrap gap-1">
-            {card.tags.map((tag, index) => (
+            {card?.tags.map((tag, index) => (
               <span
                 key={index}
                 className="bg-gray-200 text-gray-800 text-xs font-semibold px-2 py-1 rounded-full"
@@ -151,16 +151,16 @@ const CardsComponent = ({
             ))}
           </div>
           <p className="text-sm text-gray-600 mt-2 my-2 bg-gray-200 p-2 rounded-md">
-            {card.description}
+            {card?.description}
           </p>
           <p className="text-sm text-gray-600 mt-2">
-            <b>Assignee:</b> {card.assignee}
+            <b>Assignee:</b> {card?.assignee}
           </p>
           <p className="text-sm text-gray-600">
-            <b>Status:</b> {card.status}
+            <b>Status:</b> {card?.status}
           </p>
           <p className="text-sm text-gray-600">
-            <b>Due:</b> {formatDate(card.dueDate)}
+            <b>Due:</b> {formatDate(card?.dueDate)}
           </p>
 
           {renderCustomContent && renderCustomContent(card)}

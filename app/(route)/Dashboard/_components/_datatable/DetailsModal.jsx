@@ -11,18 +11,21 @@ const DetailsModal = ({
   data,
   renderRow,
   session,
-  contextType
+  contextType,
 }) => {
   const [isFieldCardNotesModalOpen, setIsFieldCardNotesModalOpen] =
     useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
+
+  console.log("Selected Row =>", selectedRow);
+  console.log("Data ==>", data);
 
   if (!isOpen) return null;
 
   // Enhanced row renderer to handle row click
   const defaultRowRenderer = (item, index) => (
     <tr
-      key={index}
+      key={`row-${item.id || index}`} // Use `item.id` if available, fallback to `index`
       className="border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
       onClick={() => {
         setSelectedRow(item);
@@ -33,18 +36,26 @@ const DetailsModal = ({
         let cellContent;
 
         if (column.accessor) {
+          // Use accessor function if defined
           cellContent = column.accessor(item);
         } else if (column.key === "isSocialLogin") {
-          // Handle boolean values for social login
+          // Handle specific boolean logic
           cellContent = item[column.key] ? "Yes" : "No";
+        } else if (column.key === "assignees") {
+          // Handle array length for "assignees"
+          cellContent = Array.isArray(item[column.key])
+            ? item[column.key].length
+            : "0";
         } else {
-          cellContent = item[column.key] || "N/A";
+          // Default content or fallback to "N/A"
+          cellContent = item[column.key] ?? "N/A";
         }
 
         return (
           <td
-            key={colIndex}
+            key={`cell-${colIndex}`}
             className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate"
+            title={typeof cellContent === "string" ? cellContent : ""}
           >
             {cellContent}
           </td>
@@ -93,7 +104,7 @@ const DetailsModal = ({
 
               {/* Table Body */}
               <tbody className="divide-y divide-gray-200">
-                {data.map(renderRow || defaultRowRenderer)}
+                {data?.map(renderRow || defaultRowRenderer)}
               </tbody>
             </table>
           )}

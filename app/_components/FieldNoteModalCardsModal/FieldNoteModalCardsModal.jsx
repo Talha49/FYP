@@ -189,7 +189,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
             showToast(`Priority changed to ${newValue}`, "info");
             break;
           case "assignees":
-            showToast(`Task assigned to ${newValue}`, "info");
+            showToast(`Task assigned to ${newValue?.length} user(s)`, "info");
             break;
           case "dueDate":
             showToast(

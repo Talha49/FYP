@@ -111,8 +111,8 @@ const CircularChartComp = () => {
       key: 'priority' 
     },
     { 
-      header: 'Assignee', 
-      key: 'assignee' 
+      header: 'Assignees', 
+      key: 'assignees' 
     }
   ];
 

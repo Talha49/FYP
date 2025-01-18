@@ -35,6 +35,7 @@ const TaskCreationForm = () => {
   const [menuPermissionsForPage, setMenuPermissions] = useState(null);
   const pathName = usePathname();
 
+  console.log("Menu Permissions: ", menuPermissionsForPage)
 
   useEffect(() => {
     setAuthuserData(session?.user?.userData);

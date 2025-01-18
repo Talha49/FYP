@@ -72,34 +72,34 @@ function LineChartComponent({ selectedDate }) {
     const groupedData = users.reduce((acc, user) => {
       const createdAt = user.createdAt;
       if (!createdAt) return acc; // Skip users with missing createdAt
-    
+
       const date = new Date(createdAt);
       if (isNaN(date.getTime())) return acc; // Skip invalid dates
-    
+
       const hour = date.getHours();
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = date.toISOString().split("T")[0];
       const key = `${dateStr}-${hour}`;
-    
+
       if (!acc[key]) {
         acc[key] = {
           date: dateStr,
           hour,
-          time: `${hour.toString().padStart(2, '0')}:00`,
+          time: `${hour.toString().padStart(2, "0")}:00`,
           totalUsers: 0,
           usersByCity: 0,
           socialLoginUsers: 0,
           users: [],
         };
       }
-    
+
       acc[key].totalUsers += user.totalUsers || 1;
       acc[key].usersByCity += user.usersByCity || (user.city ? 1 : 0);
-      acc[key].socialLoginUsers += user.socialLoginUsers || (user.isSocialLogin ? 1 : 0);
+      acc[key].socialLoginUsers +=
+        user.socialLoginUsers || (user.isSocialLogin ? 1 : 0);
       acc[key].users.push(user);
-    
+
       return acc;
     }, {});
-    
 
     // Convert to array and sort by date and hour
     return Object.values(groupedData).sort((a, b) => {
@@ -113,7 +113,9 @@ function LineChartComponent({ selectedDate }) {
     if (selectedDate && processUserData.length > 0) {
       const formattedDate = new Date(
         selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000
-      ).toISOString().split('T')[0];
+      )
+        .toISOString()
+        .split("T")[0];
 
       const filteredData = processUserData.filter(
         (item) => item.date === formattedDate
@@ -139,7 +141,11 @@ function LineChartComponent({ selectedDate }) {
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`User_Analytics_${selectedDate?.toISOString().split("T")[0] || 'all'}.pdf`);
+      pdf.save(
+        `User_Analytics_${
+          selectedDate?.toISOString().split("T")[0] || "all"
+        }.pdf`
+      );
     } catch (error) {
       console.error("PDF generation error:", error);
     } finally {
@@ -153,16 +159,24 @@ function LineChartComponent({ selectedDate }) {
       return;
     }
 
-    const headers = ["Date", "Time", "Total Users", "Users By City", "Social Login Users"];
+    const headers = [
+      "Date",
+      "Time",
+      "Total Users",
+      "Users By City",
+      "Social Login Users",
+    ];
     const csvContent = [
       headers.join(","),
-      ...data.map((item) => [
-        item.date,
-        item.time,
-        item.totalUsers,
-        item.usersByCity,
-        item.socialLoginUsers
-      ].join(","))
+      ...data.map((item) =>
+        [
+          item.date,
+          item.time,
+          item.totalUsers,
+          item.usersByCity,
+          item.socialLoginUsers,
+        ].join(",")
+      ),
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -179,13 +193,15 @@ function LineChartComponent({ selectedDate }) {
     if (!active || !payload || !payload.length) return null;
 
     const data = payload[0].payload;
-    
+
     return (
       <div className="bg-white p-4 rounded-lg shadow-lg border">
         <p className="font-semibold text-gray-800">Time: {data.time}</p>
         <p className="text-blue-600">Total Users: {data.totalUsers}</p>
         <p className="text-green-600">Users by City: {data.usersByCity}</p>
-        <p className="text-purple-600">Social Login Users: {data.socialLoginUsers}</p>
+        <p className="text-purple-600">
+          Social Login Users: {data.socialLoginUsers}
+        </p>
         <p className="text-sm text-gray-500 mt-2">Click for detailed view</p>
       </div>
     );
@@ -203,11 +219,11 @@ function LineChartComponent({ selectedDate }) {
     { header: "Name", key: "fullName" },
     { header: "City", key: "city" },
     { header: "Contact", key: "contact" },
-    { header: "Social Login", key: "isSocialLogin" }
+    { header: "Social Login", key: "isSocialLogin" },
   ];
 
   return (
-    <div >
+    <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-gray-800">User Analytics</h2>
         <div className="relative">
@@ -280,21 +296,20 @@ function LineChartComponent({ selectedDate }) {
       </div>
 
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart 
+        <LineChart
           data={chartData}
           margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-          onClick={(e) => e?.activePayload && handleDataPointClick(e.activePayload[0].payload)}
+          onClick={(e) =>
+            e?.activePayload && handleDataPointClick(e.activePayload[0].payload)
+          }
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis 
+          <XAxis
             dataKey="time"
-            tick={{ fill: '#666' }}
-            tickLine={{ stroke: '#666' }}
+            tick={{ fill: "#666" }}
+            tickLine={{ stroke: "#666" }}
           />
-          <YAxis
-            tick={{ fill: '#666' }}
-            tickLine={{ stroke: '#666' }}
-          />
+          <YAxis tick={{ fill: "#666" }} tickLine={{ stroke: "#666" }} />
           <Tooltip content={<CustomTooltip />} />
           <Legend />
           <Line
@@ -327,8 +342,6 @@ function LineChartComponent({ selectedDate }) {
         </LineChart>
       </ResponsiveContainer>
 
-      
-
       <Dialog
         isOpen={isOpenReportModal}
         onClose={() => setIsOpenReportModal(false)}
@@ -339,29 +352,28 @@ function LineChartComponent({ selectedDate }) {
         <div className="flex justify-between items-center mb-6 border-b pb-4">
           <h2 className="text-2xl font-semibold">Analytics Report</h2>
           <div className="flex items-center gap-3">
-            <button
-              onClick={generatePDF}
-              disabled={generatingPDF}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50 flex items-center gap-2"
-            >
-              {generatingPDF ? (
-                <>
-                  <ImSpinner3 className="animate-spin" />
-                  <span>Generating...</span>
-                </>
-              ) : (
-                <>
-                  <FaDownload />
-                  <span>Download PDF</span>
-                </>
+            {graphicalReport?.included &&
+              graphicalReport?.subReports[1]?.expport && (
+                <button
+                  className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-400 disabled:cursor-not-allowed text-white rounded transition-all px-2 py-1"
+                  onClick={generatePDF}
+                  disabled={generatingPDF}
+                >
+                  {generatingPDF ? (
+                    <div className="flex items-center gap-2">
+                      <ImSpinner3 className="animate-spin" />
+                      Downloading...
+                    </div>
+                  ) : (
+                    "Download as PDF"
+                  )}
+                </button>
               )}
-            </button>
-            <button
+
+            <MdClose
+              className="text-2xl cursor-pointer hover:scale-110"
               onClick={() => setIsOpenReportModal(false)}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <MdClose size={24} />
-            </button>
+            />
           </div>
         </div>
 
@@ -372,9 +384,11 @@ function LineChartComponent({ selectedDate }) {
           </div>
 
           <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">User Analytics Report</h2>
+            <h2 className="text-xl font-semibold mb-4">
+              User Analytics Report
+            </h2>
             <p className="text-gray-600">
-              Generated for: {selectedDate?.toLocaleDateString() || 'All Time'}
+              Generated for: {selectedDate?.toLocaleDateString() || "All Time"}
             </p>
           </div>
 
@@ -392,9 +406,14 @@ function LineChartComponent({ selectedDate }) {
               </p>
             </div>
             <div className="bg-yellow-50 p-6 rounded-lg">
-              <h3 className="font-semibold text-yellow-800">Social Login Users</h3>
+              <h3 className="font-semibold text-yellow-800">
+                Social Login Users
+              </h3>
               <p className="text-3xl font-bold text-yellow-600">
-                {chartData.reduce((sum, item) => sum + item.socialLoginUsers, 0)}
+                {chartData.reduce(
+                  (sum, item) => sum + item.socialLoginUsers,
+                  0
+                )}
               </p>
             </div>
           </div>
@@ -405,19 +424,35 @@ function LineChartComponent({ selectedDate }) {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Users</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Users by City</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Social Login Users</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Time
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Total Users
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Users by City
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Social Login Users
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {chartData.map((item, index) => (
                     <tr key={index}>
-                      <td className="px-6 py-4 whitespace-nowrap">{item.time}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{item.totalUsers}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{item.usersByCity}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{item.socialLoginUsers}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {item.time}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {item.totalUsers}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {item.usersByCity}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {item.socialLoginUsers}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

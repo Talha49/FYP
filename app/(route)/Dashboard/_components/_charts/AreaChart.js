@@ -56,7 +56,6 @@ function AreaChartComponent({ selectedDate }) {
   const companyLogo = "/images/SIJM-LOGO.png";
   const companyName = "Smart Inspection & Job Monitoring System";
   const users = useSelector((state) => state.UserSlice.users);
-  const { data: session } = useSession();
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -71,35 +70,34 @@ function AreaChartComponent({ selectedDate }) {
     // Group users by hour to show meaningful trends
     const groupedData = users.reduce((acc, user) => {
       if (!user.createdAt) return acc; // Skip users without a valid createdAt
-    
+
       const date = new Date(user.createdAt);
       if (isNaN(date.getTime())) return acc; // Skip invalid dates
-    
+
       const hour = date.getHours();
-      const key = `${date.toISOString().split('T')[0]}-${hour}`;
-    
+      const key = `${date.toISOString().split("T")[0]}-${hour}`;
+
       if (!acc[key]) {
         acc[key] = {
-          date: date.toISOString().split('T')[0],
+          date: date.toISOString().split("T")[0],
           hour,
-          time: `${hour.toString().padStart(2, '0')}:00`,
+          time: `${hour.toString().padStart(2, "0")}:00`,
           totalUsers: 0,
           usersByCity: 0,
           socialLoginUsers: 0,
           users: [],
         };
       }
-    
+
       acc[key].totalUsers += 1;
       acc[key].usersByCity += user.city ? 1 : 0;
       acc[key].socialLoginUsers += user.isSocialLogin ? 1 : 0;
       acc[key].users.push(user);
-    
+
       return acc;
     }, {});
-    
-  
-     console.log("Char", chartData); 
+
+    console.log("Char", chartData);
 
     return Object.values(groupedData).sort((a, b) => {
       const dateA = new Date(`${a.date}T${a.time}`);
@@ -112,7 +110,9 @@ function AreaChartComponent({ selectedDate }) {
     if (selectedDate && processUserData.length > 0) {
       const formattedDate = new Date(
         selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000
-      ).toISOString().split('T')[0];
+      )
+        .toISOString()
+        .split("T")[0];
 
       const filteredData = processUserData.filter(
         (item) => item.date === formattedDate
@@ -138,7 +138,9 @@ function AreaChartComponent({ selectedDate }) {
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`User_Analytics_${selectedDate.toISOString().split("T")[0]}.pdf`);
+      pdf.save(
+        `User_Analytics_${selectedDate.toISOString().split("T")[0]}.pdf`
+      );
     } catch (error) {
       console.error("PDF generation error:", error);
     } finally {
@@ -152,7 +154,13 @@ function AreaChartComponent({ selectedDate }) {
       return;
     }
 
-    const headers = ["Date", "Time", "Total Users", "Users By City", "Social Login Users"];
+    const headers = [
+      "Date",
+      "Time",
+      "Total Users",
+      "Users By City",
+      "Social Login Users",
+    ];
     const csvContent = [
       headers.join(","),
       ...data.map((item) =>
@@ -161,7 +169,7 @@ function AreaChartComponent({ selectedDate }) {
           item.time,
           item.totalUsers,
           item.usersByCity,
-          item.socialLoginUsers
+          item.socialLoginUsers,
         ].join(",")
       ),
     ].join("\n");
@@ -180,13 +188,15 @@ function AreaChartComponent({ selectedDate }) {
     if (!active || !payload || !payload.length) return null;
 
     const data = payload[0].payload;
-    
+
     return (
       <div className="bg-white p-4 rounded-lg shadow-lg border">
         <p className="font-semibold text-gray-800">Time: {data.time}</p>
         <p className="text-blue-600">Total Users: {data.totalUsers}</p>
         <p className="text-green-600">Users by City: {data.usersByCity}</p>
-        <p className="text-purple-600">Social Login Users: {data.socialLoginUsers}</p>
+        <p className="text-purple-600">
+          Social Login Users: {data.socialLoginUsers}
+        </p>
         <p className="text-sm text-gray-500 mt-2">Click for detailed view</p>
       </div>
     );
@@ -196,40 +206,40 @@ function AreaChartComponent({ selectedDate }) {
     if (data && data.users && data.users.length > 0) {
       setSelectedUser({
         ...data,
-        users: data.users.map(user => ({
+        users: data.users.map((user) => ({
           ...user,
-          isSocialLogin: !!user.isSocialLogin // Ensure boolean value
-        }))
+          isSocialLogin: !!user.isSocialLogin, // Ensure boolean value
+        })),
       });
       setIsModalOpen(true);
     }
   };
   const columns = [
-    { 
-      header: "User ID", 
+    {
+      header: "User ID",
       key: "_id",
-      accessor: (user) => user._id?.$oid || user._id || 'N/A'
+      accessor: (user) => user._id?.$oid || user._id || "N/A",
     },
-    { 
-      header: "Name", 
+    {
+      header: "Name",
       key: "fullName",
-      accessor: (user) => user.fullName || 'N/A'
+      accessor: (user) => user.fullName || "N/A",
     },
-    { 
-      header: "City", 
+    {
+      header: "City",
       key: "city",
-      accessor: (user) => user.city || 'N/A'
+      accessor: (user) => user.city || "N/A",
     },
-    { 
-      header: "Contact", 
+    {
+      header: "Contact",
       key: "contact",
-      accessor: (user) => user.contact || 'N/A'
+      accessor: (user) => user.contact || "N/A",
     },
-    { 
-      header: "Social Login", 
+    {
+      header: "Social Login",
       key: "isSocialLogin",
-      accessor: (user) => user.isSocialLogin ? "Yes" : "No"
-    }
+      accessor: (user) => (user.isSocialLogin ? "Yes" : "No"),
+    },
   ];
 
   return (
@@ -246,11 +256,10 @@ function AreaChartComponent({ selectedDate }) {
           >
             <FaDownload size={16} />
             <span>Export</span>
-            <FaDownload size={12} />
           </button>
 
           {downloadMenuVisible && (
-            <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border z-10">
+            <div className="absolute right-0 mt-2 z-10 w-64 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden transition-all duration-200 ease-in-out transform origin-top-right">
               <div className="p-2 space-y-1">
                 {tabularReport?.included &&
                   tabularReport?.subReports[1]?.expport && (
@@ -258,7 +267,7 @@ function AreaChartComponent({ selectedDate }) {
                       onClick={() =>
                         downloadCSV(
                           chartData,
-                          `Area_chart_report_${
+                          `priority_chart_report_${
                             selectedDate.toISOString().split("T")[0]
                           }.csv`
                         )
@@ -272,12 +281,11 @@ function AreaChartComponent({ selectedDate }) {
                       <span>Extract Chosen Entries</span>
                     </button>
                   )}
+
                 {tabularReport?.included &&
                   tabularReport?.subReports[0]?.expport && (
                     <button
-                      onClick={() =>
-                        downloadCSV(memoizedAllData, "all_data_report.csv")
-                      }
+                      onClick={() => downloadCSV(tasks, "full_data_report.csv")}
                       className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg transition-colors duration-150"
                     >
                       <PiFileTextThin
@@ -287,42 +295,20 @@ function AreaChartComponent({ selectedDate }) {
                       <span>Retrieve Full Data</span>
                     </button>
                   )}
+
                 {graphicalReport?.included &&
                   graphicalReport?.subReports[1]?.view && (
                     <button
-                      onClick={() => {
-                        setIsOpenReportModal(true);
-                      }}
+                      onClick={() => setIsOpenReportModal(true)}
                       className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg transition-colors duration-150"
                     >
                       <BsGraphUpArrow
                         size={18}
                         className="mr-2 text-green-600"
                       />
-                      <span>Generate Report</span>
+                      <span>View Report</span>
                     </button>
                   )}
-                <button
-                  onClick={() => downloadCSV(chartData, `user_analytics_${selectedDate?.toISOString().split("T")[0] || 'all'}`)}
-                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg"
-                >
-                  <PiFileTextThin size={18} className="mr-2 text-blue-600" />
-                  <span>Export Current View</span>
-                </button>
-                <button
-                  onClick={() => downloadCSV(processUserData, 'complete_user_analytics')}
-                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg"
-                >
-                  <PiFileTextThin size={18} className="mr-2 text-blue-600" />
-                  <span>Export All Data</span>
-                </button>
-                <button
-                  onClick={() => setIsOpenReportModal(true)}
-                  className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-green-50 rounded-lg"
-                >
-                  <BsGraphUpArrow size={18} className="mr-2 text-green-600" />
-                  <span>Generate Report</span>
-                </button>
               </div>
             </div>
           )}
@@ -330,35 +316,34 @@ function AreaChartComponent({ selectedDate }) {
       </div>
 
       <ResponsiveContainer width="100%" height={400}>
-        <AreaChart 
+        <AreaChart
           data={chartData}
           margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-          onClick={(e) => e?.activePayload && handleDataPointClick(e.activePayload[0].payload)}
+          onClick={(e) =>
+            e?.activePayload && handleDataPointClick(e.activePayload[0].payload)
+          }
         >
           <defs>
             <linearGradient id="totalUsers" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-              <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+              <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+              <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
             </linearGradient>
             <linearGradient id="usersByCity" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/>
-              <stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/>
+              <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
+              <stop offset="95%" stopColor="#82ca9d" stopOpacity={0} />
             </linearGradient>
             <linearGradient id="socialLoginUsers" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#ffc658" stopOpacity={0.8}/>
-              <stop offset="95%" stopColor="#ffc658" stopOpacity={0}/>
+              <stop offset="5%" stopColor="#ffc658" stopOpacity={0.8} />
+              <stop offset="95%" stopColor="#ffc658" stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis 
+          <XAxis
             dataKey="time"
-            tick={{ fill: '#666' }}
-            tickLine={{ stroke: '#666' }}
+            tick={{ fill: "#666" }}
+            tickLine={{ stroke: "#666" }}
           />
-          <YAxis
-            tick={{ fill: '#666' }}
-            tickLine={{ stroke: '#666' }}
-          />
+          <YAxis tick={{ fill: "#666" }} tickLine={{ stroke: "#666" }} />
           <Tooltip content={<CustomTooltip />} />
           <Legend />
           <Area
@@ -407,10 +392,10 @@ function AreaChartComponent({ selectedDate }) {
             {graphicalReport?.included &&
               graphicalReport?.subReports[1]?.expport && (
                 <button
-                      onClick={generatePDF}
+                  onClick={generatePDF}
                   disabled={generatingPDF}
                   className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg disabled:opacity-50 flex items-center gap-2"
-            >
+                >
                   {generatingPDF ? (
                     <>
                       <ImSpinner3 className="animate-spin" />
@@ -418,9 +403,9 @@ function AreaChartComponent({ selectedDate }) {
                     </>
                   ) : (
                     <>
-                  <FaDownload />
-                  <span>Download PDF</span>
-                </>
+                      <FaDownload />
+                      <span>Download PDF</span>
+                    </>
                   )}
                 </button>
               )}
@@ -441,9 +426,11 @@ function AreaChartComponent({ selectedDate }) {
           </div>
 
           <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">User Analytics Report</h2>
+            <h2 className="text-xl font-semibold mb-4">
+              User Analytics Report
+            </h2>
             <p className="text-gray-600">
-              Generated for: {selectedDate?.toLocaleDateString() || 'All Time'}
+              Generated for: {selectedDate?.toLocaleDateString() || "All Time"}
             </p>
           </div>
 
@@ -461,9 +448,14 @@ function AreaChartComponent({ selectedDate }) {
               </p>
             </div>
             <div className="bg-yellow-50 p-6 rounded-lg">
-              <h3 className="font-semibold text-yellow-800">Social Login Users</h3>
+              <h3 className="font-semibold text-yellow-800">
+                Social Login Users
+              </h3>
               <p className="text-3xl font-bold text-yellow-600">
-                {chartData.reduce((sum, item) => sum + item.socialLoginUsers, 0)}
+                {chartData.reduce(
+                  (sum, item) => sum + item.socialLoginUsers,
+                  0
+                )}
               </p>
             </div>
           </div>
@@ -474,19 +466,35 @@ function AreaChartComponent({ selectedDate }) {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Users</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Users by City</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Social Login Users</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Time
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Total Users
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Users by City
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Social Login Users
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {chartData.map((item, index) => (
                     <tr key={index}>
-                      <td className="px-6 py-4 whitespace-nowrap">{item.time}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{item.totalUsers}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{item.usersByCity}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">{item.socialLoginUsers}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {item.time}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {item.totalUsers}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {item.usersByCity}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {item.socialLoginUsers}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

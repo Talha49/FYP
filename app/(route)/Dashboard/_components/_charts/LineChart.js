@@ -30,7 +30,7 @@ function LineChartComp({ selectedDate }) {
   const [isOpenReportModal, setIsOpenReportModal] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedTask, setSelectedTask] = useState(null);
+  const [selectedTask, setSelectedTask] = useState(null);
   const { data: session, status } = useSession();
   const [tabularReport, setTabularReport] = useState();
   const [graphicalReport, setGraphicalReport] = useState();
@@ -95,7 +95,7 @@ function LineChartComp({ selectedDate }) {
         date: formattedSelectedDate,
         priority: task.priority,
         priorityValue: priorityMap[task.priority] || 0,
-        originalTask: task  // Store the original task data
+        originalTask: task, // Store the original task data
       }));
 
       setChartData(taskData);
@@ -103,11 +103,7 @@ function LineChartComp({ selectedDate }) {
     };
 
     updateChartData();
-  }, [selectedDate, tasks]);  
-  
-
-
-
+  }, [selectedDate, tasks]);
 
   const handleDataPointClick = (data) => {
     if (!data || !data.originalTask) {
@@ -115,20 +111,22 @@ function LineChartComp({ selectedDate }) {
       return;
     }
 
-    const taskForModal = [{
-      id: data.id,
-      title: data.title,
-      date: data.date,
-      priority: data.priority,
-      status: data.status,
-      // Add any other fields you want to display in the modal
-      ...data.originalTask
-    }];
+    const taskForModal = [
+      {
+        id: data.id,
+        title: data.title,
+        date: data.date,
+        priority: data.priority,
+        status: data.status,
+        // Add any other fields you want to display in the modal
+        ...data.originalTask,
+      },
+    ];
 
     setSelectedTask(taskForModal);
     setIsModalOpen(true);
   };
-  
+
   const generatePDF = async () => {
     setGeneratingPDF(true);
     const element = document.getElementById("report-content");
@@ -215,13 +213,13 @@ function LineChartComp({ selectedDate }) {
     { header: "Priority", key: "priority" },
     { header: "Status", key: "status" },
   ];
- 
+
   return (
     <div>
       <div className="flex justify-between mb-2">
-      <h2 className="text-lg font-bold text-gray-600 leading-tight">
-  Task Priority & Status Visualization
-</h2>
+        <h2 className="text-lg font-bold text-gray-600 leading-tight">
+          Task Priority & Status Visualization
+        </h2>
         <div className="relative">
           <button
             onClick={toggleDownloadMenu}
@@ -229,8 +227,8 @@ function LineChartComp({ selectedDate }) {
               !dataAvailable && "opacity-50 cursor-not-allowed"
             }`}
           >
-             <FaDownload size={16} />
-                       <span>Export</span>
+            <FaDownload size={16} />
+            <span>Export</span>
           </button>
           {downloadMenuVisible && (
             <div className="absolute right-0 mt-2 z-10 w-64 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden transition-all duration-200 ease-in-out transform origin-top-right">
@@ -286,8 +284,6 @@ function LineChartComp({ selectedDate }) {
               </div>
             </div>
           )}
-
-          
         </div>
       </div>
 
@@ -295,37 +291,36 @@ function LineChartComp({ selectedDate }) {
         <div className="text-center py-10 text-gray-500">
           No data available for {selectedDate.toLocaleDateString()}
         </div>
-      ) :(
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart
-          data={chartData}
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-          onClick={(e) => {
-            if (e?.activePayload?.[0]?.payload) {
-              handleDataPointClick(e.activePayload[0].payload);
-            }
-          }}
-
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis
-            dataKey="date"
-            tickFormatter={formatXAxis}
-            domain={["dataMin", "dataMax"]}
-            type="category"
-          />
-          <YAxis />
-          <Tooltip content={customTooltip} />
-          <Legend />
-          <Line
-            type="monotone"
-            dataKey="priorityValue"
-            stroke="#8884d8"
-            activeDot={{ r: 8 }}
-            className="cursor-pointer"
-          />
-        </LineChart>
-      </ResponsiveContainer>
+      ) : (
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart
+            data={chartData}
+            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            onClick={(e) => {
+              if (e?.activePayload?.[0]?.payload) {
+                handleDataPointClick(e.activePayload[0].payload);
+              }
+            }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis
+              dataKey="date"
+              tickFormatter={formatXAxis}
+              domain={["dataMin", "dataMax"]}
+              type="category"
+            />
+            <YAxis />
+            <Tooltip content={customTooltip} />
+            <Legend />
+            <Line
+              type="monotone"
+              dataKey="priorityValue"
+              stroke="#8884d8"
+              activeDot={{ r: 8 }}
+              className="cursor-pointer"
+            />
+          </LineChart>
+        </ResponsiveContainer>
       )}
 
       <DetailsModal

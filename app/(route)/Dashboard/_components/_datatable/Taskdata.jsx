@@ -338,8 +338,8 @@ const Taskdata = () => {
   const [graphicalReport, setGraphicalReport] = useState();
 
   // console.log("Session =>", session);
-  // console.log("Tabular Report Permissions =>", tabularReport);
-  // console.log("Graphical Report Permissions =>", graphicalReport);
+  console.log("Tabular Report Permissions =>", tabularReport);
+  console.log("Graphical Report Permissions =>", graphicalReport);
   // console.log(tabularReport?.included)
 
   useEffect(() => {
