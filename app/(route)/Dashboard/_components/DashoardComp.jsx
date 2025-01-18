@@ -1,46 +1,51 @@
-"use client";
-
+"use client"
 import React, { useEffect, useState } from "react";
-import { IoSearchOutline } from "react-icons/io5";
 import {
   FaFileAlt,
   FaCheckCircle,
   FaExclamationTriangle,
-  FaClock,
+  FaCalendarAlt,
 } from "react-icons/fa";
 import LineChartComp from "./_charts/LineChart";
 import CalendarComp from "./_charts/Calendar";
 import DualLines from "./_charts/DualLines";
-import LineCharttwo from "./_charts/LineCharttwo";
 import CircularChartComp from "./_charts/CircularChartComp";
 import DualAreaChart from "./_charts/AreaChart";
 import BarChartComp from "./_charts/BarChart";
-import BarGraphtwo from "./_charts/BarGraphtwo";
 import Taskdata from "./_datatable/taskdata";
+import { getTasks } from "@/lib/Features/TaskSlice";
 import { useSession } from "next-auth/react";
+import { useDispatch, useSelector } from "react-redux";
 import { ImSpinner8 } from "react-icons/im";
 import { useRouter } from "next/navigation";
 import { setDefaultOptions } from "date-fns";
 
 function Card({ icon: Icon, value, description, color, className, children }) {
+  const renderContent = () => {
+    if (Icon) {
+      return (
+        <>
+          <div className="flex items-center justify-between mb-4">
+            <div className={`p-3 rounded-full ${color}`}>
+              <Icon size={24} color="white" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800">
+              {value !== null && value !== undefined ? value : 'N/A'}
+            </h2>
+          </div>
+          <p className="text-xs text-gray-500 mt-auto">{description}</p>
+        </>
+      );
+    }
+    return children || <div className="text-center text-gray-500">No data available</div>;
+  };
+
   return (
     <div
       className={`bg-white border rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl ${className}`}
     >
       <div className="p-6 flex flex-col h-full">
-        {Icon && value ? (
-          <>
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 rounded-full ${color}`}>
-                <Icon size={24} color="white" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-800">{value}</h2>
-            </div>
-            <p className="text-xs text-gray-500 mt-auto">{description}</p>
-          </>
-        ) : (
-          <>{children}</>
-        )}
+        {renderContent()}
       </div>
     </div>
   );
@@ -69,8 +74,42 @@ function DashboardComp() {
     setGraphicalReport(graphRep);
   }, [session, status]);
 
+  const dispatch = useDispatch();
+  const { tasks } = useSelector((state) => state.TaskSlice);
+
+  useEffect(() => {
+    if (session?.user?.userData?.id) {
+      dispatch(getTasks(session.user.userData.id));
+    }
+  }, [dispatch, session?.user?.userData?.id]);
+
+  // Helper function to safely parse MongoDB dates
+  const parseMongoDate = (dateString) => {
+    if (!dateString) return null;
+    // Handle both date objects and string formats
+    const date = dateString.$date ? new Date(dateString.$date) : new Date(dateString);
+    return isNaN(date.getTime()) ? null : date;
+  };
+
+  // Derived stats for the dashboard cards
+  const totalTasks = tasks?.length || 0;
+  const completedTasks = tasks?.filter(task => task.status === "Completed").length || 0;
+  const pendingTasks = tasks?.filter(task => task.status === "In Progress" || task.status === "Pending").length || 0;
+
+  const upcomingDeadlines = tasks?.filter(task => {
+    const dueDate = parseMongoDate(task.dueDate);
+    if (!dueDate) return false;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const timeDiff = dueDate.getTime() - today.getTime();
+    const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
+    
+    return daysDiff >= 0 && daysDiff <= 7;
+  }).length || 0;
+
   function handleDateChange(date) {
-    console.log("Date changed:", date);
     setSelectedDate(date);
   }
 
@@ -96,62 +135,57 @@ function DashboardComp() {
         {/* Quantity Cards */}
         <div className="grid md:grid-cols-4 sm:grid-cols-2 grid-cols-1 gap-4">
           <Card
-            title="Total RFIs"
             icon={FaFileAlt}
-            value="45"
-            description="Open requests for information"
+            value={totalTasks}
+            description="Total Tasks"
             color="bg-blue-500"
             className="hover:scale-105"
           />
           <Card
-            title="Completed RFIs"
             icon={FaCheckCircle}
-            value="32"
-            description="Resolved and closed requests"
+            value={completedTasks}
+            description="Completed Tasks"
             color="bg-green-500"
             className="hover:scale-105"
           />
           <Card
-            title="Pending RFIs"
             icon={FaExclamationTriangle}
-            value="8"
-            description="Awaiting response or action"
+            value={pendingTasks}
+            description="Pending Tasks"
             color="bg-yellow-500"
             className="hover:scale-105"
           />
           <Card
-            title="Average Response Time"
-            icon={FaClock}
-            value="2.5 days"
-            description="Time to resolve requests"
-            color="bg-purple-500"
+            icon={FaCalendarAlt}
+            value={upcomingDeadlines}
+            description="Tasks Due in the Next 7 Days"
+            color="bg-red-500"
             className="hover:scale-105"
           />
         </div>
 
-        {/* First row */}
-        <div className="grid md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-6 ">
-          <Card className="h-[300px]">
+        {/* Charts sections remain unchanged */}
+        <div className="grid md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-6">
+          <Card className="h-[400px]">
             <LineChartComp selectedDate={selectedDate} />
           </Card>
-          <Card className=" h-[300px] overflow-y-auto" title="Calendar">
-            <div className="flex-grow flex items-center justify-center ">
+          <Card className="h-[400px] overflow-y-auto">
+            <div className="flex-grow flex items-center justify-center">
               <CalendarComp value={selectedDate} onChange={handleDateChange} />
             </div>
           </Card>
-          <Card title="Dual Lines" className="h-[300px]">
+          <Card className="h-[400px]">
             <DualLines selectedDate={selectedDate} />
           </Card>
         </div>
 
-        {/* Second row */}
         <div className="grid md:grid-cols-2 sm:grid-cols-2 grid-cols-1 gap-4">
-          <Card className="h-[540px]">
+          <Card className="h-[930px]">
             <BarChartComp selectedDate={selectedDate} />
           </Card>
 
           <div className="flex flex-col gap-4">
-            <Card title="Circular Chart Comp">
+            <Card>
               <CircularChartComp />
             </Card>
             <Card>
@@ -159,16 +193,6 @@ function DashboardComp() {
             </Card>
           </div>
         </div>
-
-        {/* Third row */}
-        {/* <div className="grid md:grid-cols-2 grid-cols-1 gap-4">
-          <Card title="BarChartComp" className="h-full">
-            <BarChartComp selectedDate={selectedDate} />
-          </Card>
-          <Card title="BarGraphtwo" className="h-full">
-            <BarGraphtwo selectedDate={selectedDate} />
-          </Card>
-        </div> */}
       </div>
 
       <div>

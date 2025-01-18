@@ -19,7 +19,6 @@ import { PiFileTextThin } from "react-icons/pi";
 import { ImSpinner3 } from "react-icons/im";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-
 import Dialog from "@/app/_components/Dialog/Dialog";
 import DetailsModal from "../_datatable/DetailsModal";
 import { getTasks } from "@/lib/Features/TaskSlice";
@@ -30,8 +29,8 @@ function LineChartComp({ selectedDate }) {
   const [downloadMenuVisible, setDownloadMenuVisible] = useState(false);
   const [isOpenReportModal, setIsOpenReportModal] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState(false);
-  const [selectedTaskDetails, setSelectedTaskDetails] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedTask, setSelectedTask] = useState(null);
   const { data: session, status } = useSession();
   const [tabularReport, setTabularReport] = useState();
   const [graphicalReport, setGraphicalReport] = useState();
@@ -84,6 +83,11 @@ function LineChartComp({ selectedDate }) {
         (task) => formatDate(new Date(task.dueDate)) === formattedSelectedDate
       );
 
+      if (filteredTasks.length === 0) {
+        setDataAvailable(false);
+        return;
+      }
+
       const taskData = filteredTasks.map((task) => ({
         id: task._id?.$oid || task._id,
         title: task.username || "No Title",
@@ -91,18 +95,40 @@ function LineChartComp({ selectedDate }) {
         date: formattedSelectedDate,
         priority: task.priority,
         priorityValue: priorityMap[task.priority] || 0,
-        task: task, // Include full task object
+        originalTask: task  // Store the original task data
       }));
+
       setChartData(taskData);
+      setDataAvailable(true);
     };
 
     updateChartData();
-  }, [selectedDate, tasks]);
+  }, [selectedDate, tasks]);  
+  
 
-  const handleDataPointClick = (taskDetails) => {
-    setSelectedTaskDetails(taskDetails);
+
+
+
+  const handleDataPointClick = (data) => {
+    if (!data || !data.originalTask) {
+      console.warn("No task data available for this point");
+      return;
+    }
+
+    const taskForModal = [{
+      id: data.id,
+      title: data.title,
+      date: data.date,
+      priority: data.priority,
+      status: data.status,
+      // Add any other fields you want to display in the modal
+      ...data.originalTask
+    }];
+
+    setSelectedTask(taskForModal);
     setIsModalOpen(true);
   };
+  
   const generatePDF = async () => {
     setGeneratingPDF(true);
     const element = document.getElementById("report-content");
@@ -189,20 +215,22 @@ function LineChartComp({ selectedDate }) {
     { header: "Priority", key: "priority" },
     { header: "Status", key: "status" },
   ];
-
+ 
   return (
     <div>
       <div className="flex justify-between mb-2">
-        <p>LineChart</p>
+      <h2 className="text-lg font-bold text-gray-600 leading-tight">
+  Task Priority & Status Visualization
+</h2>
         <div className="relative">
           <button
             onClick={toggleDownloadMenu}
             className={`bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-2 rounded flex items-center justify-center text-sm ${
               !dataAvailable && "opacity-50 cursor-not-allowed"
             }`}
-            disabled={!dataAvailable}
           >
-            <FaDownload size={12} />
+             <FaDownload size={16} />
+                       <span>Export</span>
           </button>
           {downloadMenuVisible && (
             <div className="absolute right-0 mt-2 z-10 w-64 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden transition-all duration-200 ease-in-out transform origin-top-right">
@@ -258,14 +286,26 @@ function LineChartComp({ selectedDate }) {
               </div>
             </div>
           )}
+
+          
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={200}>
+      {!dataAvailable ? (
+        <div className="text-center py-10 text-gray-500">
+          No data available for {selectedDate.toLocaleDateString()}
+        </div>
+      ) :(
+      <ResponsiveContainer width="100%" height={300}>
         <LineChart
           data={chartData}
           margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-          onClick={(e) => handleDataPointClick(e.payload)}
+          onClick={(e) => {
+            if (e?.activePayload?.[0]?.payload) {
+              handleDataPointClick(e.activePayload[0].payload);
+            }
+          }}
+
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
@@ -286,13 +326,19 @@ function LineChartComp({ selectedDate }) {
           />
         </LineChart>
       </ResponsiveContainer>
+      )}
 
       <DetailsModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedTask(null);
+        }}
         title="Task Details"
         columns={columns}
-        data={chartData}
+        data={selectedTask || []}
+        session={session}
+        contextType="Tasks"
       />
       <Dialog
         isOpen={isOpenReportModal}
