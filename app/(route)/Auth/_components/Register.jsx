@@ -315,6 +315,7 @@ function Register() {
                   placeholder=" "
                   value={formData.password}
                   onChange={handleChange}
+                  maxLength={16}
                 />
                 <label
                   htmlFor="password"
@@ -335,6 +336,7 @@ function Register() {
                   placeholder=" "
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  maxLength={16}
                 />
                 <label
                   htmlFor="confirmPassword"

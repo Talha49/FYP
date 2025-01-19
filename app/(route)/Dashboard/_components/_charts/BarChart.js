@@ -121,8 +121,6 @@ function BarChartComp({ selectedDate }) {
         "Other Floors": aggregatedData.otherFloors || 0,
         Completed: aggregatedData.Completed || 0,
         Pending: aggregatedData.Pending || 0,
-        Completed: aggregatedData.Completed || 0,
-        Pending: aggregatedData.Pending || 0,
         "High Priority": aggregatedData.HighPriority || 0,
         "Low Priority": aggregatedData.LowPriority || 0,
       },
@@ -379,28 +377,8 @@ function BarChartComp({ selectedDate }) {
               fill="#82ca9d"
               onClick={handleBarClick}
             />
-            <Bar
-              dataKey="First Floor"
-              fill="#8884d8"
-              onClick={handleBarClick}
-            />
-            <Bar
-              dataKey="Other Floors"
-              fill="#82ca9d"
-              onClick={handleBarClick}
-            />
             <Bar dataKey="Completed" fill="#ffc658" onClick={handleBarClick} />
             <Bar dataKey="Pending" fill="#ff8042" onClick={handleBarClick} />
-            <Bar
-              dataKey="High Priority"
-              fill="#d0ed57"
-              onClick={handleBarClick}
-            />
-            <Bar
-              dataKey="Low Priority"
-              fill="#8dd1e1"
-              onClick={handleBarClick}
-            />
             <Bar
               dataKey="High Priority"
               fill="#d0ed57"
@@ -468,9 +446,6 @@ function BarChartComp({ selectedDate }) {
               <h1 className="text-2xl font-bold text-gray-800">
                 {companyName}
               </h1>
-              <h1 className="text-2xl font-bold text-gray-800">
-                {companyName}
-              </h1>
               <p className="text-gray-600">Task Distribution Report</p>
               <p className="text-gray-600">
                 Date: {selectedDate.toLocaleDateString()}
@@ -493,24 +468,13 @@ function BarChartComp({ selectedDate }) {
                   filteredTasks.filter((task) => task.status === "Completed")
                     .length
                 }
-                {
-                  filteredTasks.filter((task) => task.status === "Completed")
-                    .length
-                }
               </p>
             </div>
             <div className="bg-yellow-50 p-4 rounded-lg">
               <h3 className="font-semibold text-yellow-800">
                 High Priority Tasks
               </h3>
-              <h3 className="font-semibold text-yellow-800">
-                High Priority Tasks
-              </h3>
               <p className="text-2xl font-bold text-yellow-600">
-                {
-                  filteredTasks.filter((task) => task.priority === "High")
-                    .length
-                }
                 {
                   filteredTasks.filter((task) => task.priority === "High")
                     .length
@@ -521,9 +485,6 @@ function BarChartComp({ selectedDate }) {
 
           {/* Chart */}
           <div className="mb-6">
-            <h3 className="text-xl font-semibold mb-4">
-              Task Distribution Chart
-            </h3>
             <h3 className="text-xl font-semibold mb-4">
               Task Distribution Chart
             </h3>

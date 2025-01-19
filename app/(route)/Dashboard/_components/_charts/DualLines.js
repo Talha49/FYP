@@ -265,14 +265,17 @@ function LineChartComponent({ selectedDate }) {
                 {tabularReport?.included &&
                   tabularReport?.subReports[0]?.expport && (
                     <button
-                      onClick={() => downloadCSV(tasks, "full_data_report.csv")}
-                      className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg transition-colors duration-150"
+                      onClick={() =>
+                        downloadCSV(processUserData, "complete_user_analytics")
+                      }
+                      className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-lg"
                     >
                       <PiFileTextThin
                         size={18}
                         className="mr-2 text-blue-600"
                       />
-                      <span>Retrieve Full Data</span>
+                      <span>Export All Data</span>
+                             
                     </button>
                   )}
 

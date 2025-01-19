@@ -31,6 +31,8 @@ const SideNav = () => {
   const router = useRouter();
   const publicPaths = ["/", "/Auth"];
 
+  console.log("Session =>", session);
+
   // Memoize menu permissions
   const menuPermissions = useMemo(() => {
     return (
@@ -64,10 +66,7 @@ const SideNav = () => {
       setIsVisible(includedMenus.length > 0);
 
       // Redirect if the current path is not in the list of allowed paths
-      if (
-        !allowedPaths.includes(pathName) &&
-        !publicPaths.includes(pathName)
-      ) {
+      if (!allowedPaths.includes(pathName) && !publicPaths.includes(pathName)) {
         router.push("/Access-Denied");
       }
     }
@@ -102,7 +101,8 @@ const SideNav = () => {
               <Link
                 href={menu.path || "#"}
                 target={
-                  (menu.name === "Admin" || menu.name === "Workflow") && "_blank"
+                  (menu.name === "Admin" || menu.name === "Workflow") &&
+                  "_blank"
                 }
               >
                 <div className="flex items-center p-4">

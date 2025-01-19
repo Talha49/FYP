@@ -302,6 +302,7 @@ function Login () {
                 placeholder=" "
                 value={formData.password}
                 onChange={handleChange}
+                maxLength={16}
                 // required
               />
               <label

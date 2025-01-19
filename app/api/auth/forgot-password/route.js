@@ -14,11 +14,11 @@ export async function POST(req) {
     await dbConnect();
     const user = await User.findOne({ email });
 
-    if (!user) {
-      return NextResponse.json({
-        error: "No account with that email address exists.",
-      });
-    }
+    // if (!user) {
+    //   return NextResponse.json({
+    //     error: "No account with that email address exists.",
+    //   });
+    // }
 
     // if (user.isSocialLogin) {
     //   return NextResponse.json({

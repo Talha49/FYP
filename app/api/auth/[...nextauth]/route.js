@@ -41,6 +41,11 @@ export const authOptions = {
             throw new Error("User not found");
           }
 
+          if (user.status === "inactive") {
+            console.log("Account is inactive");
+            throw new Error("Account is inactive, please contact admin");
+          }
+
           if (user.isSocialLogin) {
             console.log("User is a social login account");
             throw new Error("Please use social login for this account");
