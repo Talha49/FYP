@@ -64,6 +64,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
 
   console.log("Menu Permissions =>", menuPermissionsForPage);
 
+  console.log('Token', token)
   useEffect(() => {
     if (session) {
       setAuthenticatedUser(session?.user?.userData);
