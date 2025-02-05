@@ -13,7 +13,9 @@ import { usePathname, useRouter } from "next/navigation";
 const TaskCreationForm = () => {
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.TaskSlice);
+  const [authuserdata, setAuthuserData] = useState(null);
   const [formData, setFormData] = useState({
+ 
     description: "",
     priority: "",
     room: "",
@@ -29,7 +31,6 @@ const TaskCreationForm = () => {
   const [groundFloorImages, setGroundFloorImages] = useState([]);
   const [lastFloorImage, setLastFloorImage] = useState([]);
   const [attachments, setAttachments] = useState([]);
-  const [authuserdata, setAuthuserData] = useState(null);
   const { showToast } = useToast();
   const { data: session } = useSession();
   const [menuPermissionsForPage, setMenuPermissions] = useState(null);
@@ -81,36 +82,54 @@ const TaskCreationForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+  
     if (!menuPermissionsForPage?.includes("create")) {
       showToast("You don't have permission to create task", "error");
       return;
     }
+  
     if (!groundFloorImages.length || !lastFloorImage.length) {
       showToast("Please upload all required images", "warning");
       return;
     }
-
-    const taskFormData = new FormData();
-    Object.keys(formData).forEach((key) => {
-      if (Array.isArray(formData[key])) {
-        taskFormData.append(key, JSON.stringify(formData[key]));
-      } else {
-        taskFormData.append(key, formData[key] || "");
-      }
-    });
-    taskFormData.append("assignedBy", authuserdata?._id || "");
-    taskFormData.append("userId", authuserdata?._id || "");
-    taskFormData.append("username", authuserdata?.fullName || "");
-
-    groundFloorImages.forEach((img) =>
-      taskFormData.append("groundFloorImages", img.file)
+  
+    // Convert files to base64
+    const convertToBase64 = async (file) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve({ base64: reader.result, name: file.name });
+        reader.onerror = (error) => reject(error);
+      });
+    };
+  
+    // Convert images & attachments
+    const groundFloorImageBase64 = await Promise.all(
+      groundFloorImages.map((img) => convertToBase64(img.file))
     );
-    if (lastFloorImage[0])
-      taskFormData.append("lastFloorImage", lastFloorImage[0].file);
-    attachments.forEach((file) => taskFormData.append("attachments", file));
-
+    const lastFloorImageBase64 = await Promise.all(
+      lastFloorImage.map((img) => convertToBase64(img.file))
+    );
+    const attachmentsBase64 = await Promise.all(
+      attachments.map((file) => convertToBase64(file))
+    );
+  
+    // Construct JSON payload
+    const taskData = {
+      ...formData,
+      assignedBy: authuserdata?._id || "",
+      userId: authuserdata?._id || "",
+      creatorId: authuserdata?._id || "",  // <-- Ensure creatorId is included
+      username: authuserdata?.fullName || "",
+      groundFloorImages: groundFloorImageBase64,
+      lastFloorImages: lastFloorImageBase64,
+      attachments: attachmentsBase64,
+      dueDate: new Date(formData.dueDate).toISOString(),
+    };
+    
+  
     try {
-      await dispatch(createTask(taskFormData)).unwrap();
+      await dispatch(createTask(taskData)).unwrap();
       showToast(
         "Task created successfully! Your request has been processed.",
         "success"
@@ -118,12 +137,10 @@ const TaskCreationForm = () => {
       resetForm();
     } catch (error) {
       console.error("Error submitting form:", error);
-      showToast(
-        error.message || "Failed to create RFI. Please try again.",
-        "error"
-      );
+      showToast(error.message || "Failed to create task. Please try again.", "error");
     }
   };
+  
 
   const priorityOptions = [
     { value: "No data", label: "No data" },
@@ -170,6 +187,13 @@ const TaskCreationForm = () => {
             label="User ID"
             id="userId"
             name="userId"
+            value={authuserdata?._id || ""}
+            disabled
+          />
+           <FormInput
+            label="Creator ID"
+            id="creatorId"
+            name="creatorId"
             value={authuserdata?._id || ""}
             disabled
           />
