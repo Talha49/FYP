@@ -490,18 +490,18 @@ const ChatApp = ({
       <div className="flex-1 overflow-hidden">
         <div
           ref={chatContainerRef}
-          className="h-full overflow-y-auto p-4 space-y-2 bg-white"
+          className="h-full overflow-y-auto space-y-4 p-3 bg-white"
           style={{ maxHeight: "calc(100% - 1px)" }}
         >
           {messages.map((msg, index) => (
             <div
               key={index}
-              className={`flex items-start space-x-3 w-fit max-w-[70%] p-3 rounded-lg ${
+              className={`flex items-start space-x-3 w-[65%] p-3 relative ${
                 msg.isSystemMessage
                   ? "bg-blue-100 text-blue-600 text-xs py-1 px-2 mx-auto"
                   : msg.senderId === (currentUserId || authenticatedUser?._id)
-                  ? "bg-blue-500 text-white ml-auto"
-                  : "bg-gray-200 text-black mr-auto"
+                  ? "bg-blue-500 text-white ml-auto rounded-l-3xl rounded-br-3xl "
+                  : "bg-gray-200 text-black mr-auto rounded-r-3xl rounded-bl-3xl"
               } relative`}
               onDoubleClick={() => openMessageDialog(index)}
             >
@@ -533,7 +533,7 @@ const ChatApp = ({
                 )}
 
                 {!msg.isSystemMessage && (
-                  <small className="text-gray-400 text-xs mt-1">
+                  <small className="text-gray-900 text-xs mt-1 absolute bottom-1 right-4">
                     {msg.time}
                   </small>
                 )}
@@ -547,18 +547,18 @@ const ChatApp = ({
                           <img
                             src={file.url}
                             alt="Media"
-                            className="w-full rounded-lg hover:scale-105 transform transition-all duration-300"
+                            className="h-32 w-auto rounded-lg hover:scale-105 transform transition-all mb-3 duration-300"
                             onClick={() => openMediaPreview(file, idx)}
                           />
                         ) : file.type === "video" ? (
                           <video
                             controls
                             src={file.url}
-                            className="w-full sm:w-[500px] md:w-[700px] lg:w-[900px] rounded-lg hover:scale-105 transform transition-all duration-300"
+                            className="w-full sm:w-[500px] md:w-[700px] lg:w-[900px] rounded-lg mb-3 hover:scale-105 transform transition-all duration-300"
                             onClick={() => openMediaPreview(file, idx)}
                           />
                         ) : (
-                          <div className="flex items-center justify-between bg-gray-100 p-3 rounded-lg shadow-md">
+                          <div className="flex items-center justify-between bg-gray-100 p-3 mb-3 rounded-lg shadow-md">
                             <div className="flex items-center space-x-2">
                               <RiDownload2Line className="text-gray-600" />
                               <a
@@ -592,7 +592,7 @@ const ChatApp = ({
 
       {showMediaPreview && previewMedia && (
         <div
-          className={`fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20 ${
+          className={`fixed inset-0 flex items-center justify-center mt-8 bg-black bg-opacity-50 z-20 ${
             isFullscreen ? "h-screen" : "h-auto"
           }`}
         >
@@ -610,7 +610,7 @@ const ChatApp = ({
             </button>
 
             {/* Fullscreen Toggle Button */}
-            <button
+            {/* <button
               className="absolute top-2 left-2 text-gray-500 hover:text-gray-700"
               onClick={handleFullscreenToggle}
             >
@@ -619,7 +619,7 @@ const ChatApp = ({
               ) : (
                 <RiFullscreenLine size={24} />
               )}
-            </button>
+            </button> */}
 
             {/* Media Preview */}
             <div className="mb-4 overflow-hidden flex justify-center items-center">
