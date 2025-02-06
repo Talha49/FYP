@@ -530,9 +530,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
             <ChatApp
               chatRoomId={localNote._id}
               chatRoomName={localNote.username}
-              assignedUsers={[
-                ...localNote.assignees.map((assignee) => assignee.name),
-              ]}
+              assignedUsers={[ ...localNote.assignees.map(assignee => assignee.name)]}
             />
           </div>
 
