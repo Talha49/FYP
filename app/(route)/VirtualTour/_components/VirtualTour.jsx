@@ -304,7 +304,7 @@ function VirtualTourComponent() {
   return (
     <>
       {loading && (
-        <div className="h-screen w-screen fixed text-white flex flex-col gap-4 justify-center items-center bg-black opacity-70 z-50">
+        <div className="h-screen w-screen fixed top-0 left-0 text-white flex flex-col gap-4 justify-center items-center bg-black opacity-70 z-50">
           <h1 className="text-5xl font-semibold">Creating Virtual Tour</h1>
           <ClockLoader color="#ffffff" size={60} />{" "}
           <h1 className="text-3xl">This might take few minutes</h1>
