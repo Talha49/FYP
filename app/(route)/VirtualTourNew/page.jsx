@@ -80,7 +80,7 @@ const VirtualTour = () => {
         />
         <button
           onClick={() => setIsDialogOpen(true)}
-          className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-all"
+          className="bg-blue-500 text-white p-3 rounded-md hover:bg-blue-600 transition-all"
           disabled={loading}
         >
           Add Inspection

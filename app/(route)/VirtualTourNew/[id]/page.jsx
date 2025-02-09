@@ -215,13 +215,15 @@ const Page = () => {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-5xl font-bold mb-6 text-center text-gray-800">
-        Virtual Tours
-      </h1>
-      <Link href={"/VirtualTourNew"} className="flex items-center gap-1 my-4 text-sm border border-blue-500 bg-blue-50 text-blue-500 w-fit p-1 rounded">
-      <ArrowLeft size={17} className="text-blue-500" /> <span>Back</span>
+    <div className="p-6 max-w-5xl mx-auto">
+      <Link
+        href={"/VirtualTourNew"}
+        className="flex items-center gap-1 mb-6 text-sm border border-blue-500 bg-blue-50 text-blue-500 w-fit p-1 rounded"
+      >
+        <ArrowLeft size={17} className="text-blue-500" /> <span>Back</span>
       </Link>
+      <h1 className="text-5xl font-bold mb-6 text-gray-800">Virtual Tours</h1>
+
       {/* Search & Filter Section */}
       <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
         <input
@@ -233,7 +235,7 @@ const Page = () => {
         />
 
         <select
-          className="p-3 sm:w-1/3 w-full border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="p-[13px] sm:w-1/3 w-full border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
         >
@@ -245,7 +247,7 @@ const Page = () => {
         </select>
         <button
           onClick={() => setIsDialogOpen(true)}
-          className="bg-blue-500 sm:w-1/5 w-full text-white py-3 px-4 rounded-md hover:bg-blue-600 transition-all"
+          className="bg-blue-500 sm:w-1/5 w-full text-white p-3 rounded-md hover:bg-blue-600 transition-all"
         >
           Add Tour
         </button>
@@ -274,7 +276,7 @@ const Page = () => {
           filteredTours.map((tour) => (
             <div className="group relative bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-xl">
               {/* Image container with overlay effect */}
-              <div className="relative h-48 overflow-hidden">
+              <div className="relative h-40 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <img
                   src={tour?.frames[0]?.url}
@@ -284,7 +286,7 @@ const Page = () => {
               </div>
 
               {/* Content section */}
-              <div className="relative p-6 space-y-4">
+              <div className="relative p-4 space-y-2">
                 {/* Title with animated underline */}
                 <h2 className="text-2xl font-bold text-gray-800">
                   <span className="relative inline-block">
