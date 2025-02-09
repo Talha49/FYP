@@ -8,6 +8,8 @@ import { storage } from "@/lib/firebase/firebaseConfig";
 import Dialog from "../_components/Dialog";
 import { fetchVirtualTours } from "@/lib/Features/VtourSlice";
 import { CgSpinnerTwo } from "react-icons/cg";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 const Page = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -217,7 +219,9 @@ const Page = () => {
       <h1 className="text-5xl font-bold mb-6 text-center text-gray-800">
         Virtual Tours
       </h1>
-
+      <Link href={"/VirtualTourNew"} className="flex items-center gap-1 my-4 text-sm border border-blue-500 bg-blue-50 text-blue-500 w-fit p-1 rounded">
+      <ArrowLeft size={17} className="text-blue-500" /> <span>Back</span>
+      </Link>
       {/* Search & Filter Section */}
       <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
         <input
