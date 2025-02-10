@@ -9,7 +9,8 @@ import Dialog from "../_components/Dialog";
 import { fetchVirtualTours } from "@/lib/Features/VtourSlice";
 import { CgSpinnerTwo } from "react-icons/cg";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus, Search, Telescope } from "lucide-react";
+import ShowVirtualTour from "../_components/ShowVirtualTour";
 
 const Page = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,6 +31,7 @@ const Page = () => {
   const [creatingVT, setCreatingVT] = useState(false);
   const dispatch = useDispatch();
   const { virtualTours, loading, error } = useSelector((state) => state.VTour);
+  const [selectedVirtualTour, setSelectedVirtualTour] = useState(null);
 
   useEffect(() => {
     if (id) {
@@ -226,30 +228,34 @@ const Page = () => {
 
       {/* Search & Filter Section */}
       <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
-        <input
-          type="text"
-          placeholder="Search tours..."
-          className="w-full sm:w-2/3 p-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+        <div className="flex items-center gap-2 w-full sm:max-w-md p-3 border border-gray-300 rounded-lg shadow-sm bg-white transition focus-within:ring-2 focus-within:ring-blue-400">
+          <Search className="text-blue-500 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Search inspections..."
+            className="w-full bg-transparent focus:outline-none text-gray-700 placeholder-gray-400"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
 
         <select
-          className="p-[13px] sm:w-1/3 w-full border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="p-[13px] sm:w-1/3 w-full border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 transition focus:outline-none focus:ring-2 focus:ring-blue-400"
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
         >
           {categories.map((category) => (
-            <option key={category} value={category}>
+            <option key={category} value={category} className="text-gray-700">
               {category}
             </option>
           ))}
         </select>
+
         <button
           onClick={() => setIsDialogOpen(true)}
-          className="bg-blue-500 sm:w-1/5 w-full text-white p-3 rounded-md hover:bg-blue-600 transition-all"
+          className="flex items-center justify-center gap-2 bg-blue-500 min-w-[22%] sm:w-1/5 w-full text-white p-3 rounded-md hover:bg-blue-600 transition-all"
         >
-          Add Tour
+          <Plus /> Add New
         </button>
       </div>
       {loading && (
@@ -301,9 +307,14 @@ const Page = () => {
                 </p>
 
                 {/* Button with hover effect */}
-                <div className="pt-2">
-                  <button className="w-full px-6 py-3 bg-blue-500 text-white font-semibold rounded-xl hover:bg-blue-600 active:bg-blue-700 transform transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 active:shadow-inner active:translate-y-0">
-                    Explore Now
+                <div
+                  className="pt-2"
+                  onClick={() => {
+                    setSelectedVirtualTour(tour);
+                  }}
+                >
+                  <button className="flex items-center justify-center gap-2 w-full px-6 py-3 bg-blue-500 text-white font-semibold rounded-xl hover:bg-blue-600 active:bg-blue-700 transform transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 active:shadow-inner active:translate-y-0">
+                    <Telescope /> Explore Now
                   </button>
                 </div>
               </div>
@@ -481,6 +492,17 @@ const Page = () => {
               : "Next"}
           </button>
         </footer>
+      </Dialog>
+      <Dialog
+        title={`Expore & Inspect ${selectedVirtualTour?.name}`}
+        isOpen={selectedVirtualTour}
+        onClose={() => {
+          setSelectedVirtualTour(null);
+        }}
+        className={"rounded-b-none rounded-t-3xl h-screen overflow-y-auto"}
+        isVTshowDialog={true}
+      >
+        <ShowVirtualTour virtualTour={selectedVirtualTour} />
       </Dialog>
     </div>
   );

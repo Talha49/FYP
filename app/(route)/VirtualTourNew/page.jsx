@@ -6,7 +6,8 @@ import { FaArrowRight } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
 import { CgSpinnerTwo } from "react-icons/cg";
 import Dialog from "./_components/Dialog";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Plus, Search } from "lucide-react";
+import ShowVirtualTour from "./_components/ShowVirtualTour";
 
 const VirtualTour = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -71,19 +72,23 @@ const VirtualTour = () => {
 
       {/* Add Inspection Button */}
       <div className="flex justify-between items-center mb-4">
-        <input
-          type="text"
-          placeholder="Search inspections..."
-          className="w-full sm:max-w-sm p-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+        <div className="flex items-center gap-2 w-full sm:max-w-sm p-3 border border-gray-300 rounded-lg shadow-sm bg-white transition focus-within:ring-2 focus-within:ring-blue-400">
+          <Search className="text-blue-500 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Search inspections..."
+            className="w-full bg-transparent focus:outline-none text-gray-700 placeholder-gray-400"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
         <button
           onClick={() => setIsDialogOpen(true)}
-          className="bg-blue-500 text-white p-3 rounded-md hover:bg-blue-600 transition-all"
+          className="flex items-center justify-center gap-2 bg-blue-500 text-white p-3 rounded-md hover:bg-blue-600 transition-all"
           disabled={loading}
         >
-          Add Inspection
+          <Plus /> Add Inspection
         </button>
       </div>
 

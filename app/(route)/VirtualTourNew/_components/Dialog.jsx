@@ -1,53 +1,71 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { IoMdClose } from "react-icons/io";
 
-const Dialog = ({ children, title, isOpen, onClose, className }) => {
-  // Close on Escape key press
+const Dialog = ({
+  children,
+  title,
+  isOpen,
+  onClose,
+  className,
+  isVTshowDialog = false,
+}) => {
+  const [show, setShow] = useState(false);
+
+  // Handle Escape key press to close
   useEffect(() => {
     const handleEscape = (event) => {
       if (event.key === "Escape") {
-        onClose();
+        closeDialog();
       }
     };
     if (isOpen) {
+      setShow(true);
       document.addEventListener("keydown", handleEscape);
+    } else {
+      setShow(false);
     }
     return () => {
       document.removeEventListener("keydown", handleEscape);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
-  if (!isOpen) return null;
+  const closeDialog = () => {
+    setShow(false);
+    setTimeout(onClose, 300); // Wait for animation to complete before closing
+  };
+
+  if (!isOpen && !show) return null;
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
-      onClick={onClose} // Click outside to close
+      className={`fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 transition-opacity duration-300 ${
+        show ? "opacity-100" : "opacity-0"
+      }`}
+      onClick={closeDialog} // Click outside to close
     >
       <div
-        className={`bg-white rounded-lg shadow-lg p-6 w-full overflow-y-auto ${className}`}
+        className={`relative bg-white rounded-xl shadow-xl w-full flex flex-col transition-transform duration-300 ${
+          show
+            ? "translate-y-0 opacity-100"
+            : `${
+                isVTshowDialog ? "translate-y-96" : "-translate-y-20"
+              } opacity-0`
+        } ${className}`}
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
       >
         {/* Header */}
-        <header className="flex items-center justify-between border-b pb-3">
-          <span className="text-xl font-semibold">{title}</span>
-          <button onClick={onClose} className="text-gray-600 hover:text-gray-800">
+        <header className="flex items-center justify-between border-b p-4 sticky top-0 bg-white rounded-t-xl z-10">
+          <h2 className="text-lg font-semibold">{title}</h2>
+          <button
+            onClick={closeDialog}
+            className="text-gray-500 hover:text-gray-700 transition"
+          >
             <IoMdClose size={24} />
           </button>
         </header>
 
-        {/* Content */}
-        <div className="mt-4">{children}</div>
-
-        {/* Footer (optional) */}
-        {/* <div className="mt-6 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
-          >
-            Close
-          </button>
-        </div> */}
+        {/* Scrollable Content */}
+        <div className="p-4 overflow-y-auto flex-1">{children}</div>
       </div>
     </div>
   );
