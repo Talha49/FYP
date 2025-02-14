@@ -40,6 +40,10 @@ const Page = () => {
   const dispatch = useDispatch();
   const { virtualTours, loading, error } = useSelector((state) => state.VTour);
   const [selectedVirtualTour, setSelectedVirtualTour] = useState(null);
+  const [dateRange, setDateRange] = useState("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [isCustomDate, setIsCustomDate] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -84,14 +88,54 @@ const Page = () => {
     setFormErrors((prevErrors) => ({ ...prevErrors, [name]: "" })); // Clear error when user types
   };
 
-  const categories = ["All", "Today", "This Week", "This Month", "This Year"];
+  // Function to check if a date falls within the selected range
+  const isDateInRange = (date) => {
+    const tourDate = new Date(date);
+    const today = new Date();
 
-  // Filter tours based on search query and selected category
-  let filteredTours = virtualTours.filter(
-    (tour) =>
-      (selectedCategory === "All" || tour.category === selectedCategory) &&
-      tour.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    if (isCustomDate) {
+      const start = startDate ? new Date(startDate) : null;
+      const end = endDate ? new Date(endDate) : null;
+
+      if (start && end) {
+        return tourDate >= start && tourDate <= end;
+      }
+      return true;
+    }
+
+    switch (dateRange) {
+      case "today":
+        return tourDate.toDateString() === today.toDateString();
+      case "week":
+        const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return tourDate >= lastWeek;
+      case "month":
+        const lastMonth = new Date(
+          today.getFullYear(),
+          today.getMonth() - 1,
+          today.getDate()
+        );
+        return tourDate >= lastMonth;
+      case "year":
+        const lastYear = new Date(
+          today.getFullYear() - 1,
+          today.getMonth(),
+          today.getDate()
+        );
+        return tourDate >= lastYear;
+      default:
+        return true;
+    }
+  };
+
+  // Filter tours based on search query and date range
+  let filteredTours = virtualTours.filter((tour) => {
+    const matchesSearch = tour.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesDate = isDateInRange(tour.createdAt);
+    return matchesSearch && matchesDate;
+  });
 
   const createVirtualTour = async () => {
     try {
@@ -235,37 +279,90 @@ const Page = () => {
       <h1 className="text-5xl font-bold mb-6 text-gray-800">Virtual Tours</h1>
 
       {/* Search & Filter Section */}
-      <div className="flex flex-col sm:flex-row items-center justify-between mb-6 gap-4">
-        <div className="flex items-center gap-2 w-full sm:max-w-md p-3 border border-gray-300 rounded-lg shadow-sm bg-white transition focus-within:ring-2 focus-within:ring-blue-400">
+      <div
+        className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 mb-6 gap-4`}
+      >
+        {/* Search Input */}
+        <div className="h-fit col-span-1 sm:col-span-2 flex items-center gap-2 w-full p-3 border border-gray-300 rounded-lg shadow-sm bg-white transition focus-within:ring-2 focus-within:ring-blue-400">
           <Search className="text-blue-500 w-5 h-5" />
           <input
             type="text"
             placeholder="Search inspections..."
-            className="w-full bg-transparent focus:outline-none text-gray-700 placeholder-gray-400"
+            className="w-full min-w-0 bg-transparent focus:outline-none text-gray-700 placeholder-gray-400"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 
-        <select
-          className="p-[13px] sm:w-1/3 w-full border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 transition focus:outline-none focus:ring-2 focus:ring-blue-400"
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
+        {/* Date Range Selection */}
+        <div
+          className={`flex gap-1 w-full col-span-1 sm:col-span-2 flex-wrap ${
+            isCustomDate && "p-1 bg-neutral-100 rounded-lg border"
+          }`}
         >
-          {categories.map((category) => (
-            <option key={category} value={category} className="text-gray-700">
-              {category}
-            </option>
-          ))}
-        </select>
+          <select
+            className="p-[14px] w-full border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 transition focus:outline-none focus:ring-2 focus:ring-blue-400"
+            value={dateRange}
+            onChange={(e) => {
+              setDateRange(e.target.value);
+              setIsCustomDate(e.target.value === "custom");
+              setStartDate("");
+              setEndDate("");
+            }}
+          >
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">Last Week</option>
+            <option value="month">Last Month</option>
+            <option value="year">Last Year</option>
+            <option value="custom">Custom Range</option>
+          </select>
 
+          {isCustomDate && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
+              <div>
+                <label htmlFor="start-date" className="text-sm">
+                  Start Date
+                </label>
+                <input
+                  id="start-date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  placeholder="Start date"
+                  className="p-3 w-full border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+              <div>
+                <label htmlFor="end-date" className="text-sm">
+                  End Date
+                </label>
+                <input
+                  id="end-date"
+                  type="date"
+                  value={endDate}
+                  disabled={startDate === ""}
+                  title={
+                    startDate === "" && "Please select a start date first."
+                  }
+                  onChange={(e) => setEndDate(e.target.value)}
+                  placeholder="End date"
+                  className="p-3 w-full border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:cursor-not-allowed disabled:bg-neutral-200"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Add New Button */}
         <button
           onClick={() => setIsDialogOpen(true)}
-          className="flex items-center justify-center gap-2 bg-blue-500 min-w-[22%] sm:w-1/5 w-full text-white p-3 rounded-md hover:bg-blue-600 transition-all"
+          className="col-span-1 sm:col-span-2 md:col-span-1 h-fit flex items-center justify-center gap-2 bg-blue-500 w-full text-white p-3 rounded-md hover:bg-blue-600 transition-all"
         >
           <Plus /> Add New
         </button>
       </div>
+
       {loading && (
         <div className="text-lg w-full flex items-center justify-center h-32 gap-2">
           <CgSpinnerTwo className="text-xl animate-spin" />
