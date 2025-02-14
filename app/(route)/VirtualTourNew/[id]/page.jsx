@@ -9,8 +9,16 @@ import Dialog from "../_components/Dialog";
 import { fetchVirtualTours } from "@/lib/Features/VtourSlice";
 import { CgSpinnerTwo } from "react-icons/cg";
 import Link from "next/link";
-import { ArrowLeft, Plus, Search, Telescope } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  InfoIcon,
+  Plus,
+  Search,
+  Telescope,
+} from "lucide-react";
 import ShowVirtualTour from "../_components/ShowVirtualTour";
+import { formatTimestamp } from "../utils";
 
 const Page = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -280,10 +288,22 @@ const Page = () => {
         {!loading &&
           filteredTours.length > 0 &&
           filteredTours.map((tour) => (
-            <div className="group relative bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-xl">
-              {/* Image container with overlay effect */}
+            <div className="group relative bg-white rounded-xl border hover:scale-105 border-gray-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-xl">
+              {/* Image container with centered overlay effect */}
               <div className="relative h-40 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                {/* Overlay with centered info icon */}
+                <div className="absolute z-10 inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <CalendarDays
+                      size={22}
+                      className="text-white transform scale-0 group-hover:scale-100 transition-transform duration-300 cursor-pointer"
+                    />
+                    <p className="text-white">
+                      {formatTimestamp(tour?.createdAt)}
+                    </p>
+                  </div>
+                </div>
+
                 <img
                   src={tour?.frames[0]?.url}
                   alt={tour?.name}
@@ -317,11 +337,6 @@ const Page = () => {
                     <Telescope /> Explore Now
                   </button>
                 </div>
-              </div>
-
-              {/* Decorative corner accent */}
-              <div className="absolute top-0 right-0 w-20 h-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <div className="absolute top-0 right-0 w-16 h-16 transform translate-x-8 -translate-y-8 rotate-45 bg-blue-500/10" />
               </div>
             </div>
           ))}
@@ -499,7 +514,7 @@ const Page = () => {
         onClose={() => {
           setSelectedVirtualTour(null);
         }}
-        className={"rounded-b-none rounded-t-3xl h-screen overflow-y-auto"}
+        className={"rounded-none h-screen overflow-y-auto"}
         isVTshowDialog={true}
       >
         <ShowVirtualTour virtualTour={selectedVirtualTour} />

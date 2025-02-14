@@ -9,11 +9,11 @@ const ShowVirtualTour = ({ virtualTour }) => {
   useEffect(() => {
     if (!virtualTour?.frames?.length) return;
 
-    // Ensure cleanup before re-initializing
+    // Cleanup previous viewer if it exists
     if (viewerRef.current) {
       viewerRef.current.dispose();
       if (containerRef.current) {
-        containerRef.current.innerHTML = ""; // ✅ Check if it's not null
+        containerRef.current.innerHTML = "";
       }
     }
 
@@ -24,7 +24,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
       controlBar: true,
     });
 
-    // Create panoramas for each frame
+    // Create and store panoramas
     virtualTour.frames.forEach((frame, index) => {
       const panorama = new PANOLENS.ImagePanorama(frame.url);
 
@@ -33,26 +33,33 @@ const ShowVirtualTour = ({ virtualTour }) => {
       });
 
       panoramasRef.current[frame._id] = panorama;
+      viewerRef.current.add(panorama);
 
       // Add navigation hotspots
       if (index > 0) {
-        addHotspot(panorama, virtualTour.frames[index - 1], "Back", -5000);
+        addHotspot(panorama, virtualTour.frames[index - 1], "Move Back", -5000);
       }
       if (index < virtualTour.frames.length - 1) {
-        addHotspot(panorama, virtualTour.frames[index + 1], "Next", 5000);
+        addHotspot(
+          panorama,
+          virtualTour.frames[index + 1],
+          "Move Forward",
+          5000
+        );
       }
     });
 
-    // Set first panorama
+    // Set the first panorama with a fade transition
     const firstPanorama = panoramasRef.current[virtualTour.frames[0]._id];
-    viewerRef.current.add(firstPanorama);
-    viewerRef.current.setPanorama(firstPanorama);
+    if (firstPanorama) {
+      viewerRef.current.setPanorama(firstPanorama, 1000); // Fade duration: 1000ms
+    }
 
     return () => {
       if (viewerRef.current) {
         viewerRef.current.dispose();
         if (containerRef.current) {
-          containerRef.current.innerHTML = ""; // ✅ Safe check to avoid the error
+          containerRef.current.innerHTML = "";
         }
       }
     };
@@ -69,7 +76,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
 
       const nextPanorama = panoramasRef.current[targetFrame._id];
       if (nextPanorama) {
-        viewerRef.current.setPanorama(nextPanorama);
+        viewerRef.current.setPanorama(nextPanorama, 1000); // Smooth fade transition
       } else {
         console.error("Next panorama not found!");
       }
@@ -81,7 +88,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
   return (
     <div
       ref={containerRef}
-      className="w-full h-screen bg-black"
+      className="w-full h-full bg-black rounded-xl shadow-md"
       style={{ position: "relative", overflow: "hidden" }}
     />
   );
