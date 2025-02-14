@@ -611,7 +611,7 @@ const Page = () => {
         onClose={() => {
           setSelectedVirtualTour(null);
         }}
-        className={"rounded-none h-screen overflow-y-auto"}
+        className={"rounded-t-none rounded-b-none h-screen overflow-y-auto"}
         isVTshowDialog={true}
       >
         <ShowVirtualTour virtualTour={selectedVirtualTour} />
