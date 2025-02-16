@@ -3,38 +3,47 @@ import React, { useEffect, useRef, useState } from "react";
 import * as PANOLENS from "panolens";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import SwitchButton from "./SwitchButton";
-import { CirclePlus, Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import Dialog from "./Dialog";
 import { useSelector } from "react-redux";
 import VTCard from "./VTCard";
 
 const ShowVirtualTour = ({ virtualTour }) => {
-  const containerRef = useRef(null);
-  const viewerRef = useRef(null);
-  const panoramasRef = useRef({});
+  const mainContainerRef = useRef(null);
+  const topContainerRef = useRef(null);
+  const bottomContainerRef = useRef(null);
+  const mainViewerRef = useRef(null);
+  const topViewerRef = useRef(null);
+  const bottomViewerRef = useRef(null);
+  const mainPanoramasRef = useRef({});
+  const topPanoramasRef = useRef({});
+  const bottomPanoramasRef = useRef({});
   const resizeObserverRef = useRef(null);
   const [isSplitModeOn, setIsSplitModeOn] = useState(false);
   const [isOpenVtSelectionDialog, setIsOpenVtSelectionDialog] = useState(false);
-  const { virtualTours, loading, error } = useSelector((state) => state.VTour);
+  const { virtualTours } = useSelector((state) => state.VTour);
+  const [clickedPanel, setClickedPanel] = useState(null);
+  const [topPanelVT, setTopPanelVT] = useState(null);
+  const [bottomPanelVT, setBottomPanelVT] = useState(null);
 
   useEffect(() => {
-    if (!virtualTour?.frames?.length) return;
-
-    // Ensure container exists before initializing PANOLENS
-    const container = containerRef.current;
-    if (!container) {
-      console.error("Container ref is null. Delaying initialization...");
-      return;
+    if (!isSplitModeOn) {
+      setTopPanelVT(null);
+      setBottomPanelVT(null);
     }
+  }, [isSplitModeOn]);
 
-    // Cleanup previous viewer if it exists
+  const initializeViewer = (container, frames, viewerRef, panoramasRef) => {
+    if (!container || !frames?.length) return;
+
+    // Cleanup previous viewer
     if (viewerRef.current) {
       viewerRef.current.dispose();
-      if (container) container.innerHTML = "";
+      container.innerHTML = "";
     }
 
     try {
-      // Initialize PANOLENS Viewer
+      // Initialize viewer
       viewerRef.current = new PANOLENS.Viewer({
         container: container,
         autoRotate: true,
@@ -51,13 +60,11 @@ const ShowVirtualTour = ({ virtualTour }) => {
           "viewControl",
         ],
         output: "console",
-        // horizontalView: true,
       });
 
-      // Create and store panoramas
-      virtualTour.frames.forEach((frame, index) => {
+      // Create panoramas
+      frames.forEach((frame, index) => {
         const panorama = new PANOLENS.ImagePanorama(frame.url);
-
         panorama.addEventListener("load", () => {
           console.log(`Loaded frame ${index + 1}`);
         });
@@ -69,81 +76,128 @@ const ShowVirtualTour = ({ virtualTour }) => {
         if (index > 0) {
           addHotspot(
             panorama,
-            virtualTour.frames[index - 1],
+            frames[index - 1],
             "Move Back",
-            -5000
+            -5000,
+            viewerRef,
+            panoramasRef
           );
         }
-        if (index < virtualTour.frames.length - 1) {
+        if (index < frames.length - 1) {
           addHotspot(
             panorama,
-            virtualTour.frames[index + 1],
+            frames[index + 1],
             "Move Forward",
-            5000
+            5000,
+            viewerRef,
+            panoramasRef
           );
         }
       });
 
-      // Set the first panorama with a fade transition
-      const firstPanorama = panoramasRef.current[virtualTour.frames[0]._id];
+      // Set first panorama
+      const firstPanorama = panoramasRef.current[frames[0]._id];
       if (firstPanorama) {
         viewerRef.current.setPanorama(firstPanorama, 1000);
       }
-
-      // Setup ResizeObserver for container
-      resizeObserverRef.current = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          if (viewerRef.current) {
-            viewerRef.current.onWindowResize();
-          }
-        }
-      });
-
-      // Start observing container size changes
-      resizeObserverRef.current.observe(container);
     } catch (error) {
       console.error("WebGL error:", error);
     }
+  };
 
-    return () => {
-      // Cleanup
-      if (resizeObserverRef.current) {
-        resizeObserverRef.current.disconnect();
-      }
-      if (viewerRef.current) {
-        viewerRef.current.dispose();
-        if (containerRef.current) {
-          containerRef.current.innerHTML = "";
-        }
-      }
-    };
-  }, [virtualTour]);
-
-  // Function to add navigation hotspot
-  const addHotspot = (panorama, targetFrame, text, xOffset) => {
+  const addHotspot = (
+    panorama,
+    targetFrame,
+    text,
+    xOffset,
+    viewerRef,
+    panoramasRef
+  ) => {
     const hotspot = new PANOLENS.Infospot(400, PANOLENS.DataImage.Arrow);
     hotspot.position.set(xOffset, 0, 0);
     hotspot.addHoverText(text);
 
     hotspot.addEventListener("click", () => {
-      console.log(`Navigating to frame: ${targetFrame._id}`);
-
       const nextPanorama = panoramasRef.current[targetFrame._id];
       if (nextPanorama) {
         viewerRef.current.setPanorama(nextPanorama, 1000);
-      } else {
-        console.error("Next panorama not found!");
       }
     });
 
     panorama.add(hotspot);
   };
 
-  // Simplified resize handler using PANOLENS built-in method
-  const handleResize = () => {
-    if (viewerRef.current) {
-      viewerRef.current.onWindowResize();
+  // Initialize main viewer
+  useEffect(() => {
+    if (!virtualTour?.frames?.length) return;
+    initializeViewer(
+      mainContainerRef.current,
+      virtualTour.frames,
+      mainViewerRef,
+      mainPanoramasRef
+    );
+
+    // Setup ResizeObserver
+    resizeObserverRef.current = new ResizeObserver((entries) => {
+      entries.forEach(() => {
+        if (mainViewerRef.current) mainViewerRef.current.onWindowResize();
+        if (topViewerRef.current) topViewerRef.current.onWindowResize();
+        if (bottomViewerRef.current) bottomViewerRef.current.onWindowResize();
+      });
+    });
+
+    if (mainContainerRef.current) {
+      resizeObserverRef.current.observe(mainContainerRef.current);
     }
+
+    return () => {
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+      }
+      [mainViewerRef, topViewerRef, bottomViewerRef].forEach((ref) => {
+        if (ref.current) {
+          ref.current.dispose();
+        }
+      });
+    };
+  }, [virtualTour]);
+
+  // Initialize top panel viewer
+  useEffect(() => {
+    if (isSplitModeOn && topPanelVT?.frames?.length) {
+      initializeViewer(
+        topContainerRef.current,
+        topPanelVT.frames,
+        topViewerRef,
+        topPanoramasRef
+      );
+      if (resizeObserverRef.current && topContainerRef.current) {
+        resizeObserverRef.current.observe(topContainerRef.current);
+      }
+    }
+  }, [topPanelVT, isSplitModeOn]);
+
+  // Initialize bottom panel viewer
+  useEffect(() => {
+    if (isSplitModeOn && bottomPanelVT?.frames?.length) {
+      initializeViewer(
+        bottomContainerRef.current,
+        bottomPanelVT.frames,
+        bottomViewerRef,
+        bottomPanoramasRef
+      );
+      if (resizeObserverRef.current && bottomContainerRef.current) {
+        resizeObserverRef.current.observe(bottomContainerRef.current);
+      }
+    }
+  }, [bottomPanelVT, isSplitModeOn]);
+
+  const handleResize = () => {
+    [mainViewerRef, topViewerRef, bottomViewerRef].forEach((ref) => {
+      if (ref.current) {
+        ref.current.onWindowResize();
+      }
+    });
   };
 
   return (
@@ -152,34 +206,22 @@ const ShowVirtualTour = ({ virtualTour }) => {
         <h1
           className={`${
             isSplitModeOn ? "text-blue-500" : "text-black"
-          } text-xl transition-all `}
+          } text-xl transition-all`}
         >
           Split Mode
         </h1>
-        <SwitchButton
-          checked={isSplitModeOn}
-          onChange={(value) => setIsSplitModeOn(value)}
-        />
+        <SwitchButton checked={isSplitModeOn} onChange={setIsSplitModeOn} />
       </div>
-      {/* <div
-        ref={containerRef}
-        className="w-full flex-1 bg-black shadow-md "
-        style={{
-          position: "relative",
-          overflow: "hidden",
-          touchAction: "none",
-        }}
-      /> */}
+
       <PanelGroup
         direction="horizontal"
-        className="h-screen border "
+        className="h-screen border"
         onLayout={handleResize}
       >
-        {/* Left panel */}
         <Panel defaultSize={50} minSize={20} maxSize={80}>
           <div
-            ref={containerRef}
-            className="w-full h-full bg-black shadow-md "
+            ref={mainContainerRef}
+            className="w-full h-full bg-black shadow-md"
             style={{
               position: "relative",
               overflow: "hidden",
@@ -187,11 +229,10 @@ const ShowVirtualTour = ({ virtualTour }) => {
             }}
           />
         </Panel>
+
         {isSplitModeOn && (
           <>
             <PanelResizeHandle className="w-1 bg-neutral-100 hover:bg-blue-600 transition-all cursor-col-resize" />
-
-            {/* Right Panel */}
             <Panel
               defaultSize={50}
               minSize={0}
@@ -199,57 +240,128 @@ const ShowVirtualTour = ({ virtualTour }) => {
               className="flex bg-neutral-300"
             >
               <PanelGroup direction="vertical">
-                {/* Top Panel */}
                 <Panel
                   defaultSize={50}
                   minSize={20}
                   maxSize={80}
                   className="group flex items-center justify-center bg-neutral-300 bg-opacity-70 transition-all hover:bg-black hover:bg-opacity-70 backdrop-blur-md cursor-pointer"
-                  onClick={() => setIsOpenVtSelectionDialog(true)}
+                  onClick={() => {
+                    if (!topPanelVT) {
+                      setIsOpenVtSelectionDialog(true);
+                      setClickedPanel("top");
+                    }
+                  }}
                 >
-                  <Plus
-                    size={80}
-                    className="cursor-pointer text-blue-500 transition-transform duration-200 group-hover:scale-110 group-hover:text-blue-600"
-                  />
+                  {topPanelVT ? (
+                    <div className="relative w-full h-full">
+                      <div
+                        ref={topContainerRef}
+                        className="w-full h-full bg-black shadow-md"
+                        style={{
+                          position: "relative",
+                          overflow: "hidden",
+                          touchAction: "none",
+                        }}
+                      />
+                      <button
+                        className="absolute top-2 right-2 z-10 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-1.5 shadow-md transition-all duration-200 hover:scale-110"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent panel click event
+                          if (topViewerRef.current) {
+                            topViewerRef.current.dispose();
+                          }
+                          setTopPanelVT(null);
+                        }}
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+                  ) : (
+                    <Plus
+                      size={80}
+                      className="cursor-pointer text-blue-500 transition-transform duration-200 group-hover:scale-110 group-hover:text-blue-600"
+                    />
+                  )}
                 </Panel>
 
                 <PanelResizeHandle className="h-1 bg-neutral-100 hover:bg-blue-600 transition-all cursor-row-resize" />
-                {/* Bottom Panel */}
+
                 <Panel
                   defaultSize={50}
                   minSize={20}
                   maxSize={80}
                   className="group flex items-center justify-center bg-neutral-300 bg-opacity-70 transition-all hover:bg-black hover:bg-opacity-70 backdrop-blur-md cursor-pointer"
-                  onClick={() => setIsOpenVtSelectionDialog(true)}
+                  onClick={() => {
+                    if (!bottomPanelVT) {
+                      setIsOpenVtSelectionDialog(true);
+                      setClickedPanel("bottom");
+                    }
+                  }}
                 >
-                  <Plus
-                    size={80}
-                    className="cursor-pointer text-blue-500 transition-transform duration-200 group-hover:scale-110 group-hover:text-blue-600"
-                  />
+                  {bottomPanelVT ? (
+                    <div className="relative w-full h-full">
+                      <div
+                        ref={bottomContainerRef}
+                        className="w-full h-full bg-black shadow-md"
+                        style={{
+                          position: "relative",
+                          overflow: "hidden",
+                          touchAction: "none",
+                        }}
+                      />
+                      <button
+                        className="absolute top-2 right-2 z-10 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-1.5 shadow-md transition-all duration-200 hover:scale-110"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent panel click event
+                          if (bottomViewerRef.current) {
+                            bottomViewerRef.current.dispose();
+                          }
+                          setBottomPanelVT(null);
+                        }}
+                      >
+                        <X size={20} />
+                      </button>
+                    </div>
+                  ) : (
+                    <Plus
+                      size={80}
+                      className="cursor-pointer text-blue-500 transition-transform duration-200 group-hover:scale-110 group-hover:text-blue-600"
+                    />
+                  )}
                 </Panel>
               </PanelGroup>
             </Panel>
           </>
         )}
       </PanelGroup>
-      {/* VT Selection Dialog */}
+
       <Dialog
         isOpen={isOpenVtSelectionDialog}
-        onClose={() => {
-          setIsOpenVtSelectionDialog(false);
-        }}
-        title={"Select Virtual Tour"}
-        className={"max-w-2xl max-h-[500px]"}
+        onClose={() => setIsOpenVtSelectionDialog(false)}
+        title="Select Virtual Tour"
+        className="max-w-3xl max-h-[500px]"
       >
         <div className="grid grid-cols-2 gap-4">
           {virtualTours
-            ?.filter((tour) => tour._id !== virtualTour._id)
+            ?.filter(
+              (tour) =>
+                tour._id !== virtualTour._id &&
+                tour._id !== topPanelVT?._id &&
+                tour._id !== bottomPanelVT?._id
+            )
             ?.map((tour) => (
               <VTCard
-                key={tour?._id}
+                key={tour._id}
                 tour={tour}
                 isSelectionDialog={true}
-                buttonOnClick={() => {}}
+                buttonOnClick={() => {
+                  if (clickedPanel === "top") {
+                    setTopPanelVT(tour);
+                  } else {
+                    setBottomPanelVT(tour);
+                  }
+                  setIsOpenVtSelectionDialog(false);
+                }}
               />
             ))}
         </div>
