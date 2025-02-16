@@ -1,13 +1,21 @@
 "use client";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as PANOLENS from "panolens";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import SwitchButton from "./SwitchButton";
+import { CirclePlus, Plus } from "lucide-react";
+import Dialog from "./Dialog";
+import { useSelector } from "react-redux";
+import VTCard from "./VTCard";
 
 const ShowVirtualTour = ({ virtualTour }) => {
   const containerRef = useRef(null);
   const viewerRef = useRef(null);
   const panoramasRef = useRef({});
   const resizeObserverRef = useRef(null);
+  const [isSplitModeOn, setIsSplitModeOn] = useState(false);
+  const [isOpenVtSelectionDialog, setIsOpenVtSelectionDialog] = useState(false);
+  const { virtualTours, loading, error } = useSelector((state) => state.VTour);
 
   useEffect(() => {
     if (!virtualTour?.frames?.length) return;
@@ -30,7 +38,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
       viewerRef.current = new PANOLENS.Viewer({
         container: container,
         autoRotate: true,
-        autoRotateSpeed: 1,
+        autoRotateSpeed: 0.7,
         controlBar: true,
         controlButtons: [
           "fullscreen",
@@ -139,21 +147,35 @@ const ShowVirtualTour = ({ virtualTour }) => {
   };
 
   return (
-    <>
-      <div
+    <div className="flex flex-col h-full">
+      <div className="flex justify-end items-center mb-4 gap-2 absolute top-3.5 right-20 z-20">
+        <h1
+          className={`${
+            isSplitModeOn ? "text-blue-500" : "text-black"
+          } text-xl transition-all `}
+        >
+          Split Mode
+        </h1>
+        <SwitchButton
+          checked={isSplitModeOn}
+          onChange={(value) => setIsSplitModeOn(value)}
+        />
+      </div>
+      {/* <div
         ref={containerRef}
-        className="w-full h-full bg-black shadow-md "
+        className="w-full flex-1 bg-black shadow-md "
         style={{
           position: "relative",
           overflow: "hidden",
           touchAction: "none",
         }}
-      />
-      {/* <PanelGroup
+      /> */}
+      <PanelGroup
         direction="horizontal"
         className="h-screen border "
         onLayout={handleResize}
       >
+        {/* Left panel */}
         <Panel defaultSize={50} minSize={20} maxSize={80}>
           <div
             ref={containerRef}
@@ -165,39 +187,74 @@ const ShowVirtualTour = ({ virtualTour }) => {
             }}
           />
         </Panel>
+        {isSplitModeOn && (
+          <>
+            <PanelResizeHandle className="w-1 bg-neutral-100 hover:bg-blue-600 transition-all cursor-col-resize" />
 
-        <PanelResizeHandle className="w-1 bg-neutral-100 hover:bg-blue-600 transition-all cursor-col-resize" />
-
-        <Panel
-          defaultSize={50}
-          minSize={20}
-          maxSize={80}
-          className="flex items-center justify-center bg-gray-300"
-        >
-          <PanelGroup direction="vertical">
+            {/* Right Panel */}
             <Panel
               defaultSize={50}
-              minSize={20}
+              minSize={0}
               maxSize={80}
-              collapsible={true}
-              collapsedSize={0}
+              className="flex bg-neutral-300"
             >
-              top-right
+              <PanelGroup direction="vertical">
+                {/* Top Panel */}
+                <Panel
+                  defaultSize={50}
+                  minSize={20}
+                  maxSize={80}
+                  className="group flex items-center justify-center bg-neutral-300 bg-opacity-70 transition-all hover:bg-black hover:bg-opacity-70 backdrop-blur-md cursor-pointer"
+                  onClick={() => setIsOpenVtSelectionDialog(true)}
+                >
+                  <Plus
+                    size={80}
+                    className="cursor-pointer text-blue-500 transition-transform duration-200 group-hover:scale-110 group-hover:text-blue-600"
+                  />
+                </Panel>
+
+                <PanelResizeHandle className="h-1 bg-neutral-100 hover:bg-blue-600 transition-all cursor-row-resize" />
+                {/* Bottom Panel */}
+                <Panel
+                  defaultSize={50}
+                  minSize={20}
+                  maxSize={80}
+                  className="group flex items-center justify-center bg-neutral-300 bg-opacity-70 transition-all hover:bg-black hover:bg-opacity-70 backdrop-blur-md cursor-pointer"
+                  onClick={() => setIsOpenVtSelectionDialog(true)}
+                >
+                  <Plus
+                    size={80}
+                    className="cursor-pointer text-blue-500 transition-transform duration-200 group-hover:scale-110 group-hover:text-blue-600"
+                  />
+                </Panel>
+              </PanelGroup>
             </Panel>
-            <PanelResizeHandle className="h-1 bg-neutral-100 hover:bg-blue-600 transition-all cursor-col-resize" />
-            <Panel
-              defaultSize={50}
-              minSize={20}
-              maxSize={80}
-              collapsible={true}
-              collapsedSize={0}
-            >
-              bottom-right
-            </Panel>
-          </PanelGroup>
-        </Panel>
-      </PanelGroup> */}
-    </>
+          </>
+        )}
+      </PanelGroup>
+      {/* VT Selection Dialog */}
+      <Dialog
+        isOpen={isOpenVtSelectionDialog}
+        onClose={() => {
+          setIsOpenVtSelectionDialog(false);
+        }}
+        title={"Select Virtual Tour"}
+        className={"max-w-2xl max-h-[500px]"}
+      >
+        <div className="grid grid-cols-2 gap-4">
+          {virtualTours
+            ?.filter((tour) => tour._id !== virtualTour._id)
+            ?.map((tour) => (
+              <VTCard
+                key={tour?._id}
+                tour={tour}
+                isSelectionDialog={true}
+                buttonOnClick={() => {}}
+              />
+            ))}
+        </div>
+      </Dialog>
+    </div>
   );
 };
 

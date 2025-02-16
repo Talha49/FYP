@@ -9,16 +9,10 @@ import Dialog from "../_components/Dialog";
 import { fetchVirtualTours } from "@/lib/Features/VtourSlice";
 import { CgSpinnerTwo } from "react-icons/cg";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  CalendarDays,
-  InfoIcon,
-  Plus,
-  Search,
-  Telescope,
-} from "lucide-react";
+import { ArrowLeft, LoaderCircle, Plus, Search } from "lucide-react";
 import ShowVirtualTour from "../_components/ShowVirtualTour";
 import { formatTimestamp } from "../utils";
+import VTCard from "../_components/VTCard";
 
 const Page = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,6 +38,8 @@ const Page = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [isCustomDate, setIsCustomDate] = useState(false);
+  const [filteredTours, setFilteredTours] = useState([]);
+
 
   useEffect(() => {
     if (id) {
@@ -59,6 +55,18 @@ const Page = () => {
       };
     });
   }, [videoUrl]);
+
+  useEffect(() => {
+    // Filter tours based on search query and date range
+    const filteredVTs = virtualTours.filter((tour) => {
+      const matchesSearch = tour.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      const matchesDate = isDateInRange(tour.createdAt);
+      return matchesSearch && matchesDate;
+    });
+    setFilteredTours(filteredVTs);
+  }, [virtualTours, searchQuery, id, startDate, endDate, dateRange]);
 
   const validateForm = () => {
     let errors = {};
@@ -128,16 +136,7 @@ const Page = () => {
     }
   };
 
-  // Filter tours based on search query and date range
-  let filteredTours = virtualTours.filter((tour) => {
-    const matchesSearch = tour.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesDate = isDateInRange(tour.createdAt);
-    return matchesSearch && matchesDate;
-  });
-
-  const createVirtualTour = async () => {
+  const createVirtualTour = async (newVtourData) => {
     try {
       setCreatingVT(true);
       const response = await fetch("/api/v-tour/create", {
@@ -147,11 +146,11 @@ const Page = () => {
         },
         body: JSON.stringify(newVtourData),
       });
+      console.log("response: ", response);
       if (!response.ok) {
         throw new Error("Failed to create virtual tour");
       }
       const data = await response.json();
-      setVirtualTours((prevTours) => [...prevTours, data.virtualTour]);
       return data.virtualTour;
     } catch (error) {
       console.error("Error creating virtual tour:", error);
@@ -226,13 +225,18 @@ const Page = () => {
 
       setNewVtourData((prev) => ({
         ...prev,
-        frames: frameData,
+        frames: [...frameData],
       }));
+
       setIsProcessing(false);
-      const virtualTour = await createVirtualTour();
+      const virtualTour = await createVirtualTour({
+        ...newVtourData,
+        frames: frameData,
+      });
+
       if (virtualTour?._id) {
         alert("Virtual Tour created successfully!");
-        filteredTours = filteredTours.push(virtualTour);
+        setFilteredTours((prevTours) => [...prevTours, virtualTour]);
         setNewVtourData({
           name: "",
           description: "",
@@ -385,57 +389,13 @@ const Page = () => {
         {!loading &&
           filteredTours.length > 0 &&
           filteredTours.map((tour) => (
-            <div className="group relative bg-white rounded-xl border hover:scale-105 border-gray-200 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-xl">
-              {/* Image container with centered overlay effect */}
-              <div className="relative h-40 overflow-hidden">
-                {/* Overlay with centered info icon */}
-                <div className="absolute z-10 inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <CalendarDays
-                      size={22}
-                      className="text-white transform scale-0 group-hover:scale-100 transition-transform duration-300 cursor-pointer"
-                    />
-                    <p className="text-white">
-                      {formatTimestamp(tour?.createdAt)}
-                    </p>
-                  </div>
-                </div>
-
-                <img
-                  src={tour?.frames[0]?.url}
-                  alt={tour?.name}
-                  className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
-                />
-              </div>
-
-              {/* Content section */}
-              <div className="relative p-4 space-y-2">
-                {/* Title with animated underline */}
-                <h2 className="text-2xl font-bold text-gray-800">
-                  <span className="relative inline-block">
-                    {tour?.name}
-                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-500 group-hover:w-full transition-all duration-300" />
-                  </span>
-                </h2>
-
-                {/* Description with line clamp */}
-                <p className="text-gray-600 leading-relaxed line-clamp-3">
-                  {tour?.description}
-                </p>
-
-                {/* Button with hover effect */}
-                <div
-                  className="pt-2"
-                  onClick={() => {
-                    setSelectedVirtualTour(tour);
-                  }}
-                >
-                  <button className="flex items-center justify-center gap-2 w-full px-6 py-3 bg-blue-500 text-white font-semibold rounded-xl hover:bg-blue-600 active:bg-blue-700 transform transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 active:shadow-inner active:translate-y-0">
-                    <Telescope /> Explore Now
-                  </button>
-                </div>
-              </div>
-            </div>
+            <VTCard
+              key={tour._id}
+              tour={tour}
+              buttonOnClick={() => {
+                setSelectedVirtualTour(tour);
+              }}
+            />
           ))}
       </div>
       <Dialog
@@ -572,8 +532,9 @@ const Page = () => {
               </div>
             )}
             {creatingVT && (
-              <p className="text-center text-sm text-gray-600">
-                Please wait for a while
+              <p className="w-full text-gray-600 flex items-center justify-center gap-2">
+                <LoaderCircle className="animate-spin" />
+                <span className="text-sm">Please wait for a while</span>
               </p>
             )}
           </div>
@@ -595,7 +556,7 @@ const Page = () => {
               }
             }}
             className="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition disabled:bg-neutral-300 disabled:text-neutral-500 disabled:cursor-not-allowed"
-            disabled={isProcessing}
+            disabled={isProcessing || creatingVT}
           >
             {step === 3
               ? isProcessing

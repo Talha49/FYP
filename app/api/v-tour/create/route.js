@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 export async function POST(req) {
   try {
     const { name, description, videoUrl, frames, inspectionId } = await req.json();
+    console.log({ name, description, videoUrl, frames, inspectionId })
     if (
       !name ||
       !description ||
