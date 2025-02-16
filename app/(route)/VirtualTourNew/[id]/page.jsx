@@ -273,7 +273,7 @@ const Page = () => {
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 max-w-5xl mx-auto overflow-x-hidden">
       <Link
         href={"/VirtualTourNew"}
         className="flex items-center gap-1 mb-6 text-sm border border-blue-500 bg-blue-50 text-blue-500 w-fit p-1 rounded"

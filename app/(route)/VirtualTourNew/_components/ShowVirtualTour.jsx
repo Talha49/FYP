@@ -3,10 +3,11 @@ import React, { useEffect, useRef, useState } from "react";
 import * as PANOLENS from "panolens";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import SwitchButton from "./SwitchButton";
-import { Plus, X } from "lucide-react";
+import { Info, Plus, SquareSplitHorizontal, X } from "lucide-react";
 import Dialog from "./Dialog";
 import { useSelector } from "react-redux";
 import VTCard from "./VTCard";
+import InfospotDrawer from "./InfospotDrawer";
 
 const ShowVirtualTour = ({ virtualTour }) => {
   const mainContainerRef = useRef(null);
@@ -25,6 +26,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const [clickedPanel, setClickedPanel] = useState(null);
   const [topPanelVT, setTopPanelVT] = useState(null);
   const [bottomPanelVT, setBottomPanelVT] = useState(null);
+  const [isOpenInfospotsDrawer, setIsOpenInfospotsDrawer] = useState(false);
 
   useEffect(() => {
     if (!isSplitModeOn) {
@@ -202,17 +204,25 @@ const ShowVirtualTour = ({ virtualTour }) => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex justify-end items-center mb-4 gap-2 absolute top-3.5 right-20 z-20">
-        <h1
-          className={`${
-            isSplitModeOn ? "text-blue-500" : "text-black"
-          } text-xl transition-all`}
+      <div className="flex justify-end items-center mb-4 gap-4 absolute top-2 right-20 z-20 w-full">
+        <div className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 border border-blue-500 text-blue-500 p-2 rounded-lg transition-all">
+          <h1
+            className={`${
+              isSplitModeOn ? "text-blue-500" : "text-blue-500"
+            } transition-all flex items-center gap-2`}
+          >
+            <SquareSplitHorizontal size={18} />
+            Split Mode
+          </h1>
+          <SwitchButton checked={isSplitModeOn} onChange={setIsSplitModeOn} />
+        </div>
+        <button
+          onClick={() => setIsOpenInfospotsDrawer(true)}
+          className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 border border-blue-500 text-blue-500 p-2 rounded-lg transition-all"
         >
-          Split Mode
-        </h1>
-        <SwitchButton checked={isSplitModeOn} onChange={setIsSplitModeOn} />
+          <Info size={18} /> View Infospots
+        </button>
       </div>
-
       <PanelGroup
         direction="horizontal"
         className="h-screen border"
@@ -232,7 +242,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
 
         {isSplitModeOn && (
           <>
-            <PanelResizeHandle className="w-1 bg-neutral-100 hover:bg-blue-600 transition-all cursor-col-resize" />
+            <PanelResizeHandle className="w-1 bg-blue-300 hover:bg-blue-600 transition-all cursor-col-resize" />
             <Panel
               defaultSize={50}
               minSize={0}
@@ -277,14 +287,25 @@ const ShowVirtualTour = ({ virtualTour }) => {
                       </button>
                     </div>
                   ) : (
-                    <Plus
-                      size={80}
-                      className="cursor-pointer text-blue-500 transition-transform duration-200 group-hover:scale-110 group-hover:text-blue-600"
-                    />
+                    <div className="cursor-pointer text-blue-500 transition-transform duration-300 group hover:text-blue-600 flex flex-col items-center justify-center space-y-2 p-4 bg-blue-50 w-full h-full">
+                      <Plus
+                        size={80}
+                        className="text-blue-500 transition-transform duration-300 group-hover:scale-110 group-hover:text-blue-600"
+                      />
+
+                      <h1 className="text-lg font-semibold text-gray-800 group-hover:text-blue-700">
+                        Add New Virtual Tour
+                      </h1>
+
+                      <p className="text-sm text-gray-500 group-hover:text-gray-700">
+                        Select another virtual tour to compare an immersive
+                        virtual experience.
+                      </p>
+                    </div>
                   )}
                 </Panel>
 
-                <PanelResizeHandle className="h-1 bg-neutral-100 hover:bg-blue-600 transition-all cursor-row-resize" />
+                <PanelResizeHandle className="h-1 bg-blue-300 hover:bg-blue-600 transition-all cursor-row-resize" />
 
                 <Panel
                   defaultSize={50}
@@ -323,10 +344,21 @@ const ShowVirtualTour = ({ virtualTour }) => {
                       </button>
                     </div>
                   ) : (
-                    <Plus
-                      size={80}
-                      className="cursor-pointer text-blue-500 transition-transform duration-200 group-hover:scale-110 group-hover:text-blue-600"
-                    />
+                    <div className="cursor-pointer text-blue-500 transition-transform duration-300 group hover:text-blue-600 flex flex-col items-center justify-center space-y-2 p-4 bg-blue-50 w-full h-full">
+                      <Plus
+                        size={80}
+                        className="text-blue-500 transition-transform duration-300 group-hover:scale-110 group-hover:text-blue-600"
+                      />
+
+                      <h1 className="text-lg font-semibold text-gray-800 group-hover:text-blue-700">
+                        Add New Virtual Tour
+                      </h1>
+
+                      <p className="text-sm text-gray-500 group-hover:text-gray-700">
+                        Select another virtual tour to compare an immersive
+                        virtual experience.
+                      </p>
+                    </div>
                   )}
                 </Panel>
               </PanelGroup>
@@ -334,7 +366,6 @@ const ShowVirtualTour = ({ virtualTour }) => {
           </>
         )}
       </PanelGroup>
-
       <Dialog
         isOpen={isOpenVtSelectionDialog}
         onClose={() => setIsOpenVtSelectionDialog(false)}
@@ -366,6 +397,16 @@ const ShowVirtualTour = ({ virtualTour }) => {
             ))}
         </div>
       </Dialog>
+      <InfospotDrawer
+        isOpen={isOpenInfospotsDrawer}
+        onClose={() => {
+          setIsOpenInfospotsDrawer(false);
+        }}
+        title={"Infospots"}
+        description={"List of infospots you have added to current virtual tour"}
+      >
+        Hello
+      </InfospotDrawer>
     </div>
   );
 };

@@ -44,7 +44,7 @@ const Dialog = ({
       onClick={closeDialog} // Click outside to close
     >
       <div
-        className={`relative bg-white rounded-xl shadow-xl w-full flex flex-col transition-transform duration-300 ${
+        className={`relative bg-white rounded-xl shadow-xl w-full flex flex-col transition-transform duration-300 overflow-x-hidden ${
           show
             ? "translate-y-0 opacity-100"
             : `${
