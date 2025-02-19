@@ -8,6 +8,7 @@ import Dialog from "./Dialog";
 import { useSelector } from "react-redux";
 import VTCard from "./VTCard";
 import InfospotDrawer from "./InfospotDrawer";
+import { TbMapPlus } from "react-icons/tb";
 
 const ShowVirtualTour = ({ virtualTour }) => {
   const mainContainerRef = useRef(null);
@@ -62,6 +63,11 @@ const ShowVirtualTour = ({ virtualTour }) => {
           "viewControl",
         ],
         output: "console",
+      });
+
+      container.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+        console.log("right clicked")
       });
 
       // Create panoramas
@@ -288,7 +294,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
                     </div>
                   ) : (
                     <div className="cursor-pointer text-blue-500 transition-transform duration-300 group hover:text-blue-600 flex flex-col items-center justify-center space-y-2 p-4 bg-blue-50 w-full h-full">
-                      <Plus
+                      <TbMapPlus
                         size={80}
                         className="text-blue-500 transition-transform duration-300 group-hover:scale-110 group-hover:text-blue-600"
                       />
@@ -345,7 +351,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
                     </div>
                   ) : (
                     <div className="cursor-pointer text-blue-500 transition-transform duration-300 group hover:text-blue-600 flex flex-col items-center justify-center space-y-2 p-4 bg-blue-50 w-full h-full">
-                      <Plus
+                      <TbMapPlus
                         size={80}
                         className="text-blue-500 transition-transform duration-300 group-hover:scale-110 group-hover:text-blue-600"
                       />
@@ -405,7 +411,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
         title={"Infospots"}
         description={"List of infospots you have added to current virtual tour"}
       >
-        Hello
+        List of infospots you have added to current virtual tour
       </InfospotDrawer>
     </div>
   );
