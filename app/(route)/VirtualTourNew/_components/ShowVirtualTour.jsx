@@ -29,6 +29,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const [topPanelVT, setTopPanelVT] = useState(null);
   const [bottomPanelVT, setBottomPanelVT] = useState(null);
   const [isOpenInfospotsDrawer, setIsOpenInfospotsDrawer] = useState(false);
+  const [isOpenCreateInfospotDialog, setIsOpenCreateInfospotDialog] =
+    useState(false);
 
   useEffect(() => {
     if (!isSplitModeOn) {
@@ -68,7 +70,44 @@ const ShowVirtualTour = ({ virtualTour }) => {
 
       container.addEventListener("contextmenu", (event) => {
         event.preventDefault();
-        console.log("right clicked");
+
+        const currentPanorama = viewerRef.current.panorama;
+        const frameId = Object.keys(panoramasRef.current).find(
+          (key) => panoramasRef.current[key] === currentPanorama
+        );
+        const rect = container.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / container.clientWidth) * 2 - 1;
+        const y =
+          -((event.clientY - rect.top) / container.clientHeight) * 2 + 1;
+
+        const raycaster = viewerRef.current.raycaster;
+        const camera = viewerRef.current.camera;
+        raycaster.setFromCamera({ x, y }, camera);
+
+        const intersects = raycaster.intersectObject(currentPanorama, true);
+
+        if (intersects.length > 0) {
+          const worldPosition = intersects[0].point;
+          const localPosition = currentPanorama.worldToLocal(
+            worldPosition.clone()
+          );
+          setIsOpenCreateInfospotDialog(true);
+
+          const spot = new PANOLENS.Infospot(300, "/images/alert.png");
+          spot.position.copy(localPosition);
+          spot.position.z += 50; // Move forward for better visibility
+          spot.scale.set(2, 2, 2); // Increase size
+          spot.lookAt(camera.position); // Face camera
+          spot.addHoverText("Infospot Title");
+
+          currentPanorama.add(spot);
+          viewerRef.current.update(); // Refresh scene
+
+          console.log("Infospot Local Position:", {
+            position: spot.position,
+            frameId,
+          });
+        }
       });
 
       // Create panoramas
@@ -228,6 +267,17 @@ const ShowVirtualTour = ({ virtualTour }) => {
 
       return newState;
     });
+  };
+
+  const createInfospotElement = (title, description) => {
+    const element = document.createElement("div");
+    element.innerHTML = `
+      <div class="bg-white w-[300px] p-4 shadow-lg rounded-lg">
+        <h3 class="text-xl font-bold mb-2">${title}</h3>
+        <hr/>
+        <p class="text-sm text-gray-700 mt-2">${description}</p>
+      </div>`;
+    return element;
   };
 
   const handleResize = () => {
@@ -454,6 +504,42 @@ const ShowVirtualTour = ({ virtualTour }) => {
             ))}
         </div>
       </Dialog>
+      {/* Create infospot dialog */}
+      <Dialog
+        isOpen={isOpenCreateInfospotDialog}
+        onClose={() => setIsOpenCreateInfospotDialog(false)}
+        title="Create Infospot"
+        className="max-w-[500px]"
+      >
+        <form className="flex flex-col gap-2">
+          <div>
+            <label htmlFor="title" className="text-sm text-gray-600">
+              Infospot Title
+            </label>
+            <input
+              id="title"
+              type="text"
+              placeholder="Infospot Title"
+              className="w-full p-2 border border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+            />
+          </div>
+          <div>
+            <label htmlFor="description" className="text-sm text-gray-600">
+              Infospot Description
+            </label>
+            <textarea
+              id="description"
+              placeholder="Infospot Description"
+              className="w-full h-32 p-2 border border-blue-500 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-600"
+            />
+          </div>
+
+          <button className="w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition">
+            Create Infospot
+          </button>
+        </form>
+      </Dialog>
+      {/* Infospots drawer */}
       <InfospotDrawer
         isOpen={isOpenInfospotsDrawer}
         onClose={() => {
