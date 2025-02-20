@@ -15,6 +15,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const topContainerRef = useRef(null);
   const bottomContainerRef = useRef(null);
   const mainViewerRef = useRef(null);
+  const activeViewerRef = useRef(null);
   const topViewerRef = useRef(null);
   const bottomViewerRef = useRef(null);
   const mainPanoramasRef = useRef({});
@@ -31,13 +32,16 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const [isOpenInfospotsDrawer, setIsOpenInfospotsDrawer] = useState(false);
   const [isOpenCreateInfospotDialog, setIsOpenCreateInfospotDialog] =
     useState(false);
+  const [activeEventVtId, setActiveEventVtId] = useState(null);
   const [newInfospotData, setNewInfospotData] = useState({
     title: "",
     description: "",
     frame_id: "",
     position: { x: 0, y: 0, z: 0 },
-    vt_id: virtualTour._id,
+    vt_id: null,
   });
+
+  console.log(newInfospotData);
 
   useEffect(() => {
     if (!isSplitModeOn) {
@@ -46,7 +50,22 @@ const ShowVirtualTour = ({ virtualTour }) => {
     }
   }, [isSplitModeOn]);
 
-  const initializeViewer = (container, frames, viewerRef, panoramasRef) => {
+  useEffect(() => {
+    if (activeEventVtId) {
+      setNewInfospotData((prev) => ({
+        ...prev,
+        vt_id: activeEventVtId,
+      }));
+    }
+  }, [activeEventVtId]);
+
+  const initializeViewer = (
+    container,
+    frames,
+    viewerRef,
+    panoramasRef,
+    vt_id
+  ) => {
     if (!container || !frames?.length) return;
 
     // Cleanup previous viewer
@@ -77,7 +96,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
 
       container.addEventListener("contextmenu", (event) => {
         event.preventDefault();
-
+        setActiveViewer(container);
+        setActiveEventVtId(vt_id);
         const currentPanorama = viewerRef.current.panorama;
         const frameId = Object.keys(panoramasRef.current).find(
           (key) => panoramasRef.current[key] === currentPanorama
@@ -100,16 +120,6 @@ const ShowVirtualTour = ({ virtualTour }) => {
           );
           setIsOpenCreateInfospotDialog(true);
 
-          const spot = new PANOLENS.Infospot(300, "/images/alert.png");
-          spot.position.copy(localPosition);
-          spot.position.z += 50; // Move forward for better visibility
-          spot.scale.set(2, 2, 2); // Increase size
-          spot.lookAt(camera.position); // Face camera
-          spot.addHoverText("Infospot Title");
-
-          currentPanorama.add(spot);
-          viewerRef.current.update(); // Refresh scene
-
           // Update new infospot data
           setNewInfospotData((prev) => ({
             ...prev,
@@ -120,11 +130,6 @@ const ShowVirtualTour = ({ virtualTour }) => {
               z: localPosition.z,
             },
           }));
-
-          console.log("Infospot Local Position:", {
-            position: spot.position,
-            frameId,
-          });
         }
       });
 
@@ -200,7 +205,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
       mainContainerRef.current,
       virtualTour.frames,
       mainViewerRef,
-      mainPanoramasRef
+      mainPanoramasRef,
+      virtualTour._id
     );
 
     // Setup ResizeObserver
@@ -235,7 +241,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
         topContainerRef.current,
         topPanelVT.frames,
         topViewerRef,
-        topPanoramasRef
+        topPanoramasRef,
+        topPanelVT._id
       );
       if (resizeObserverRef.current && topContainerRef.current) {
         resizeObserverRef.current.observe(topContainerRef.current);
@@ -250,7 +257,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
         bottomContainerRef.current,
         bottomPanelVT.frames,
         bottomViewerRef,
-        bottomPanoramasRef
+        bottomPanoramasRef,
+        bottomPanelVT._id
       );
       if (resizeObserverRef.current && bottomContainerRef.current) {
         resizeObserverRef.current.observe(bottomContainerRef.current);
@@ -302,9 +310,57 @@ const ShowVirtualTour = ({ virtualTour }) => {
     });
   };
 
+  const setActiveViewer = (container) => {
+    if (container === mainContainerRef.current) {
+      activeViewerRef.current = mainViewerRef.current;
+    } else if (container === topContainerRef.current) {
+      activeViewerRef.current = topViewerRef.current;
+    } else if (container === bottomContainerRef.current) {
+      activeViewerRef.current = bottomViewerRef.current;
+    }
+  };
+
   const handleCreateInfospot = async (e) => {
     e.preventDefault();
-    console.log("Creating infospot with data:", newInfospotData);
+    try {
+      const res = await fetch("/api/infospot/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newInfospotData),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to create infospot");
+      }
+      const data = await res.json();
+      const newInfospot = data.newInfospot;
+      console.log("Infospot created successfully:", data);
+      setIsOpenCreateInfospotDialog(false);
+      setNewInfospotData({
+        title: "",
+        description: "",
+        frame_id: "",
+        position: { x: 0, y: 0, z: 0 },
+        vt_id: virtualTour._id,
+      });
+      const camera = activeViewerRef.current.camera;
+      const currentPanorama = activeViewerRef.current.panorama;
+      if (!currentPanorama) {
+        throw new Error("No panorama active in current viewer");
+      }
+      const spot = new PANOLENS.Infospot(300, "/images/alert.png");
+      spot.position.copy(newInfospot.position);
+      spot.position.z += 50; // Move forward for better visibility
+      spot.scale.set(2, 2, 2); // Increase size
+      spot.lookAt(camera.position); // Face camera
+      spot.addHoverText(newInfospot.title);
+
+      currentPanorama.add(spot);
+      activeViewerRef.current.update(); // Refresh scene
+    } catch (error) {
+      console.log("Failed to create infospot:", error);
+    }
   };
 
   return (
