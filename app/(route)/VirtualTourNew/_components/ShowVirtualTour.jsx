@@ -30,8 +30,6 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const [bottomPanelVT, setBottomPanelVT] = useState(null);
   const [isOpenInfospotsDrawer, setIsOpenInfospotsDrawer] = useState(false);
 
-  console.log(isAutoRotateOn);
-
   useEffect(() => {
     if (!isSplitModeOn) {
       setTopPanelVT(null);
@@ -172,7 +170,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
       });
     };
   }, [virtualTour]);
-  
+
   // Initialize top panel viewer
   useEffect(() => {
     if (isSplitModeOn && topPanelVT?.frames?.length) {
@@ -204,20 +202,20 @@ const ShowVirtualTour = ({ virtualTour }) => {
   }, [bottomPanelVT]);
 
   const toggleAutoRotate = () => {
-    setIsAutoRotateOn(prevState => {
+    setIsAutoRotateOn((prevState) => {
       const newState = !prevState;
-      
+
       // Update all active viewers
       const viewers = [
         mainViewerRef.current,
         topViewerRef.current,
-        bottomViewerRef.current
+        bottomViewerRef.current,
       ].filter(Boolean);
-      
-      viewers.forEach(viewer => {
+
+      viewers.forEach((viewer) => {
         if (viewer && viewer.OrbitControls) {
           viewer.OrbitControls.autoRotate = newState;
-          
+
           // If turning off auto-rotate, reset the rotation angle and update controls
           if (!newState) {
             viewer.OrbitControls.autoRotateSpeed = 0;
@@ -227,7 +225,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
           }
         }
       });
-      
+
       return newState;
     });
   };
@@ -279,10 +277,15 @@ const ShowVirtualTour = ({ virtualTour }) => {
       </div>
       <PanelGroup
         direction="horizontal"
-        className="h-screen border"
+        className="h-screen border bg-blue-300 rounded-lg"
         onLayout={handleResize}
       >
-        <Panel defaultSize={50} minSize={20} maxSize={80}>
+        <Panel
+          defaultSize={50}
+          minSize={20}
+          maxSize={80}
+          className="rounded-lg bg-blue-300"
+        >
           <div
             ref={mainContainerRef}
             className="w-full h-full bg-black shadow-md"
@@ -301,14 +304,14 @@ const ShowVirtualTour = ({ virtualTour }) => {
               defaultSize={50}
               minSize={0}
               maxSize={80}
-              className="flex bg-neutral-300"
+              className="flex bg-blue-300"
             >
               <PanelGroup direction="vertical">
                 <Panel
                   defaultSize={50}
                   minSize={20}
                   maxSize={80}
-                  className="group flex items-center justify-center bg-neutral-300 bg-opacity-70 transition-all hover:bg-black hover:bg-opacity-70 backdrop-blur-md cursor-pointer"
+                  className="group flex items-center justify-center rounded-lg bg-blue-300 bg-opacity-70 transition-all hover:bg-black hover:bg-opacity-70 backdrop-blur-md cursor-pointer"
                   onClick={() => {
                     if (!topPanelVT) {
                       setIsOpenVtSelectionDialog(true);
@@ -365,7 +368,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
                   defaultSize={50}
                   minSize={20}
                   maxSize={80}
-                  className="group flex items-center justify-center bg-neutral-300 bg-opacity-70 transition-all hover:bg-black hover:bg-opacity-70 backdrop-blur-md cursor-pointer"
+                  className="group flex items-center justify-center rounded-lg bg-blue-300 bg-opacity-70 transition-all hover:bg-black hover:bg-opacity-70 backdrop-blur-md cursor-pointer"
                   onClick={() => {
                     if (!bottomPanelVT) {
                       setIsOpenVtSelectionDialog(true);
