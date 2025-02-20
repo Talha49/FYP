@@ -3,7 +3,14 @@ import React, { useEffect, useRef, useState } from "react";
 import * as PANOLENS from "panolens";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import SwitchButton from "./SwitchButton";
-import { Info, Plus, Rotate3d, SquareSplitHorizontal, X } from "lucide-react";
+import {
+  Info,
+  LoaderCircle,
+  Plus,
+  Rotate3d,
+  SquareSplitHorizontal,
+  X,
+} from "lucide-react";
 import Dialog from "./Dialog";
 import { useSelector } from "react-redux";
 import VTCard from "./VTCard";
@@ -40,6 +47,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
     position: { x: 0, y: 0, z: 0 },
     vt_id: null,
   });
+  const [creatingInfospot, setCreatingInfospot] = useState(false);
 
   console.log(newInfospotData);
 
@@ -322,6 +330,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
 
   const handleCreateInfospot = async (e) => {
     e.preventDefault();
+    setCreatingInfospot(true);
     try {
       const res = await fetch("/api/infospot/create", {
         method: "POST",
@@ -335,7 +344,6 @@ const ShowVirtualTour = ({ virtualTour }) => {
       }
       const data = await res.json();
       const newInfospot = data.newInfospot;
-      console.log("Infospot created successfully:", data);
       setIsOpenCreateInfospotDialog(false);
       setNewInfospotData({
         title: "",
@@ -360,6 +368,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
       activeViewerRef.current.update(); // Refresh scene
     } catch (error) {
       console.log("Failed to create infospot:", error);
+    } finally {
+      setCreatingInfospot(false);
     }
   };
 
@@ -627,9 +637,17 @@ const ShowVirtualTour = ({ virtualTour }) => {
 
           <button
             type="submit"
-            className="w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+            className="flex items-center justify-center w-full p-2 bg-blue-500 text-white disabled:bg-neutral-700 disabled:cursor-not-allowed rounded-md hover:bg-blue-600 transition"
+            disabled={creatingInfospot}
           >
-            Create Infospot
+            {creatingInfospot ? (
+              <p className="flex items-center gap-2">
+                <LoaderCircle size={18} className="animate-spin" />
+                <span>Creating Infospot...</span>
+              </p>
+            ) : (
+              "Create Infospot"
+            )}
           </button>
         </form>
       </Dialog>
