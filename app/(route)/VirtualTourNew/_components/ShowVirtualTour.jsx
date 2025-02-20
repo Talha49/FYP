@@ -6,7 +6,6 @@ import SwitchButton from "./SwitchButton";
 import {
   Info,
   LoaderCircle,
-  Plus,
   Rotate3d,
   SquareSplitHorizontal,
   X,
@@ -16,6 +15,7 @@ import { useSelector } from "react-redux";
 import VTCard from "./VTCard";
 import InfospotDrawer from "./InfospotDrawer";
 import { TbMapPlus } from "react-icons/tb";
+import { fetchInfospots } from "../utils";
 
 const ShowVirtualTour = ({ virtualTour }) => {
   const mainContainerRef = useRef(null);
@@ -48,8 +48,11 @@ const ShowVirtualTour = ({ virtualTour }) => {
     vt_id: null,
   });
   const [creatingInfospot, setCreatingInfospot] = useState(false);
+  const [mainVtInfospots, setMainVtInfospots] = useState([]);
+  const [topPanelVtInfospots, setTopPanelVtInfospots] = useState([]);
+  const [bottomPanelVtInfospots, setBottomPanelVtInfospots] = useState([]);
 
-  console.log(newInfospotData);
+  console.log({ mainVtInfospots, topPanelVtInfospots, bottomPanelVtInfospots });
 
   useEffect(() => {
     if (!isSplitModeOn) {
@@ -67,12 +70,28 @@ const ShowVirtualTour = ({ virtualTour }) => {
     }
   }, [activeEventVtId]);
 
+  const loadInfospots = async (id, setInfospots) => {
+    if (!id) {
+      console.warn("No ID provided for loading infospots.");
+      return [];
+    }
+    try {
+      const infospots = await fetchInfospots(id);
+      setInfospots(infospots);
+      return infospots;
+    } catch (error) {
+      console.error("Error loading infospots:", error);
+      return [];
+    }
+  };
+
   const initializeViewer = (
     container,
     frames,
     viewerRef,
     panoramasRef,
-    vt_id
+    vt_id,
+    setInfospots
   ) => {
     if (!container || !frames?.length) return;
 
@@ -101,6 +120,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
         ],
         output: "console",
       });
+
+      loadInfospots(vt_id, setInfospots);
 
       container.addEventListener("contextmenu", (event) => {
         event.preventDefault();
@@ -214,7 +235,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
       virtualTour.frames,
       mainViewerRef,
       mainPanoramasRef,
-      virtualTour._id
+      virtualTour._id,
+      setMainVtInfospots
     );
 
     // Setup ResizeObserver
@@ -250,7 +272,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
         topPanelVT.frames,
         topViewerRef,
         topPanoramasRef,
-        topPanelVT._id
+        topPanelVT._id,
+        setTopPanelVtInfospots
       );
       if (resizeObserverRef.current && topContainerRef.current) {
         resizeObserverRef.current.observe(topContainerRef.current);
@@ -266,7 +289,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
         bottomPanelVT.frames,
         bottomViewerRef,
         bottomPanoramasRef,
-        bottomPanelVT._id
+        bottomPanelVT._id,
+        setBottomPanelVtInfospots
       );
       if (resizeObserverRef.current && bottomContainerRef.current) {
         resizeObserverRef.current.observe(bottomContainerRef.current);

@@ -17,3 +17,19 @@ export function formatTimestamp(timestamp) {
 
   return `${formattedDate} at ${formattedTime}`;
 }
+
+export async function fetchInfospots(id) {
+  try {
+    const response = await fetch(`/api/infospot/get/${id}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch infospots: ${response.statusText}`);
+    }
+    const data = await response.json();
+    console.log(data)
+    
+    return data.infospots || []; // Ensure it returns an array
+  } catch (error) {
+    console.error("Error fetching infospots:", error);
+    return []; // Return an empty array instead of undefined
+  }
+}
