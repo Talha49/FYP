@@ -4,6 +4,8 @@ import * as PANOLENS from "panolens";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import SwitchButton from "./SwitchButton";
 import {
+  ArrowDown,
+  ChevronDown,
   Info,
   LoaderCircle,
   Rotate3d,
@@ -51,6 +53,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const [mainVtInfospots, setMainVtInfospots] = useState([]);
   const [topPanelVtInfospots, setTopPanelVtInfospots] = useState([]);
   const [bottomPanelVtInfospots, setBottomPanelVtInfospots] = useState([]);
+  const [activeInfospotTab, setActiveInfospotTab] = useState(1);
 
   console.log({ mainVtInfospots, topPanelVtInfospots, bottomPanelVtInfospots });
 
@@ -684,7 +687,142 @@ const ShowVirtualTour = ({ virtualTour }) => {
         title={"Infospots"}
         description={"List of infospots you have added to current virtual tour"}
       >
-        List of infospots you have added to current virtual tour
+        <div className="space-y-2">
+          <div
+            className={`${
+              activeInfospotTab === 1
+                ? "bg-blue-500 text-white"
+                : "bg-blue-100 text-blue-500"
+            } p-2 rounded-md cursor-pointer`}
+            onClick={() => {
+              setActiveInfospotTab(1);
+            }}
+          >
+            <h1 className="text-lg font-semibold flex items-center justify-between">
+              <span>Main Panel Infospots</span>
+              <ChevronDown
+                className={`${
+                  activeInfospotTab === 1 ? "rotate-180" : "rotate-0"
+                } transition-all`}
+              />
+            </h1>
+            {activeInfospotTab === 1 && (
+              <div className="space-y-2 mt-2">
+                {mainVtInfospots.length > 0 ? (
+                  mainVtInfospots.map((infospot) => (
+                    <div
+                      key={infospot._id}
+                      className="flex flex-col p-2 bg-blue-50 rounded-md"
+                    >
+                      <h1 className="text-lg text-black font-semibold">
+                        {infospot.title}
+                      </h1>
+                      <p className="text-sm text-gray-500">
+                        {infospot.description}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-white p-2">No infospots</p>
+                )}
+              </div>
+            )}
+          </div>
+          {isSplitModeOn && (
+            <>
+              <div
+                className={`${
+                  activeInfospotTab === 2
+                    ? "bg-blue-500 text-white"
+                    : "bg-blue-100 text-blue-500"
+                } p-2 rounded-md cursor-pointer`}
+                onClick={() => {
+                  setActiveInfospotTab(2);
+                }}
+              >
+                <h1 className="text-lg font-semibold flex items-center justify-between">
+                  <span>Top-Right Panel Infospots</span>
+                  <ChevronDown
+                    className={`${
+                      activeInfospotTab === 2 ? "rotate-180" : "rotate-0"
+                    } transition-all`}
+                  />
+                </h1>
+                {activeInfospotTab === 2 && (
+                  <div className="space-y-2 mt-2">
+                    {topPanelVtInfospots.length > 0 ? (
+                      topPanelVtInfospots.map((infospot) => (
+                        <div
+                          key={infospot._id}
+                          className="flex flex-col p-2 bg-blue-50 rounded-md"
+                        >
+                          <h1 className="text-lg text-black font-semibold">
+                            {infospot.title}
+                          </h1>
+                          <p className="text-sm text-gray-500">
+                            {infospot.description}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-white p-2">
+                        {!topPanelVT && "Please open virtual tour first"}
+                        {topPanelVT &&
+                          topPanelVtInfospots.length === 0 &&
+                          "No infospots"}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div
+                className={`${
+                  activeInfospotTab === 3
+                    ? "bg-blue-500 text-white"
+                    : "bg-blue-100 text-blue-500"
+                } p-2 rounded-md cursor-pointer`}
+                onClick={() => {
+                  setActiveInfospotTab(3);
+                }}
+              >
+                <h1 className="text-lg font-semibold flex items-center justify-between">
+                  <span>Bottom-Right Panel Infospots</span>
+                  <ChevronDown
+                    className={`${
+                      activeInfospotTab === 3 ? "rotate-180" : "rotate-0"
+                    } transition-all`}
+                  />
+                </h1>
+                {activeInfospotTab === 3 && (
+                  <div className="space-y-2 mt-2">
+                    {bottomPanelVtInfospots.length > 0 ? (
+                      bottomPanelVtInfospots.map((infospot) => (
+                        <div
+                          key={infospot._id}
+                          className="flex flex-col p-2 bg-blue-50 rounded-md"
+                        >
+                          <h1 className="text-lg text-black font-semibold">
+                            {infospot.title}
+                          </h1>
+                          <p className="text-sm text-gray-500">
+                            {infospot.description}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-white p-2">
+                        {!bottomPanelVT && "Please open virtual tour first"}
+                        {bottomPanelVT &&
+                          bottomPanelVtInfospots.length === 0 &&
+                          "No infospots"}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
       </InfospotDrawer>
     </div>
   );
