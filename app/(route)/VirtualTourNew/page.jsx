@@ -2,12 +2,10 @@
 import { createInspection, fetchInspections } from "@/lib/Features/VtourSlice";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import { FaArrowRight } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
 import { CgSpinnerTwo } from "react-icons/cg";
 import Dialog from "./_components/Dialog";
 import { ArrowRight, Plus, Search } from "lucide-react";
-import ShowVirtualTour from "./_components/ShowVirtualTour";
 
 const VirtualTour = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -35,7 +33,7 @@ const VirtualTour = () => {
   };
 
   // Filter tours based on search query and selected category
-  let filteredInspections = inspections.filter((tour) =>
+  let filteredInspections = inspections?.filter((tour) =>
     tour.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -101,7 +99,7 @@ const VirtualTour = () => {
       ) : error ? (
         <div className="text-red-500 text-lg">{error.message}</div>
       ) : null}
-      {filteredInspections.length === 0 && !loading && !error ? (
+      {filteredInspections?.length === 0 && !loading && !error ? (
         <p className="text-center text-gray-500 text-lg">
           No inspections found.
         </p>

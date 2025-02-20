@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import * as PANOLENS from "panolens";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import SwitchButton from "./SwitchButton";
-import { Info, Plus, SquareSplitHorizontal, X } from "lucide-react";
+import { Info, Plus, Rotate3d, SquareSplitHorizontal, X } from "lucide-react";
 import Dialog from "./Dialog";
 import { useSelector } from "react-redux";
 import VTCard from "./VTCard";
@@ -22,12 +22,15 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const bottomPanoramasRef = useRef({});
   const resizeObserverRef = useRef(null);
   const [isSplitModeOn, setIsSplitModeOn] = useState(false);
+  const [isAutoRotateOn, setIsAutoRotateOn] = useState(true);
   const [isOpenVtSelectionDialog, setIsOpenVtSelectionDialog] = useState(false);
   const { virtualTours } = useSelector((state) => state.VTour);
   const [clickedPanel, setClickedPanel] = useState(null);
   const [topPanelVT, setTopPanelVT] = useState(null);
   const [bottomPanelVT, setBottomPanelVT] = useState(null);
   const [isOpenInfospotsDrawer, setIsOpenInfospotsDrawer] = useState(false);
+
+  console.log(isAutoRotateOn);
 
   useEffect(() => {
     if (!isSplitModeOn) {
@@ -49,7 +52,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
       // Initialize viewer
       viewerRef.current = new PANOLENS.Viewer({
         container: container,
-        autoRotate: true,
+        autoRotate: isAutoRotateOn,
         autoRotateSpeed: 0.7,
         controlBar: true,
         controlButtons: [
@@ -67,7 +70,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
 
       container.addEventListener("contextmenu", (event) => {
         event.preventDefault();
-        console.log("right clicked")
+        console.log("right clicked");
       });
 
       // Create panoramas
@@ -169,7 +172,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
       });
     };
   }, [virtualTour]);
-
+  
   // Initialize top panel viewer
   useEffect(() => {
     if (isSplitModeOn && topPanelVT?.frames?.length) {
@@ -183,7 +186,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
         resizeObserverRef.current.observe(topContainerRef.current);
       }
     }
-  }, [topPanelVT, isSplitModeOn]);
+  }, [topPanelVT]);
 
   // Initialize bottom panel viewer
   useEffect(() => {
@@ -198,7 +201,36 @@ const ShowVirtualTour = ({ virtualTour }) => {
         resizeObserverRef.current.observe(bottomContainerRef.current);
       }
     }
-  }, [bottomPanelVT, isSplitModeOn]);
+  }, [bottomPanelVT]);
+
+  const toggleAutoRotate = () => {
+    setIsAutoRotateOn(prevState => {
+      const newState = !prevState;
+      
+      // Update all active viewers
+      const viewers = [
+        mainViewerRef.current,
+        topViewerRef.current,
+        bottomViewerRef.current
+      ].filter(Boolean);
+      
+      viewers.forEach(viewer => {
+        if (viewer && viewer.OrbitControls) {
+          viewer.OrbitControls.autoRotate = newState;
+          
+          // If turning off auto-rotate, reset the rotation angle and update controls
+          if (!newState) {
+            viewer.OrbitControls.autoRotateSpeed = 0;
+            viewer.OrbitControls.update();
+          } else {
+            viewer.OrbitControls.autoRotateSpeed = 0.7; // or whatever speed you prefer
+          }
+        }
+      });
+      
+      return newState;
+    });
+  };
 
   const handleResize = () => {
     [mainViewerRef, topViewerRef, bottomViewerRef].forEach((ref) => {
@@ -217,10 +249,26 @@ const ShowVirtualTour = ({ virtualTour }) => {
               isSplitModeOn ? "text-blue-500" : "text-blue-500"
             } transition-all flex items-center gap-2`}
           >
+            <Rotate3d size={18} />
+            Auto Rotate
+          </h1>
+          <SwitchButton checked={isAutoRotateOn} onChange={toggleAutoRotate} />
+        </div>
+        <div className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 border border-blue-500 text-blue-500 p-2 rounded-lg transition-all">
+          <h1
+            className={`${
+              isSplitModeOn ? "text-blue-500" : "text-blue-500"
+            } transition-all flex items-center gap-2`}
+          >
             <SquareSplitHorizontal size={18} />
             Split Mode
           </h1>
-          <SwitchButton checked={isSplitModeOn} onChange={setIsSplitModeOn} />
+          <SwitchButton
+            checked={isSplitModeOn}
+            onChange={() => {
+              setIsSplitModeOn(!isSplitModeOn);
+            }}
+          />
         </div>
         <button
           onClick={() => setIsOpenInfospotsDrawer(true)}
