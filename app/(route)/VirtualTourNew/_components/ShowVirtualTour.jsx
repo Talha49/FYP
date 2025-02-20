@@ -31,6 +31,13 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const [isOpenInfospotsDrawer, setIsOpenInfospotsDrawer] = useState(false);
   const [isOpenCreateInfospotDialog, setIsOpenCreateInfospotDialog] =
     useState(false);
+  const [newInfospotData, setNewInfospotData] = useState({
+    title: "",
+    description: "",
+    frame_id: "",
+    position: { x: 0, y: 0, z: 0 },
+    vt_id: virtualTour._id,
+  });
 
   useEffect(() => {
     if (!isSplitModeOn) {
@@ -102,6 +109,17 @@ const ShowVirtualTour = ({ virtualTour }) => {
 
           currentPanorama.add(spot);
           viewerRef.current.update(); // Refresh scene
+
+          // Update new infospot data
+          setNewInfospotData((prev) => ({
+            ...prev,
+            frame_id: frameId,
+            position: {
+              x: localPosition.x,
+              y: localPosition.y,
+              z: localPosition.z,
+            },
+          }));
 
           console.log("Infospot Local Position:", {
             position: spot.position,
@@ -240,6 +258,14 @@ const ShowVirtualTour = ({ virtualTour }) => {
     }
   }, [bottomPanelVT]);
 
+  const handleResize = () => {
+    [mainViewerRef, topViewerRef, bottomViewerRef].forEach((ref) => {
+      if (ref.current) {
+        ref.current.onWindowResize();
+      }
+    });
+  };
+
   const toggleAutoRotate = () => {
     setIsAutoRotateOn((prevState) => {
       const newState = !prevState;
@@ -269,23 +295,16 @@ const ShowVirtualTour = ({ virtualTour }) => {
     });
   };
 
-  const createInfospotElement = (title, description) => {
-    const element = document.createElement("div");
-    element.innerHTML = `
-      <div class="bg-white w-[300px] p-4 shadow-lg rounded-lg">
-        <h3 class="text-xl font-bold mb-2">${title}</h3>
-        <hr/>
-        <p class="text-sm text-gray-700 mt-2">${description}</p>
-      </div>`;
-    return element;
+  const handleChange = (e) => {
+    setNewInfospotData({
+      ...newInfospotData,
+      [e.target.name]: e.target.value,
+    });
   };
 
-  const handleResize = () => {
-    [mainViewerRef, topViewerRef, bottomViewerRef].forEach((ref) => {
-      if (ref.current) {
-        ref.current.onWindowResize();
-      }
-    });
+  const handleCreateInfospot = async (e) => {
+    e.preventDefault();
+    console.log("Creating infospot with data:", newInfospotData);
   };
 
   return (
@@ -507,17 +526,31 @@ const ShowVirtualTour = ({ virtualTour }) => {
       {/* Create infospot dialog */}
       <Dialog
         isOpen={isOpenCreateInfospotDialog}
-        onClose={() => setIsOpenCreateInfospotDialog(false)}
+        onClose={() => {
+          setIsOpenCreateInfospotDialog(false);
+          setNewInfospotData({
+            title: "",
+            description: "",
+            frame_id: "",
+            position: { x: 0, y: 0, z: 0 },
+            vt_id: virtualTour._id,
+          });
+        }}
         title="Create Infospot"
         className="max-w-[500px]"
       >
-        <form className="flex flex-col gap-2">
+        <form
+          onSubmit={(e) => handleCreateInfospot(e)}
+          className="flex flex-col gap-2"
+        >
           <div>
             <label htmlFor="title" className="text-sm text-gray-600">
               Infospot Title
             </label>
             <input
               id="title"
+              name="title"
+              onChange={handleChange}
               type="text"
               placeholder="Infospot Title"
               className="w-full p-2 border border-blue-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
@@ -529,12 +562,17 @@ const ShowVirtualTour = ({ virtualTour }) => {
             </label>
             <textarea
               id="description"
+              name="description"
+              onChange={handleChange}
               placeholder="Infospot Description"
               className="w-full h-32 p-2 border border-blue-500 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
           </div>
 
-          <button className="w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition">
+          <button
+            type="submit"
+            className="w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+          >
             Create Infospot
           </button>
         </form>
