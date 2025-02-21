@@ -55,8 +55,6 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const [bottomPanelVtInfospots, setBottomPanelVtInfospots] = useState([]);
   const [activeInfospotTab, setActiveInfospotTab] = useState(1);
 
-  console.log({ mainVtInfospots, topPanelVtInfospots, bottomPanelVtInfospots });
-
   useEffect(() => {
     if (!isSplitModeOn) {
       setTopPanelVT(null);
@@ -94,7 +92,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
     viewerRef,
     panoramasRef,
     vt_id,
-    setInfospots
+    setInfospots,
+    infospots
   ) => {
     if (!container || !frames?.length) return;
 
@@ -168,12 +167,34 @@ const ShowVirtualTour = ({ virtualTour }) => {
       // Create panoramas
       frames.forEach((frame, index) => {
         const panorama = new PANOLENS.ImagePanorama(frame.url);
+
         panorama.addEventListener("load", () => {
           console.log(`Loaded frame ${index + 1}`);
         });
 
+        // Store panorama reference
         panoramasRef.current[frame._id] = panorama;
         viewerRef.current.add(panorama);
+
+        // Attach infospots to the respective panorama
+        const frameInfospots = infospots.filter(
+          (spot) => spot.frame_id === frame._id
+        );
+        frameInfospots.forEach((spot) => {
+          const infoSpot = new PANOLENS.Infospot(300, PANOLENS.DataImage.Info);
+          infoSpot.position.set(
+            spot.position.x,
+            spot.position.y,
+            spot.position.z
+          );
+          infoSpot.addHoverText(spot.title, 30);
+
+          infoSpot.addEventListener("click", () => {
+            alert(`${spot.title}: ${spot.description}`);
+          });
+
+          panorama.add(infoSpot);
+        });
 
         // Add navigation hotspots
         if (index > 0) {
@@ -239,7 +260,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
       mainViewerRef,
       mainPanoramasRef,
       virtualTour._id,
-      setMainVtInfospots
+      setMainVtInfospots,
+      virtualTour.infospots
     );
 
     // Setup ResizeObserver
@@ -276,7 +298,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
         topViewerRef,
         topPanoramasRef,
         topPanelVT._id,
-        setTopPanelVtInfospots
+        setTopPanelVtInfospots,
+        topPanelVT.infospots
       );
       if (resizeObserverRef.current && topContainerRef.current) {
         resizeObserverRef.current.observe(topContainerRef.current);
@@ -293,7 +316,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
         bottomViewerRef,
         bottomPanoramasRef,
         bottomPanelVT._id,
-        setBottomPanelVtInfospots
+        setBottomPanelVtInfospots,
+        bottomPanelVT.infospots
       );
       if (resizeObserverRef.current && bottomContainerRef.current) {
         resizeObserverRef.current.observe(bottomContainerRef.current);
@@ -384,7 +408,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
       if (!currentPanorama) {
         throw new Error("No panorama active in current viewer");
       }
-      const spot = new PANOLENS.Infospot(300, "/images/alert.png");
+      const spot = new PANOLENS.Infospot(300, PANOLENS.DataImage.Info);
       spot.position.copy(newInfospot.position);
       spot.position.z += 50; // Move forward for better visibility
       spot.scale.set(2, 2, 2); // Increase size
@@ -688,139 +712,81 @@ const ShowVirtualTour = ({ virtualTour }) => {
         description={"List of infospots you have added to current virtual tour"}
       >
         <div className="space-y-2">
-          <div
-            className={`${
-              activeInfospotTab === 1
-                ? "bg-blue-500 text-white"
-                : "bg-blue-100 text-blue-500"
-            } p-2 rounded-md cursor-pointer`}
-            onClick={() => {
-              setActiveInfospotTab(1);
-            }}
-          >
-            <h1 className="text-lg font-semibold flex items-center justify-between">
-              <span>Main Panel Infospots</span>
-              <ChevronDown
-                className={`${
-                  activeInfospotTab === 1 ? "rotate-180" : "rotate-0"
-                } transition-all`}
-              />
-            </h1>
-            {activeInfospotTab === 1 && (
-              <div className="space-y-2 mt-2">
-                {mainVtInfospots.length > 0 ? (
-                  mainVtInfospots.map((infospot) => (
-                    <div
-                      key={infospot._id}
-                      className="flex flex-col p-2 bg-blue-50 rounded-md"
-                    >
-                      <h1 className="text-lg text-black font-semibold">
-                        {infospot.title}
-                      </h1>
-                      <p className="text-sm text-gray-500">
-                        {infospot.description}
-                      </p>
+          {[
+            {
+              id: 1,
+              title: "Main Panel Infospots",
+              data: mainVtInfospots,
+            },
+            {
+              id: 2,
+              title: "Top-Right Panel Infospots",
+              data: topPanelVtInfospots,
+              isVisible: isSplitModeOn && topPanelVT,
+              emptyMessage: !topPanelVT
+                ? "Please open virtual tour first"
+                : "No infospots",
+            },
+            {
+              id: 3,
+              title: "Bottom-Right Panel Infospots",
+              data: bottomPanelVtInfospots,
+              isVisible: isSplitModeOn && bottomPanelVT,
+              emptyMessage: !bottomPanelVT
+                ? "Please open virtual tour first"
+                : "No infospots",
+            },
+          ].map(
+            ({
+              id,
+              title,
+              data,
+              isVisible = true,
+              emptyMessage = "No infospots",
+            }) =>
+              isVisible ? (
+                <div
+                  key={id}
+                  className={`${
+                    activeInfospotTab === id
+                      ? "bg-blue-500 text-white"
+                      : "bg-blue-100 text-blue-500"
+                  } p-2 rounded-md cursor-pointer`}
+                  onClick={() => setActiveInfospotTab(id)}
+                >
+                  <h1 className="text-lg font-semibold flex items-center justify-between">
+                    <span>{title}</span>
+                    <ChevronDown
+                      className={`${
+                        activeInfospotTab === id ? "rotate-180" : "rotate-0"
+                      } transition-all`}
+                    />
+                  </h1>
+                  {activeInfospotTab === id && (
+                    <div className="space-y-2 mt-2">
+                      {data.length ? (
+                        data.map((infospot) => (
+                          <div
+                            key={infospot._id}
+                            className="flex flex-col p-2 bg-blue-50 rounded-md"
+                          >
+                            <h1 className="text-lg text-black font-semibold">
+                              {infospot.title}
+                            </h1>
+                            <p className="text-sm text-gray-500">
+                              {infospot.description}
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-600 p-2">
+                          {emptyMessage}
+                        </p>
+                      )}
                     </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-white p-2">No infospots</p>
-                )}
-              </div>
-            )}
-          </div>
-          {isSplitModeOn && (
-            <>
-              <div
-                className={`${
-                  activeInfospotTab === 2
-                    ? "bg-blue-500 text-white"
-                    : "bg-blue-100 text-blue-500"
-                } p-2 rounded-md cursor-pointer`}
-                onClick={() => {
-                  setActiveInfospotTab(2);
-                }}
-              >
-                <h1 className="text-lg font-semibold flex items-center justify-between">
-                  <span>Top-Right Panel Infospots</span>
-                  <ChevronDown
-                    className={`${
-                      activeInfospotTab === 2 ? "rotate-180" : "rotate-0"
-                    } transition-all`}
-                  />
-                </h1>
-                {activeInfospotTab === 2 && (
-                  <div className="space-y-2 mt-2">
-                    {topPanelVtInfospots.length > 0 ? (
-                      topPanelVtInfospots.map((infospot) => (
-                        <div
-                          key={infospot._id}
-                          className="flex flex-col p-2 bg-blue-50 rounded-md"
-                        >
-                          <h1 className="text-lg text-black font-semibold">
-                            {infospot.title}
-                          </h1>
-                          <p className="text-sm text-gray-500">
-                            {infospot.description}
-                          </p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-sm text-white p-2">
-                        {!topPanelVT && "Please open virtual tour first"}
-                        {topPanelVT &&
-                          topPanelVtInfospots.length === 0 &&
-                          "No infospots"}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div
-                className={`${
-                  activeInfospotTab === 3
-                    ? "bg-blue-500 text-white"
-                    : "bg-blue-100 text-blue-500"
-                } p-2 rounded-md cursor-pointer`}
-                onClick={() => {
-                  setActiveInfospotTab(3);
-                }}
-              >
-                <h1 className="text-lg font-semibold flex items-center justify-between">
-                  <span>Bottom-Right Panel Infospots</span>
-                  <ChevronDown
-                    className={`${
-                      activeInfospotTab === 3 ? "rotate-180" : "rotate-0"
-                    } transition-all`}
-                  />
-                </h1>
-                {activeInfospotTab === 3 && (
-                  <div className="space-y-2 mt-2">
-                    {bottomPanelVtInfospots.length > 0 ? (
-                      bottomPanelVtInfospots.map((infospot) => (
-                        <div
-                          key={infospot._id}
-                          className="flex flex-col p-2 bg-blue-50 rounded-md"
-                        >
-                          <h1 className="text-lg text-black font-semibold">
-                            {infospot.title}
-                          </h1>
-                          <p className="text-sm text-gray-500">
-                            {infospot.description}
-                          </p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-sm text-white p-2">
-                        {!bottomPanelVT && "Please open virtual tour first"}
-                        {bottomPanelVT &&
-                          bottomPanelVtInfospots.length === 0 &&
-                          "No infospots"}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </>
+                  )}
+                </div>
+              ) : null
           )}
         </div>
       </InfospotDrawer>

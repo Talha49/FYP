@@ -1,4 +1,5 @@
 import dbConnect from "@/lib/connectdb/connection";
+import Infospot from "@/lib/models/Infospot";
 import VTour from "@/lib/models/VTour";
 import { NextResponse } from "next/server";
 
@@ -15,16 +16,17 @@ export async function GET(req, { params }) {
     const virtualTours = await VTour.find({
       inspectionId: id,
     });
-    if (!virtualTours) {
-      return NextResponse.json(
-        { message: "Virtual tours not found" },
-        { status: 404 }
-      );
-    }
+    // Fetch infospots for each virtual tour
+    const virtualToursWithInfospots = await Promise.all(
+      virtualTours.map(async (vt) => {
+        const infospots = await Infospot.find({ vt_id: vt._id });
+        return { ...vt.toObject(), infospots }; // Convert Mongoose document to object
+      })
+    );
     return NextResponse.json(
       {
         message: "Virtual tours fetched successfully",
-        virtualTours,
+        virtualTours: virtualToursWithInfospots,
       },
       { status: 200 }
     );
