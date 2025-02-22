@@ -4,12 +4,15 @@ import * as PANOLENS from "panolens";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import SwitchButton from "./SwitchButton";
 import {
-  ArrowDown,
   ChevronDown,
   Info,
   LoaderCircle,
+  Pencil,
   Rotate3d,
   SquareSplitHorizontal,
+  Tag,
+  Trash2,
+  TriangleAlert,
   X,
 } from "lucide-react";
 import Dialog from "./Dialog";
@@ -54,6 +57,10 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const [topPanelVtInfospots, setTopPanelVtInfospots] = useState([]);
   const [bottomPanelVtInfospots, setBottomPanelVtInfospots] = useState([]);
   const [activeInfospotTab, setActiveInfospotTab] = useState(1);
+  const [isOpenConfirmDeleteDialog, setIsOpenConfirmDeleteDialog] =
+    useState(false);
+  const [isEditingInfospot, setIsEditingInfospot] = useState(false);
+  const [editingInfospot, setEditingInfospot] = useState(false);
 
   useEffect(() => {
     if (!isSplitModeOn) {
@@ -652,8 +659,9 @@ const ShowVirtualTour = ({ virtualTour }) => {
             position: { x: 0, y: 0, z: 0 },
             vt_id: virtualTour._id,
           });
+          setIsEditingInfospot(false);
         }}
-        title="Create Infospot"
+        title={isEditingInfospot ? "Edit Infospot" : "Create Infospot"}
         className="max-w-[500px]"
       >
         <form
@@ -667,6 +675,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
             <input
               id="title"
               name="title"
+              value={newInfospotData.title}
               onChange={handleChange}
               type="text"
               placeholder="Infospot Title"
@@ -680,26 +689,69 @@ const ShowVirtualTour = ({ virtualTour }) => {
             <textarea
               id="description"
               name="description"
+              value={newInfospotData.description}
               onChange={handleChange}
               placeholder="Infospot Description"
               className="w-full h-32 p-2 border border-blue-500 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
           </div>
 
-          <button
-            type="submit"
-            className="flex items-center justify-center w-full p-2 bg-blue-500 text-white disabled:bg-neutral-700 disabled:cursor-not-allowed rounded-md hover:bg-blue-600 transition"
-            disabled={creatingInfospot}
-          >
-            {creatingInfospot ? (
-              <p className="flex items-center gap-2">
-                <LoaderCircle size={18} className="animate-spin" />
-                <span>Creating Infospot...</span>
-              </p>
+          <div className="flex items-center gap-4">
+            <button
+              className="flex items-center justify-center gap-2 p-2 w-full bg-neutral-100 text-neutral-800 border rounded-md hover:bg-neutral-200 transition"
+              onClick={() => {
+                setIsOpenCreateInfospotDialog(false);
+                setNewInfospotData({
+                  title: "",
+                  description: "",
+                  frame_id: "",
+                  position: { x: 0, y: 0, z: 0 },
+                  vt_id: virtualTour._id,
+                });
+                setIsEditingInfospot(false);
+              }}
+            >
+              <X size={18} />
+              <span>Cancel</span>
+            </button>
+            {!isEditingInfospot ? (
+              <button
+                type="submit"
+                className="flex items-center justify-center w-full p-2 bg-blue-500 text-white disabled:bg-neutral-700 disabled:cursor-not-allowed rounded-md hover:bg-blue-600 transition"
+                disabled={creatingInfospot}
+              >
+                {creatingInfospot ? (
+                  <p className="flex items-center gap-2">
+                    <LoaderCircle size={18} className="animate-spin" />
+                    <span>Creating Infospot...</span>
+                  </p>
+                ) : (
+                  <p className="flex items-center gap-2">
+                    <Tag size={18} />
+                    <span>Create Infospot</span>
+                  </p>
+                )}
+              </button>
             ) : (
-              "Create Infospot"
+              <button
+                className="flex items-center justify-center w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+                disabled={editingInfospot}
+                onClick={() => {}}
+              >
+                {editingInfospot ? (
+                  <p className="flex items-center gap-2">
+                    <LoaderCircle size={18} className="animate-spin" />
+                    <span>Updating Infospot...</span>
+                  </p>
+                ) : (
+                  <p className="flex items-center gap-2">
+                    <Tag size={18} />
+                    <span>Update Infospot</span>
+                  </p>
+                )}
+              </button>
             )}
-          </button>
+          </div>
         </form>
       </Dialog>
       {/* Infospots drawer */}
@@ -768,7 +820,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
                         data.map((infospot) => (
                           <div
                             key={infospot._id}
-                            className="flex flex-col p-2 bg-blue-50 rounded-md"
+                            className="relative flex flex-col p-2 bg-blue-50 rounded-md"
                           >
                             <h1 className="text-lg text-black font-semibold">
                               {infospot.title}
@@ -776,10 +828,34 @@ const ShowVirtualTour = ({ virtualTour }) => {
                             <p className="text-sm text-gray-500">
                               {infospot.description}
                             </p>
+                            <div className="absolute top-2 right-2 flex items-center gap-2">
+                              <Pencil
+                                size={15}
+                                className="text-black hover:scale-110 hover:rotate-3 transition-all"
+                                onClick={() => {
+                                  setNewInfospotData({
+                                    title: infospot.title,
+                                    description: infospot.description,
+                                    frame_id: infospot.frame_id,
+                                    position: infospot.position,
+                                    vt_id: infospot.vt_id,
+                                  });
+                                  setIsEditingInfospot(true);
+                                  setIsOpenCreateInfospotDialog(true);
+                                }}
+                              />
+                              <Trash2
+                                size={15}
+                                className="text-red-600 hover:scale-110 hover:rotate-3 transition-all"
+                                onClick={() =>
+                                  setIsOpenConfirmDeleteDialog(true)
+                                }
+                              />
+                            </div>
                           </div>
                         ))
                       ) : (
-                        <p className="text-sm text-gray-600 p-2">
+                        <p className="text-sm text-gray-100 p-2">
                           {emptyMessage}
                         </p>
                       )}
@@ -790,6 +866,52 @@ const ShowVirtualTour = ({ virtualTour }) => {
           )}
         </div>
       </InfospotDrawer>
+      {/* Confirmation Delete dialog */}
+      <Dialog
+        title={"Please Confirm!"}
+        isOpen={isOpenConfirmDeleteDialog}
+        onClose={() => {
+          setIsOpenConfirmDeleteDialog(false);
+        }}
+        className="max-w-[550px]"
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex gap-4">
+            <div className="flex items-center justify-center">
+              <span className="bg-yellow-100 p-3 flex items-center justify-center rounded-full">
+                <TriangleAlert size={40} className="text-yellow-500" />
+              </span>
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold">
+                Are you sure you want to delete this Infospot?
+              </h1>
+              <p className="text-sm text-gray-600">
+                This action cannot be undone. Once deleted, the infospot will be
+                permanently removed.
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-end gap-4">
+            <button
+              className="flex items-center gap-2 p-2 bg-neutral-100 text-neutral-800 border rounded-md hover:bg-neutral-200 transition"
+              onClick={() => setIsOpenConfirmDeleteDialog(false)}
+            >
+              <X size={18} />
+              <span>Cancel</span>
+            </button>
+            <button
+              className="flex items-center gap-2 p-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+              onClick={() => {
+                alert("Delete Infospot");
+              }}
+            >
+              <Trash2 size={18} />
+              <span>Delete</span>
+            </button>
+          </div>
+        </div>
+      </Dialog>
     </div>
   );
 };
