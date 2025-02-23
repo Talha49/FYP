@@ -20,7 +20,7 @@ import { useSelector } from "react-redux";
 import VTCard from "./VTCard";
 import InfospotDrawer from "./InfospotDrawer";
 import { TbMapPlus } from "react-icons/tb";
-import { fetchInfospots } from "../utils";
+import { deleteInfospot, fetchInfospots } from "../utils";
 
 const ShowVirtualTour = ({ virtualTour }) => {
   const mainContainerRef = useRef(null);
@@ -59,8 +59,23 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const [activeInfospotTab, setActiveInfospotTab] = useState(1);
   const [isOpenConfirmDeleteDialog, setIsOpenConfirmDeleteDialog] =
     useState(false);
+  const [loadingInfospots, setLoadingInfospots] = useState(false);
   const [isEditingInfospot, setIsEditingInfospot] = useState(false);
   const [editingInfospot, setEditingInfospot] = useState(false);
+  const [isDeletingInfospot, setIsDeletingInfospot] = useState(false);
+  const [selectedInfospot, setSelectedInfospot] = useState(null);
+  const [deletedInfospots, setDeletedInfospots] = useState(
+    sessionStorage.getItem("deletedInfospots")
+      ? JSON.parse(sessionStorage.getItem("deletedInfospots"))
+      : []
+  );
+
+  useEffect(() => {
+    sessionStorage.setItem(
+      "deletedInfospots",
+      JSON.stringify(deletedInfospots)
+    );
+  }, [deletedInfospots]);
 
   useEffect(() => {
     if (!isSplitModeOn) {
@@ -84,12 +99,15 @@ const ShowVirtualTour = ({ virtualTour }) => {
       return [];
     }
     try {
+      setLoadingInfospots(true);
       const infospots = await fetchInfospots(id);
       setInfospots(infospots);
       return infospots;
     } catch (error) {
       console.error("Error loading infospots:", error);
       return [];
+    } finally {
+      setLoadingInfospots(false);
     }
   };
 
@@ -261,6 +279,9 @@ const ShowVirtualTour = ({ virtualTour }) => {
   // Initialize main viewer
   useEffect(() => {
     if (!virtualTour?.frames?.length) return;
+    const activeInfospots = virtualTour.infospots.filter(
+      (infospot) => !deletedInfospots.includes(infospot._id)
+    );
     initializeViewer(
       mainContainerRef.current,
       virtualTour.frames,
@@ -268,7 +289,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
       mainPanoramasRef,
       virtualTour._id,
       setMainVtInfospots,
-      virtualTour.infospots
+      activeInfospots
     );
 
     // Setup ResizeObserver
@@ -294,11 +315,14 @@ const ShowVirtualTour = ({ virtualTour }) => {
         }
       });
     };
-  }, [virtualTour]);
+  }, [virtualTour, deletedInfospots]);
 
   // Initialize top panel viewer
   useEffect(() => {
     if (isSplitModeOn && topPanelVT?.frames?.length) {
+      const activeInfospots = topPanelVT.infospots.filter(
+        (infospot) => !deletedInfospots.includes(infospot._id)
+      );
       initializeViewer(
         topContainerRef.current,
         topPanelVT.frames,
@@ -306,17 +330,20 @@ const ShowVirtualTour = ({ virtualTour }) => {
         topPanoramasRef,
         topPanelVT._id,
         setTopPanelVtInfospots,
-        topPanelVT.infospots
+        activeInfospots
       );
       if (resizeObserverRef.current && topContainerRef.current) {
         resizeObserverRef.current.observe(topContainerRef.current);
       }
     }
-  }, [topPanelVT]);
+  }, [topPanelVT, deletedInfospots]);
 
   // Initialize bottom panel viewer
   useEffect(() => {
     if (isSplitModeOn && bottomPanelVT?.frames?.length) {
+      const activeInfospots = bottomPanelVT.infospots.filter(
+        (infospot) => !deletedInfospots.includes(infospot._id)
+      );
       initializeViewer(
         bottomContainerRef.current,
         bottomPanelVT.frames,
@@ -324,13 +351,13 @@ const ShowVirtualTour = ({ virtualTour }) => {
         bottomPanoramasRef,
         bottomPanelVT._id,
         setBottomPanelVtInfospots,
-        bottomPanelVT.infospots
+        activeInfospots
       );
       if (resizeObserverRef.current && bottomContainerRef.current) {
         resizeObserverRef.current.observe(bottomContainerRef.current);
       }
     }
-  }, [bottomPanelVT]);
+  }, [bottomPanelVT, deletedInfospots]);
 
   const handleResize = () => {
     [mainViewerRef, topViewerRef, bottomViewerRef].forEach((ref) => {
@@ -424,10 +451,31 @@ const ShowVirtualTour = ({ virtualTour }) => {
 
       currentPanorama.add(spot);
       activeViewerRef.current.update(); // Refresh scene
+      loadInfospots(virtualTour._id, setMainVtInfospots);
+      loadInfospots(topPanelVT?._id, setTopPanelVtInfospots);
+      loadInfospots(bottomPanelVT?._id, setBottomPanelVtInfospots);
     } catch (error) {
       console.log("Failed to create infospot:", error);
     } finally {
       setCreatingInfospot(false);
+    }
+  };
+
+  const handleDeleteInfospot = async (infospotId) => {
+    try {
+      setIsDeletingInfospot(true);
+      const deletedInfospot = await deleteInfospot(infospotId);
+      if (deletedInfospot) {
+        loadInfospots(virtualTour._id, setMainVtInfospots);
+        loadInfospots(topPanelVT?._id, setTopPanelVtInfospots);
+        loadInfospots(bottomPanelVT?._id, setBottomPanelVtInfospots);
+        setDeletedInfospots([...deletedInfospots, deletedInfospot?._id]);
+      }
+    } catch (error) {
+      console.error("Error deleting infospot:", error);
+    } finally {
+      setIsDeletingInfospot(false);
+      setIsOpenConfirmDeleteDialog(false);
     }
   };
 
@@ -762,6 +810,12 @@ const ShowVirtualTour = ({ virtualTour }) => {
         }}
         title={"Infospots"}
         description={"List of infospots you have added to current virtual tour"}
+        isLoading={loadingInfospots}
+        onRefresh={() => {
+          loadInfospots(virtualTour?._id, setMainVtInfospots);
+          loadInfospots(topPanelVT?._id, setTopPanelVtInfospots);
+          loadInfospots(bottomPanelVT?._id, setBottomPanelVtInfospots);
+        }}
       >
         <div className="space-y-2">
           {[
@@ -847,9 +901,10 @@ const ShowVirtualTour = ({ virtualTour }) => {
                               <Trash2
                                 size={15}
                                 className="text-red-600 hover:scale-110 hover:rotate-3 transition-all"
-                                onClick={() =>
-                                  setIsOpenConfirmDeleteDialog(true)
-                                }
+                                onClick={() => {
+                                  setSelectedInfospot(infospot);
+                                  setIsOpenConfirmDeleteDialog(true);
+                                }}
                               />
                             </div>
                           </div>
@@ -901,13 +956,26 @@ const ShowVirtualTour = ({ virtualTour }) => {
               <span>Cancel</span>
             </button>
             <button
-              className="flex items-center gap-2 p-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
-              onClick={() => {
-                alert("Delete Infospot");
-              }}
+              className="flex items-center gap-2 p-2 bg-red-500 text-white rounded-md hover:bg-red-600 disabled:bg-neutral-700 disabled:cursor-not-allowed transition"
+              onClick={() =>
+                handleDeleteInfospot(
+                  selectedInfospot._id,
+                  selectedInfospot.frame_id
+                )
+              }
+              disabled={isDeletingInfospot}
             >
-              <Trash2 size={18} />
-              <span>Delete</span>
+              {isDeletingInfospot ? (
+                <p className="flex items-center gap-2">
+                  <LoaderCircle size={18} className="animate-spin" />
+                  <span>Deleting...</span>
+                </p>
+              ) : (
+                <p className="flex items-center gap-2">
+                  <Trash2 size={18} />
+                  <span>Delete</span>
+                </p>
+              )}
             </button>
           </div>
         </div>
