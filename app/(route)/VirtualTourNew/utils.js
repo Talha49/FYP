@@ -107,5 +107,14 @@ export const driverObj = driver({
         align: "center",
       },
     },
+    {
+      element: "#learn",
+      popover: {
+        title: "Learn How to operate",
+        description: "Click here to learn how to operate the virtual tour",
+        side: "bottom",
+        align: "center",
+      },
+    },
   ],
 });

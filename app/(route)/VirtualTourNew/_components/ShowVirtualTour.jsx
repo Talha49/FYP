@@ -73,6 +73,17 @@ const ShowVirtualTour = ({ virtualTour }) => {
   );
 
   useEffect(() => {
+    const hasDriven = sessionStorage.getItem("hasDriven");
+
+    if (!hasDriven) {
+      setTimeout(() => {
+        driverObj.drive();
+      }, 1500);
+      sessionStorage.setItem("hasDriven", "true");
+    }
+  }, []);
+
+  useEffect(() => {
     sessionStorage.setItem(
       "deletedInfospots",
       JSON.stringify(deletedInfospots)
@@ -485,6 +496,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
     <div className="flex flex-col h-full">
       <div className="flex justify-end items-center mb-4 gap-4 absolute top-2 right-20 z-20 w-full">
         <GoQuestion
+          id="learn"
           className="cursor-pointer text-3xl text-blue-500 hover:scale-110 hover:text-blue-600 transition-all"
           onClick={() => driverObj.drive()}
         />
