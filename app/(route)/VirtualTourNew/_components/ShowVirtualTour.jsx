@@ -20,7 +20,9 @@ import { useSelector } from "react-redux";
 import VTCard from "./VTCard";
 import InfospotDrawer from "./InfospotDrawer";
 import { TbMapPlus } from "react-icons/tb";
-import { deleteInfospot, fetchInfospots } from "../utils";
+import { deleteInfospot, driverObj, fetchInfospots } from "../utils";
+import "driver.js/dist/driver.css";
+import { GoQuestion } from "react-icons/go";
 
 const ShowVirtualTour = ({ virtualTour }) => {
   const mainContainerRef = useRef(null);
@@ -482,7 +484,14 @@ const ShowVirtualTour = ({ virtualTour }) => {
   return (
     <div className="flex flex-col h-full">
       <div className="flex justify-end items-center mb-4 gap-4 absolute top-2 right-20 z-20 w-full">
-        <div className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 border border-blue-500 text-blue-500 p-2 rounded-lg transition-all">
+        <GoQuestion
+          className="cursor-pointer text-3xl text-blue-500 hover:scale-110 hover:text-blue-600 transition-all"
+          onClick={() => driverObj.drive()}
+        />
+        <div
+          id="auto-rotate"
+          className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 border border-blue-500 text-blue-500 p-2 rounded-lg transition-all"
+        >
           <h1
             className={`${
               isSplitModeOn ? "text-blue-500" : "text-blue-500"
@@ -493,7 +502,10 @@ const ShowVirtualTour = ({ virtualTour }) => {
           </h1>
           <SwitchButton checked={isAutoRotateOn} onChange={toggleAutoRotate} />
         </div>
-        <div className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 border border-blue-500 text-blue-500 p-2 rounded-lg transition-all">
+        <div
+          id="split-mode"
+          className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 border border-blue-500 text-blue-500 p-2 rounded-lg transition-all"
+        >
           <h1
             className={`${
               isSplitModeOn ? "text-blue-500" : "text-blue-500"
@@ -510,6 +522,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
           />
         </div>
         <button
+          id="view-infospots"
           onClick={() => setIsOpenInfospotsDrawer(true)}
           className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 border border-blue-500 text-blue-500 p-2 rounded-lg transition-all"
         >
@@ -517,6 +530,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
         </button>
       </div>
       <PanelGroup
+        id="vt-panel"
         direction="horizontal"
         className="h-screen border bg-blue-300 rounded-lg"
         onLayout={handleResize}

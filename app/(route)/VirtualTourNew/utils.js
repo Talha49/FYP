@@ -1,3 +1,6 @@
+import { driver } from "driver.js";
+import "driver.js/dist/driver.css";
+
 export function formatTimestamp(timestamp) {
   const date = new Date(timestamp);
 
@@ -50,3 +53,59 @@ export async function deleteInfospot(id) {
     alert("Error deleting infospot");
   }
 }
+
+export const driverObj = driver({
+  animate: true,
+  showProgress: true,
+  showButtons: ["next", "previous", "close"],
+  steps: [
+    {
+      element: "#auto-rotate",
+      popover: {
+        title: "Auto Rotate",
+        description:
+          "Here you can start and stop auto-rotating of virtual content",
+        side: "left",
+        align: "start",
+      },
+    },
+    {
+      element: "#split-mode",
+      popover: {
+        title: "Split Mode",
+        description:
+          "You can split the screen up to three panels to compare the virtual tours",
+        side: "bottom",
+        align: "start",
+      },
+    },
+    {
+      element: "#view-infospots",
+      popover: {
+        title: "View Infospots",
+        description:
+          "View all the infospots you have added to the virtual tour",
+        side: "bottom",
+        align: "end",
+      },
+    },
+    {
+      element: "#vt-panel",
+      popover: {
+        title: "Navigation",
+        description: "Click on arrows to navigate within virtual tour",
+        side: "top",
+        align: "center",
+      },
+    },
+    {
+      element: "#vt-panel",
+      popover: {
+        title: "Add Infospot",
+        description: "Rigt click to add infospot to the virtual tour",
+        side: "top",
+        align: "center",
+      },
+    },
+  ],
+});
