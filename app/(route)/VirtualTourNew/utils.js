@@ -50,7 +50,25 @@ export async function deleteInfospot(id) {
     return data.deletedInfospot;
   } catch (error) {
     console.error("Error deleting infospot:", error);
-    alert("Error deleting infospot");
+  }
+}
+
+export async function updateInfospot(id, data) {
+  try {
+    const response = await fetch(`/api/infospot/update/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to update infospot: ${response.statusText}`);
+    }
+    const resData = await response.json();
+    return resData.updatedInfospot;
+  } catch (error) {
+    console.error("Error updating infospot:", error);
   }
 }
 

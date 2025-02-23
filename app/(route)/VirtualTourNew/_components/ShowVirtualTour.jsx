@@ -20,7 +20,12 @@ import { useSelector } from "react-redux";
 import VTCard from "./VTCard";
 import InfospotDrawer from "./InfospotDrawer";
 import { TbMapPlus } from "react-icons/tb";
-import { deleteInfospot, driverObj, fetchInfospots } from "../utils";
+import {
+  deleteInfospot,
+  driverObj,
+  fetchInfospots,
+  updateInfospot,
+} from "../utils";
 import "driver.js/dist/driver.css";
 import { GoQuestion } from "react-icons/go";
 
@@ -71,6 +76,12 @@ const ShowVirtualTour = ({ virtualTour }) => {
       ? JSON.parse(sessionStorage.getItem("deletedInfospots"))
       : []
   );
+  const [updatedInfospots, setUpdatedInfospots] = useState(
+    sessionStorage.getItem("updatedInfospots")
+      ? JSON.parse(sessionStorage.getItem("updatedInfospots"))
+      : []
+  );
+  const [updatingInfospotId, setUpdatingInfospotId] = useState(null);
 
   useEffect(() => {
     const hasDriven = sessionStorage.getItem("hasDriven");
@@ -89,6 +100,13 @@ const ShowVirtualTour = ({ virtualTour }) => {
       JSON.stringify(deletedInfospots)
     );
   }, [deletedInfospots]);
+
+  useEffect(() => {
+    sessionStorage.setItem(
+      "updatedInfospots",
+      JSON.stringify(updatedInfospots)
+    );
+  }, [updatedInfospots]);
 
   useEffect(() => {
     if (!isSplitModeOn) {
@@ -295,6 +313,13 @@ const ShowVirtualTour = ({ virtualTour }) => {
     const activeInfospots = virtualTour.infospots.filter(
       (infospot) => !deletedInfospots.includes(infospot._id)
     );
+    const finalInfospots = activeInfospots.map((infospot) => {
+      const updatedInfospot = updatedInfospots.find(
+        (updated) => updated._id === infospot._id
+      );
+      return updatedInfospot ? updatedInfospot : infospot;
+    });
+
     initializeViewer(
       mainContainerRef.current,
       virtualTour.frames,
@@ -302,7 +327,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
       mainPanoramasRef,
       virtualTour._id,
       setMainVtInfospots,
-      activeInfospots
+      finalInfospots
     );
 
     // Setup ResizeObserver
@@ -328,7 +353,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
         }
       });
     };
-  }, [virtualTour, deletedInfospots]);
+  }, [virtualTour, deletedInfospots, updatedInfospots]);
 
   // Initialize top panel viewer
   useEffect(() => {
@@ -336,6 +361,12 @@ const ShowVirtualTour = ({ virtualTour }) => {
       const activeInfospots = topPanelVT.infospots.filter(
         (infospot) => !deletedInfospots.includes(infospot._id)
       );
+      const finalInfospots = activeInfospots.map((infospot) => {
+        const updatedInfospot = updatedInfospots.find(
+          (updated) => updated._id === infospot._id
+        );
+        return updatedInfospot ? updatedInfospot : infospot;
+      });
       initializeViewer(
         topContainerRef.current,
         topPanelVT.frames,
@@ -343,13 +374,13 @@ const ShowVirtualTour = ({ virtualTour }) => {
         topPanoramasRef,
         topPanelVT._id,
         setTopPanelVtInfospots,
-        activeInfospots
+        finalInfospots
       );
       if (resizeObserverRef.current && topContainerRef.current) {
         resizeObserverRef.current.observe(topContainerRef.current);
       }
     }
-  }, [topPanelVT, deletedInfospots]);
+  }, [topPanelVT, deletedInfospots, updatedInfospots]);
 
   // Initialize bottom panel viewer
   useEffect(() => {
@@ -357,6 +388,12 @@ const ShowVirtualTour = ({ virtualTour }) => {
       const activeInfospots = bottomPanelVT.infospots.filter(
         (infospot) => !deletedInfospots.includes(infospot._id)
       );
+      const finalInfospots = activeInfospots.map((infospot) => {
+        const updatedInfospot = updatedInfospots.find(
+          (updated) => updated._id === infospot._id
+        );
+        return updatedInfospot ? updatedInfospot : infospot;
+      });
       initializeViewer(
         bottomContainerRef.current,
         bottomPanelVT.frames,
@@ -364,13 +401,13 @@ const ShowVirtualTour = ({ virtualTour }) => {
         bottomPanoramasRef,
         bottomPanelVT._id,
         setBottomPanelVtInfospots,
-        activeInfospots
+        finalInfospots
       );
       if (resizeObserverRef.current && bottomContainerRef.current) {
         resizeObserverRef.current.observe(bottomContainerRef.current);
       }
     }
-  }, [bottomPanelVT, deletedInfospots]);
+  }, [bottomPanelVT, deletedInfospots, updatedInfospots]);
 
   const handleResize = () => {
     [mainViewerRef, topViewerRef, bottomViewerRef].forEach((ref) => {
@@ -489,6 +526,35 @@ const ShowVirtualTour = ({ virtualTour }) => {
     } finally {
       setIsDeletingInfospot(false);
       setIsOpenConfirmDeleteDialog(false);
+    }
+  };
+
+  const handleUpdateInfospot = async (e) => {
+    try {
+      e.preventDefault();
+      setEditingInfospot(true);
+      const updatedInfospot = await updateInfospot(
+        updatingInfospotId,
+        newInfospotData
+      );
+      if (updatedInfospot) {
+        loadInfospots(virtualTour._id, setMainVtInfospots);
+        loadInfospots(topPanelVT?._id, setTopPanelVtInfospots);
+        loadInfospots(bottomPanelVT?._id, setBottomPanelVtInfospots);
+        setIsOpenCreateInfospotDialog(false);
+        setNewInfospotData({
+          title: "",
+          description: "",
+          frame_id: "",
+          position: { x: 0, y: 0, z: 0 },
+          vt_id: virtualTour._id,
+        });
+        setUpdatedInfospots([...updatedInfospots, updatedInfospot]);
+      }
+    } catch (error) {
+      console.error("Error updating infospot:", error);
+    } finally {
+      setEditingInfospot(false);
     }
   };
 
@@ -738,10 +804,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
         title={isEditingInfospot ? "Edit Infospot" : "Create Infospot"}
         className="max-w-[500px]"
       >
-        <form
-          onSubmit={(e) => handleCreateInfospot(e)}
-          className="flex flex-col gap-2"
-        >
+        <form className="flex flex-col gap-2">
           <div>
             <label htmlFor="title" className="text-sm text-gray-600">
               Infospot Title
@@ -790,7 +853,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
             </button>
             {!isEditingInfospot ? (
               <button
-                type="submit"
+                onClick={(e) => handleCreateInfospot(e)}
                 className="flex items-center justify-center w-full p-2 bg-blue-500 text-white disabled:bg-neutral-700 disabled:cursor-not-allowed rounded-md hover:bg-blue-600 transition"
                 disabled={creatingInfospot}
               >
@@ -808,9 +871,11 @@ const ShowVirtualTour = ({ virtualTour }) => {
               </button>
             ) : (
               <button
-                className="flex items-center justify-center w-full p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+                className="flex items-center justify-center w-full p-2 bg-blue-500 text-white disabled:bg-neutral-700 disabled:cursor-not-allowed rounded-md hover:bg-blue-600 transition"
                 disabled={editingInfospot}
-                onClick={() => {}}
+                onClick={(e) => {
+                  handleUpdateInfospot(e);
+                }}
               >
                 {editingInfospot ? (
                   <p className="flex items-center gap-2">
@@ -913,6 +978,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
                                 size={15}
                                 className="text-black hover:scale-110 hover:rotate-3 transition-all"
                                 onClick={() => {
+                                  setUpdatingInfospotId(infospot._id);
                                   setNewInfospotData({
                                     title: infospot.title,
                                     description: infospot.description,
