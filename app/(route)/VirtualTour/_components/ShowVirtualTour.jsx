@@ -4,6 +4,7 @@ import * as PANOLENS from "panolens";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import SwitchButton from "./SwitchButton";
 import {
+  Bug,
   ChevronDown,
   Info,
   LoaderCircle,
@@ -28,6 +29,7 @@ import {
 } from "../utils";
 import "driver.js/dist/driver.css";
 import { GoQuestion } from "react-icons/go";
+import TaskCreationForm from "../../Upload/UploadForm/UploadForm";
 
 const ShowVirtualTour = ({ virtualTour }) => {
   const mainContainerRef = useRef(null);
@@ -77,6 +79,9 @@ const ShowVirtualTour = ({ virtualTour }) => {
       : []
   );
   const [updatingInfospotId, setUpdatingInfospotId] = useState(null);
+  const [isOpenActionSelectionDialog, setIsOpenActionSelectionDialog] =
+    useState(false);
+  const [isOpenCreateTaskDialog, setIsOpenCreateTaskDialog] = useState(false);
 
   useEffect(() => {
     const hasDriven = sessionStorage.getItem("hasDriven");
@@ -199,7 +204,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
           const localPosition = currentPanorama.worldToLocal(
             worldPosition.clone()
           );
-          setIsOpenCreateInfospotDialog(true);
+          // setIsOpenCreateInfospotDialog(true);
+          setIsOpenActionSelectionDialog(true);
 
           // Update new infospot data
           setNewInfospotData((prev) => ({
@@ -576,7 +582,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
           defaultSize={50}
           minSize={20}
           maxSize={80}
-          className="rounded-lg bg-blue-300"
+          className="bg-blue-300"
         >
           <div
             ref={mainContainerRef}
@@ -591,7 +597,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
 
         {isSplitModeOn && (
           <>
-            <PanelResizeHandle className="w-1 bg-blue-300 hover:bg-blue-600 transition-all cursor-col-resize" />
+            <PanelResizeHandle className="w-1 bg-blue-500 transition-all cursor-col-resize" />
             <Panel
               defaultSize={50}
               minSize={0}
@@ -675,6 +681,34 @@ const ShowVirtualTour = ({ virtualTour }) => {
                 }}
               />
             ))}
+        </div>
+      </Dialog>
+      {/* Action Selectio Dialog */}
+      <Dialog
+        isOpen={isOpenActionSelectionDialog}
+        onClose={() => setIsOpenActionSelectionDialog(false)}
+        title="What you want to do?"
+        className="max-w-xl max-h-[500px]"
+      >
+        <div className="flex gap-4">
+          <button
+            onClick={() => {
+              setIsOpenActionSelectionDialog(false);
+              setIsOpenCreateInfospotDialog(true);
+            }}
+            className="w-full p-4 flex flex-col items-center justify-center rounded-lg cursor-pointer border border-blue-500 bg-blue-50 hover:bg-blue-100 text-blue-600"
+          >
+            <Info size={30} /> Create Infospot
+          </button>
+          <button
+            onClick={() => {
+              setIsOpenActionSelectionDialog(false);
+              setIsOpenCreateTaskDialog(true);
+            }}
+            className="w-full p-4 flex flex-col items-center justify-center rounded-lg cursor-pointer border border-blue-500 bg-blue-50 hover:bg-blue-100 text-blue-600"
+          >
+            <Bug size={30} /> Create Task
+          </button>
         </div>
       </Dialog>
       {/* Create infospot dialog */}
@@ -952,6 +986,17 @@ const ShowVirtualTour = ({ virtualTour }) => {
             </button>
           </div>
         </div>
+      </Dialog>
+      {/* Create Task dialog */}
+      <Dialog
+        isOpen={isOpenCreateTaskDialog}
+        onClose={() => {
+          setIsOpenCreateTaskDialog(false);
+        }}
+        title={"Create Task"}
+        className="max-w-4xl max-h-96 overflow-y-auto"
+      >
+        <TaskCreationForm />
       </Dialog>
     </div>
   );
