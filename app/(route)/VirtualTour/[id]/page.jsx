@@ -40,7 +40,6 @@ const Page = () => {
   const [isCustomDate, setIsCustomDate] = useState(false);
   const [filteredTours, setFilteredTours] = useState([]);
 
-
   useEffect(() => {
     if (id) {
       dispatch(fetchVirtualTours(id));
@@ -275,7 +274,7 @@ const Page = () => {
   return (
     <div className="p-6 max-w-5xl mx-auto overflow-x-hidden">
       <Link
-        href={"/VirtualTourNew"}
+        href={"/VirtualTour"}
         className="flex items-center gap-1 mb-6 text-sm border border-blue-500 bg-blue-50 text-blue-500 w-fit p-1 rounded"
       >
         <ArrowLeft size={17} className="text-blue-500" /> <span>Back</span>
@@ -571,6 +570,9 @@ const Page = () => {
         isOpen={selectedVirtualTour}
         onClose={() => {
           setSelectedVirtualTour(null);
+          if (id) {
+            dispatch(fetchVirtualTours(id));
+          }
         }}
         className={"rounded-t-none rounded-b-none h-screen overflow-y-auto"}
         isVTshowDialog={true}

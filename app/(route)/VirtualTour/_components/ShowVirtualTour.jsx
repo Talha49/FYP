@@ -31,7 +31,7 @@ import { GoQuestion } from "react-icons/go";
 
 const ShowVirtualTour = ({ virtualTour }) => {
   const mainContainerRef = useRef(null);
-  const topContainerRef = useRef(null);
+  const rightContainerRef = useRef(null);
   const bottomContainerRef = useRef(null);
   const mainViewerRef = useRef(null);
   const activeViewerRef = useRef(null);
@@ -368,7 +368,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
         return updatedInfospot ? updatedInfospot : infospot;
       });
       initializeViewer(
-        topContainerRef.current,
+        rightContainerRef.current,
         topPanelVT.frames,
         topViewerRef,
         topPanoramasRef,
@@ -376,8 +376,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
         setTopPanelVtInfospots,
         finalInfospots
       );
-      if (resizeObserverRef.current && topContainerRef.current) {
-        resizeObserverRef.current.observe(topContainerRef.current);
+      if (resizeObserverRef.current && rightContainerRef.current) {
+        resizeObserverRef.current.observe(rightContainerRef.current);
       }
     }
   }, [topPanelVT, deletedInfospots, updatedInfospots]);
@@ -456,7 +456,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const setActiveViewer = (container) => {
     if (container === mainContainerRef.current) {
       activeViewerRef.current = mainViewerRef.current;
-    } else if (container === topContainerRef.current) {
+    } else if (container === rightContainerRef.current) {
       activeViewerRef.current = topViewerRef.current;
     } else if (container === bottomContainerRef.current) {
       activeViewerRef.current = bottomViewerRef.current;
@@ -638,124 +638,59 @@ const ShowVirtualTour = ({ virtualTour }) => {
               minSize={0}
               maxSize={80}
               className="flex bg-blue-300"
+              onClick={() => {
+                if (!topPanelVT) {
+                  setIsOpenVtSelectionDialog(true);
+                  setClickedPanel("top");
+                }
+              }}
             >
-              <PanelGroup direction="vertical">
-                <Panel
-                  defaultSize={50}
-                  minSize={20}
-                  maxSize={80}
-                  className="group flex items-center justify-center rounded-lg bg-blue-300 bg-opacity-70 transition-all hover:bg-black hover:bg-opacity-70 backdrop-blur-md cursor-pointer"
-                  onClick={() => {
-                    if (!topPanelVT) {
-                      setIsOpenVtSelectionDialog(true);
-                      setClickedPanel("top");
-                    }
-                  }}
-                >
-                  {topPanelVT ? (
-                    <div className="relative w-full h-full">
-                      <div
-                        ref={topContainerRef}
-                        className="w-full h-full bg-black shadow-md"
-                        style={{
-                          position: "relative",
-                          overflow: "hidden",
-                          touchAction: "none",
-                        }}
-                      />
-                      <button
-                        className="absolute top-2 right-2 z-10 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-1.5 shadow-md transition-all duration-200 hover:scale-110"
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent panel click event
-                          if (topViewerRef.current) {
-                            topViewerRef.current.dispose();
-                          }
-                          setTopPanelVT(null);
-                        }}
-                      >
-                        <X size={20} />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="cursor-pointer text-blue-500 transition-transform duration-300 group hover:text-blue-600 flex flex-col items-center justify-center space-y-2 p-4 bg-blue-50 w-full h-full">
-                      <TbMapPlus
-                        size={80}
-                        className="text-blue-500 transition-transform duration-300 group-hover:scale-110 group-hover:text-blue-600"
-                      />
+              {topPanelVT ? (
+                <div className="relative w-full h-full">
+                  <div
+                    ref={rightContainerRef}
+                    className="w-full h-full bg-black shadow-md"
+                    style={{
+                      position: "relative",
+                      overflow: "hidden",
+                      touchAction: "none",
+                    }}
+                  />
+                  <button
+                    className="absolute top-2 right-2 z-10 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-1.5 shadow-md transition-all duration-200 hover:scale-110"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent panel click event
+                      if (topViewerRef.current) {
+                        topViewerRef.current.dispose();
+                      }
+                      setTopPanelVT(null);
+                    }}
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              ) : (
+                <div className="cursor-pointer text-blue-500 transition-transform duration-300 group hover:text-blue-600 flex flex-col items-center justify-center space-y-2 p-4 bg-blue-50 w-full h-full">
+                  <TbMapPlus
+                    size={80}
+                    className="text-blue-500 transition-transform duration-300 group-hover:scale-110 group-hover:text-blue-600"
+                  />
 
-                      <h1 className="text-lg font-semibold text-gray-800 group-hover:text-blue-700">
-                        Add New Virtual Tour
-                      </h1>
+                  <h1 className="text-lg font-semibold text-gray-800 group-hover:text-blue-700">
+                    Add New Virtual Tour
+                  </h1>
 
-                      <p className="text-sm text-gray-500 group-hover:text-gray-700">
-                        Select another virtual tour to compare an immersive
-                        virtual experience.
-                      </p>
-                    </div>
-                  )}
-                </Panel>
-
-                <PanelResizeHandle className="h-1 bg-blue-300 hover:bg-blue-600 transition-all cursor-row-resize" />
-
-                <Panel
-                  defaultSize={50}
-                  minSize={20}
-                  maxSize={80}
-                  className="group flex items-center justify-center rounded-lg bg-blue-300 bg-opacity-70 transition-all hover:bg-black hover:bg-opacity-70 backdrop-blur-md cursor-pointer"
-                  onClick={() => {
-                    if (!bottomPanelVT) {
-                      setIsOpenVtSelectionDialog(true);
-                      setClickedPanel("bottom");
-                    }
-                  }}
-                >
-                  {bottomPanelVT ? (
-                    <div className="relative w-full h-full">
-                      <div
-                        ref={bottomContainerRef}
-                        className="w-full h-full bg-black shadow-md"
-                        style={{
-                          position: "relative",
-                          overflow: "hidden",
-                          touchAction: "none",
-                        }}
-                      />
-                      <button
-                        className="absolute top-2 right-2 z-10 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-1.5 shadow-md transition-all duration-200 hover:scale-110"
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent panel click event
-                          if (bottomViewerRef.current) {
-                            bottomViewerRef.current.dispose();
-                          }
-                          setBottomPanelVT(null);
-                        }}
-                      >
-                        <X size={20} />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="cursor-pointer text-blue-500 transition-transform duration-300 group hover:text-blue-600 flex flex-col items-center justify-center space-y-2 p-4 bg-blue-50 w-full h-full">
-                      <TbMapPlus
-                        size={80}
-                        className="text-blue-500 transition-transform duration-300 group-hover:scale-110 group-hover:text-blue-600"
-                      />
-
-                      <h1 className="text-lg font-semibold text-gray-800 group-hover:text-blue-700">
-                        Add New Virtual Tour
-                      </h1>
-
-                      <p className="text-sm text-gray-500 group-hover:text-gray-700">
-                        Select another virtual tour to compare an immersive
-                        virtual experience.
-                      </p>
-                    </div>
-                  )}
-                </Panel>
-              </PanelGroup>
+                  <p className="text-sm text-gray-500 group-hover:text-gray-700">
+                    Select another virtual tour to compare an immersive virtual
+                    experience.
+                  </p>
+                </div>
+              )}
             </Panel>
           </>
         )}
       </PanelGroup>
+      {/* VT selection Dialog */}
       <Dialog
         isOpen={isOpenVtSelectionDialog}
         onClose={() => setIsOpenVtSelectionDialog(false)}
@@ -836,7 +771,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
           <div className="flex items-center gap-4">
             <button
               className="flex items-center justify-center gap-2 p-2 w-full bg-neutral-100 text-neutral-800 border rounded-md hover:bg-neutral-200 transition"
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
                 setIsOpenCreateInfospotDialog(false);
                 setNewInfospotData({
                   title: "",
