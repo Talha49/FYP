@@ -32,14 +32,11 @@ import { GoQuestion } from "react-icons/go";
 const ShowVirtualTour = ({ virtualTour }) => {
   const mainContainerRef = useRef(null);
   const rightContainerRef = useRef(null);
-  const bottomContainerRef = useRef(null);
   const mainViewerRef = useRef(null);
   const activeViewerRef = useRef(null);
-  const topViewerRef = useRef(null);
-  const bottomViewerRef = useRef(null);
+  const rightViewerRef = useRef(null);
   const mainPanoramasRef = useRef({});
-  const topPanoramasRef = useRef({});
-  const bottomPanoramasRef = useRef({});
+  const rightPanoramasRef = useRef({});
   const resizeObserverRef = useRef(null);
   const [isSplitModeOn, setIsSplitModeOn] = useState(false);
   const [isAutoRotateOn, setIsAutoRotateOn] = useState(true);
@@ -47,7 +44,6 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const { virtualTours } = useSelector((state) => state.VTour);
   const [clickedPanel, setClickedPanel] = useState(null);
   const [topPanelVT, setTopPanelVT] = useState(null);
-  const [bottomPanelVT, setBottomPanelVT] = useState(null);
   const [isOpenInfospotsDrawer, setIsOpenInfospotsDrawer] = useState(false);
   const [isOpenCreateInfospotDialog, setIsOpenCreateInfospotDialog] =
     useState(false);
@@ -61,8 +57,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
   });
   const [creatingInfospot, setCreatingInfospot] = useState(false);
   const [mainVtInfospots, setMainVtInfospots] = useState([]);
-  const [topPanelVtInfospots, setTopPanelVtInfospots] = useState([]);
-  const [bottomPanelVtInfospots, setBottomPanelVtInfospots] = useState([]);
+  const [rightPanelVtInfospots, setRightPanelVtInfospots] = useState([]);
   const [activeInfospotTab, setActiveInfospotTab] = useState(1);
   const [isOpenConfirmDeleteDialog, setIsOpenConfirmDeleteDialog] =
     useState(false);
@@ -111,7 +106,6 @@ const ShowVirtualTour = ({ virtualTour }) => {
   useEffect(() => {
     if (!isSplitModeOn) {
       setTopPanelVT(null);
-      setBottomPanelVT(null);
     }
   }, [isSplitModeOn]);
 
@@ -334,8 +328,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
     resizeObserverRef.current = new ResizeObserver((entries) => {
       entries.forEach(() => {
         if (mainViewerRef.current) mainViewerRef.current.onWindowResize();
-        if (topViewerRef.current) topViewerRef.current.onWindowResize();
-        if (bottomViewerRef.current) bottomViewerRef.current.onWindowResize();
+        if (rightViewerRef.current) rightViewerRef.current.onWindowResize();
       });
     });
 
@@ -347,7 +340,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
       if (resizeObserverRef.current) {
         resizeObserverRef.current.disconnect();
       }
-      [mainViewerRef, topViewerRef, bottomViewerRef].forEach((ref) => {
+      [mainViewerRef, rightViewerRef].forEach((ref) => {
         if (ref.current) {
           ref.current.dispose();
         }
@@ -370,10 +363,10 @@ const ShowVirtualTour = ({ virtualTour }) => {
       initializeViewer(
         rightContainerRef.current,
         topPanelVT.frames,
-        topViewerRef,
-        topPanoramasRef,
+        rightViewerRef,
+        rightPanoramasRef,
         topPanelVT._id,
-        setTopPanelVtInfospots,
+        setRightPanelVtInfospots,
         finalInfospots
       );
       if (resizeObserverRef.current && rightContainerRef.current) {
@@ -382,35 +375,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
     }
   }, [topPanelVT, deletedInfospots, updatedInfospots]);
 
-  // Initialize bottom panel viewer
-  useEffect(() => {
-    if (isSplitModeOn && bottomPanelVT?.frames?.length) {
-      const activeInfospots = bottomPanelVT.infospots.filter(
-        (infospot) => !deletedInfospots.includes(infospot._id)
-      );
-      const finalInfospots = activeInfospots.map((infospot) => {
-        const updatedInfospot = updatedInfospots.find(
-          (updated) => updated._id === infospot._id
-        );
-        return updatedInfospot ? updatedInfospot : infospot;
-      });
-      initializeViewer(
-        bottomContainerRef.current,
-        bottomPanelVT.frames,
-        bottomViewerRef,
-        bottomPanoramasRef,
-        bottomPanelVT._id,
-        setBottomPanelVtInfospots,
-        finalInfospots
-      );
-      if (resizeObserverRef.current && bottomContainerRef.current) {
-        resizeObserverRef.current.observe(bottomContainerRef.current);
-      }
-    }
-  }, [bottomPanelVT, deletedInfospots, updatedInfospots]);
-
   const handleResize = () => {
-    [mainViewerRef, topViewerRef, bottomViewerRef].forEach((ref) => {
+    [mainViewerRef, rightViewerRef].forEach((ref) => {
       if (ref.current) {
         ref.current.onWindowResize();
       }
@@ -422,11 +388,9 @@ const ShowVirtualTour = ({ virtualTour }) => {
       const newState = !prevState;
 
       // Update all active viewers
-      const viewers = [
-        mainViewerRef.current,
-        topViewerRef.current,
-        bottomViewerRef.current,
-      ].filter(Boolean);
+      const viewers = [mainViewerRef.current, rightViewerRef.current].filter(
+        Boolean
+      );
 
       viewers.forEach((viewer) => {
         if (viewer && viewer.OrbitControls) {
@@ -457,9 +421,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
     if (container === mainContainerRef.current) {
       activeViewerRef.current = mainViewerRef.current;
     } else if (container === rightContainerRef.current) {
-      activeViewerRef.current = topViewerRef.current;
-    } else if (container === bottomContainerRef.current) {
-      activeViewerRef.current = bottomViewerRef.current;
+      activeViewerRef.current = rightViewerRef.current;
     }
   };
 
@@ -502,8 +464,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
       currentPanorama.add(spot);
       activeViewerRef.current.update(); // Refresh scene
       loadInfospots(virtualTour._id, setMainVtInfospots);
-      loadInfospots(topPanelVT?._id, setTopPanelVtInfospots);
-      loadInfospots(bottomPanelVT?._id, setBottomPanelVtInfospots);
+      loadInfospots(topPanelVT?._id, setRightPanelVtInfospots);
     } catch (error) {
       console.log("Failed to create infospot:", error);
     } finally {
@@ -517,8 +478,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
       const deletedInfospot = await deleteInfospot(infospotId);
       if (deletedInfospot) {
         loadInfospots(virtualTour._id, setMainVtInfospots);
-        loadInfospots(topPanelVT?._id, setTopPanelVtInfospots);
-        loadInfospots(bottomPanelVT?._id, setBottomPanelVtInfospots);
+        loadInfospots(topPanelVT?._id, setRightPanelVtInfospots);
         setDeletedInfospots([...deletedInfospots, deletedInfospot?._id]);
       }
     } catch (error) {
@@ -539,8 +499,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
       );
       if (updatedInfospot) {
         loadInfospots(virtualTour._id, setMainVtInfospots);
-        loadInfospots(topPanelVT?._id, setTopPanelVtInfospots);
-        loadInfospots(bottomPanelVT?._id, setBottomPanelVtInfospots);
+        loadInfospots(topPanelVT?._id, setRightPanelVtInfospots);
         setIsOpenCreateInfospotDialog(false);
         setNewInfospotData({
           title: "",
@@ -641,7 +600,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
               onClick={() => {
                 if (!topPanelVT) {
                   setIsOpenVtSelectionDialog(true);
-                  setClickedPanel("top");
+                  setClickedPanel("right");
                 }
               }}
             >
@@ -660,8 +619,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
                     className="absolute top-2 right-2 z-10 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-1.5 shadow-md transition-all duration-200 hover:scale-110"
                     onClick={(e) => {
                       e.stopPropagation(); // Prevent panel click event
-                      if (topViewerRef.current) {
-                        topViewerRef.current.dispose();
+                      if (rightViewerRef.current) {
+                        rightViewerRef.current.dispose();
                       }
                       setTopPanelVT(null);
                     }}
@@ -701,9 +660,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
           {virtualTours
             ?.filter(
               (tour) =>
-                tour._id !== virtualTour._id &&
-                tour._id !== topPanelVT?._id &&
-                tour._id !== bottomPanelVT?._id
+                tour._id !== virtualTour._id && tour._id !== topPanelVT?._id
             )
             ?.map((tour) => (
               <VTCard
@@ -711,10 +668,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
                 tour={tour}
                 isSelectionDialog={true}
                 buttonOnClick={() => {
-                  if (clickedPanel === "top") {
+                  if (clickedPanel === "right") {
                     setTopPanelVT(tour);
-                  } else {
-                    setBottomPanelVT(tour);
                   }
                   setIsOpenVtSelectionDialog(false);
                 }}
@@ -840,32 +795,22 @@ const ShowVirtualTour = ({ virtualTour }) => {
         isLoading={loadingInfospots}
         onRefresh={() => {
           loadInfospots(virtualTour?._id, setMainVtInfospots);
-          loadInfospots(topPanelVT?._id, setTopPanelVtInfospots);
-          loadInfospots(bottomPanelVT?._id, setBottomPanelVtInfospots);
+          loadInfospots(topPanelVT?._id, setRightPanelVtInfospots);
         }}
       >
         <div className="space-y-2">
           {[
             {
               id: 1,
-              title: "Main Panel Infospots",
+              title: "Left Panel Infospots",
               data: mainVtInfospots,
             },
             {
               id: 2,
-              title: "Top-Right Panel Infospots",
-              data: topPanelVtInfospots,
+              title: "Right Panel Infospots",
+              data: rightPanelVtInfospots,
               isVisible: isSplitModeOn && topPanelVT,
               emptyMessage: !topPanelVT
-                ? "Please open virtual tour first"
-                : "No infospots",
-            },
-            {
-              id: 3,
-              title: "Bottom-Right Panel Infospots",
-              data: bottomPanelVtInfospots,
-              isVisible: isSplitModeOn && bottomPanelVT,
-              emptyMessage: !bottomPanelVT
                 ? "Please open virtual tour first"
                 : "No infospots",
             },
