@@ -82,6 +82,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const [isOpenActionSelectionDialog, setIsOpenActionSelectionDialog] =
     useState(false);
   const [isOpenCreateTaskDialog, setIsOpenCreateTaskDialog] = useState(false);
+  const [clickedInfospot, setClickedInfospot] = useState(null);
 
   useEffect(() => {
     const hasDriven = sessionStorage.getItem("hasDriven");
@@ -246,7 +247,10 @@ const ShowVirtualTour = ({ virtualTour }) => {
           infoSpot.addHoverText(spot.title, 30);
 
           infoSpot.addEventListener("click", () => {
-            alert(`${spot.title}: ${spot.description}`);
+            setClickedInfospot({
+              title: spot.title,
+              description: spot.description,
+            });
           });
 
           panorama.add(infoSpot);
@@ -997,6 +1001,17 @@ const ShowVirtualTour = ({ virtualTour }) => {
         className="max-w-4xl max-h-96 overflow-y-auto"
       >
         <TaskCreationForm />
+      </Dialog>
+      {/* Infospot Details Dialog */}
+      <Dialog
+        isOpen={clickedInfospot}
+        onClose={() => {
+          setClickedInfospot(false);
+        }}
+        title={clickedInfospot?.title}
+        className="max-w-lg max-h-96 overflow-y-auto"
+      >
+        <p>{clickedInfospot?.description}</p>
       </Dialog>
     </div>
   );
