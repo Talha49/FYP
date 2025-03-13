@@ -890,7 +890,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
           {virtualTours
             ?.filter(
               (tour) =>
-                tour._id !== virtualTour._id && tour._id !== rightPanelVT?._id
+                tour._id !== mainPanelVT._id && tour._id !== rightPanelVT?._id
             )
             ?.map((tour) => (
               <VTCard
