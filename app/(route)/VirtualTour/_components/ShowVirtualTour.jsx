@@ -6,8 +6,12 @@ import SwitchButton from "./SwitchButton";
 import {
   Bug,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Info,
   LoaderCircle,
+  LockKeyhole,
+  LockKeyholeOpen,
   Pencil,
   Rotate3d,
   SquareSplitHorizontal,
@@ -25,6 +29,7 @@ import {
   deleteInfospot,
   driverObj,
   fetchInfospots,
+  formatTimestamp,
   updateInfospot,
 } from "../utils";
 import "driver.js/dist/driver.css";
@@ -45,7 +50,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const [isOpenVtSelectionDialog, setIsOpenVtSelectionDialog] = useState(false);
   const { virtualTours } = useSelector((state) => state.VTour);
   const [clickedPanel, setClickedPanel] = useState(null);
-  const [topPanelVT, setTopPanelVT] = useState(null);
+  const [rightPanelVT, setRightPanelVT] = useState(null);
   const [isOpenInfospotsDrawer, setIsOpenInfospotsDrawer] = useState(false);
   const [isOpenCreateInfospotDialog, setIsOpenCreateInfospotDialog] =
     useState(false);
@@ -83,6 +88,173 @@ const ShowVirtualTour = ({ virtualTour }) => {
     useState(false);
   const [isOpenCreateTaskDialog, setIsOpenCreateTaskDialog] = useState(false);
   const [clickedInfospot, setClickedInfospot] = useState(null);
+  const [locked, setLocked] = useState(false);
+  const syncingRef = useRef(false);
+  const [mainPanelVtIndex, setMainPanelVtIndex] = useState(0);
+  const [rightPanelVtIndex, setRightPanelVtIndex] = useState(0);
+  const [mainPanelVT, setMainPanelVT] = useState(virtualTour);
+
+  const navigateVirtualTour = (direction, panel) => {
+    const isMainPanel = panel === "main";
+    const currentIndex = isMainPanel ? mainPanelVtIndex : rightPanelVtIndex;
+    const setIndex = isMainPanel ? setMainPanelVtIndex : setRightPanelVtIndex;
+
+    // Calculate new index based on direction
+    let newIndex;
+    if (direction === "next") {
+      newIndex = (currentIndex + 1) % virtualTours.length;
+    } else {
+      newIndex = (currentIndex - 1 + virtualTours.length) % virtualTours.length;
+    }
+
+    setIndex(newIndex);
+
+    // Update the appropriate panel with the new virtual tour
+    if (isMainPanel) {
+      // We need to reinitialize the main viewer with the new virtual tour
+      const newVirtualTour = virtualTours[newIndex];
+      // Reset any existing viewer
+      if (mainViewerRef.current) {
+        mainViewerRef.current.dispose();
+      }
+      if (mainContainerRef.current) {
+        mainContainerRef.current.innerHTML = "";
+      }
+
+      // Initialize with the new tour (similar logic to your existing useEffect)
+      const activeInfospots = newVirtualTour.infospots.filter(
+        (infospot) => !deletedInfospots.includes(infospot._id)
+      );
+      const finalInfospots = activeInfospots.map((infospot) => {
+        const updatedInfospot = updatedInfospots.find(
+          (updated) => updated._id === infospot._id
+        );
+        return updatedInfospot ? updatedInfospot : infospot;
+      });
+
+      // Update the main panel virtual tour state
+      setMainPanelVT(newVirtualTour);
+
+      initializeViewer(
+        mainContainerRef.current,
+        newVirtualTour.frames,
+        mainViewerRef,
+        mainPanoramasRef,
+        newVirtualTour._id,
+        setMainVtInfospots,
+        finalInfospots
+      );
+    } else {
+      // Update only the right panel with the new tour
+      setRightPanelVT(virtualTours[newIndex]);
+    }
+  };
+
+  useEffect(() => {
+    if (virtualTour && virtualTours?.length) {
+      const index = virtualTours.findIndex(
+        (tour) => tour._id === virtualTour._id
+      );
+      if (index !== -1) {
+        setMainPanelVtIndex(index);
+      }
+    }
+  }, [virtualTour, virtualTours]);
+
+  useEffect(() => {
+    if (rightPanelVT && virtualTours?.length) {
+      const index = virtualTours.findIndex(
+        (tour) => tour._id === rightPanelVT._id
+      );
+      if (index !== -1) {
+        setRightPanelVtIndex(index);
+      }
+    }
+  }, [rightPanelVT, virtualTours]);
+
+  // Replace the existing setupSynchronization function with this improved version
+  const setupSynchronization = () => {
+    if (locked && mainViewerRef.current && rightViewerRef.current) {
+      const mainControls = mainViewerRef.current.OrbitControls;
+      const rightControls = rightViewerRef.current.OrbitControls;
+
+      // Add event listeners for main viewer
+      const mainControlsChangeHandler = () => {
+        if (syncingRef.current || !locked) return;
+
+        syncingRef.current = true;
+
+        // Sync camera position and rotation from main to right
+        const mainCamera = mainViewerRef.current.camera;
+        const rightCamera = rightViewerRef.current.camera;
+
+        // Apply position and rotation to right camera
+        rightCamera.position.copy(mainCamera.position);
+        rightCamera.quaternion.copy(mainCamera.quaternion);
+
+        // Update controls and renderer
+        rightControls.update();
+        rightViewerRef.current.renderer.render(
+          rightViewerRef.current.scene,
+          rightCamera
+        );
+
+        syncingRef.current = false;
+      };
+
+      // Add event listeners for right viewer
+      const rightControlsChangeHandler = () => {
+        if (syncingRef.current || !locked) return;
+
+        syncingRef.current = true;
+
+        // Sync camera position and rotation from right to main
+        const mainCamera = mainViewerRef.current.camera;
+        const rightCamera = rightViewerRef.current.camera;
+
+        // Apply position and rotation to main camera
+        mainCamera.position.copy(rightCamera.position);
+        mainCamera.quaternion.copy(rightCamera.quaternion);
+
+        // Update controls and renderer
+        mainControls.update();
+        mainViewerRef.current.renderer.render(
+          mainViewerRef.current.scene,
+          mainCamera
+        );
+
+        syncingRef.current = false;
+      };
+
+      // Add event listeners
+      mainControls.addEventListener("change", mainControlsChangeHandler);
+      rightControls.addEventListener("change", rightControlsChangeHandler);
+
+      // Return cleanup function
+      return () => {
+        if (mainControls) {
+          mainControls.removeEventListener("change", mainControlsChangeHandler);
+        }
+        if (rightControls) {
+          rightControls.removeEventListener(
+            "change",
+            rightControlsChangeHandler
+          );
+        }
+      };
+    }
+    return () => {}; // Return empty cleanup function if conditions aren't met
+  };
+
+  // Make sure this useEffect is properly implemented to setup and cleanup the synchronization
+  useEffect(() => {
+    const cleanupSync = setupSynchronization();
+
+    // Clean up on component unmount or when lock state changes
+    return () => {
+      if (cleanupSync) cleanupSync();
+    };
+  }, [locked, isSplitModeOn, mainViewerRef.current, rightViewerRef.current]);
 
   useEffect(() => {
     const hasDriven = sessionStorage.getItem("hasDriven");
@@ -111,7 +283,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
 
   useEffect(() => {
     if (!isSplitModeOn) {
-      setTopPanelVT(null);
+      setRightPanelVT(null);
     }
   }, [isSplitModeOn]);
 
@@ -168,13 +340,13 @@ const ShowVirtualTour = ({ virtualTour }) => {
         controlBar: true,
         controlButtons: [
           "fullscreen",
-          "setting",
-          "video",
-          "gallery",
-          "zoom",
-          "compass",
-          "autorotate",
-          "viewControl",
+          // "setting",
+          // "video",
+          // "gallery",
+          // "zoom",
+          // "compass",
+          // "autorotate",
+          // "viewControl",
         ],
         output: "console",
       });
@@ -360,8 +532,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
 
   // Initialize top panel viewer
   useEffect(() => {
-    if (isSplitModeOn && topPanelVT?.frames?.length) {
-      const activeInfospots = topPanelVT.infospots.filter(
+    if (isSplitModeOn && rightPanelVT?.frames?.length) {
+      const activeInfospots = rightPanelVT.infospots.filter(
         (infospot) => !deletedInfospots.includes(infospot._id)
       );
       const finalInfospots = activeInfospots.map((infospot) => {
@@ -372,10 +544,10 @@ const ShowVirtualTour = ({ virtualTour }) => {
       });
       initializeViewer(
         rightContainerRef.current,
-        topPanelVT.frames,
+        rightPanelVT.frames,
         rightViewerRef,
         rightPanoramasRef,
-        topPanelVT._id,
+        rightPanelVT._id,
         setRightPanelVtInfospots,
         finalInfospots
       );
@@ -383,7 +555,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
         resizeObserverRef.current.observe(rightContainerRef.current);
       }
     }
-  }, [topPanelVT, deletedInfospots, updatedInfospots]);
+  }, [rightPanelVT, deletedInfospots, updatedInfospots]);
 
   const handleResize = () => {
     [mainViewerRef, rightViewerRef].forEach((ref) => {
@@ -474,7 +646,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
       currentPanorama.add(spot);
       activeViewerRef.current.update(); // Refresh scene
       loadInfospots(virtualTour._id, setMainVtInfospots);
-      loadInfospots(topPanelVT?._id, setRightPanelVtInfospots);
+      loadInfospots(rightPanelVT?._id, setRightPanelVtInfospots);
     } catch (error) {
       console.log("Failed to create infospot:", error);
     } finally {
@@ -488,7 +660,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
       const deletedInfospot = await deleteInfospot(infospotId);
       if (deletedInfospot) {
         loadInfospots(virtualTour._id, setMainVtInfospots);
-        loadInfospots(topPanelVT?._id, setRightPanelVtInfospots);
+        loadInfospots(rightPanelVT?._id, setRightPanelVtInfospots);
         setDeletedInfospots([...deletedInfospots, deletedInfospot?._id]);
       }
     } catch (error) {
@@ -509,7 +681,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
       );
       if (updatedInfospot) {
         loadInfospots(virtualTour._id, setMainVtInfospots);
-        loadInfospots(topPanelVT?._id, setRightPanelVtInfospots);
+        loadInfospots(rightPanelVT?._id, setRightPanelVtInfospots);
         setIsOpenCreateInfospotDialog(false);
         setNewInfospotData({
           title: "",
@@ -584,9 +756,9 @@ const ShowVirtualTour = ({ virtualTour }) => {
       >
         <Panel
           defaultSize={50}
-          minSize={20}
+          minSize={30}
           maxSize={80}
-          className="bg-blue-300"
+          className="bg-blue-300 relative"
         >
           <div
             ref={mainContainerRef}
@@ -597,24 +769,55 @@ const ShowVirtualTour = ({ virtualTour }) => {
               touchAction: "none",
             }}
           />
+          <div className="absolute bottom-2 left-0 px-2 flex items-center justify-center gap-2">
+            <button
+              className="bg-white p-1 rounded-md shadow-md"
+              onClick={() => navigateVirtualTour("prev", "main")}
+            >
+              <ChevronLeft />
+            </button>
+            <div className="bg-white px-6 py-1 rounded-md shadow-md line-clamp-1">
+              {formatTimestamp(mainPanelVT?.createdAt)}
+            </div>
+            <button
+              className="bg-white p-1 rounded-md shadow-md"
+              onClick={() => navigateVirtualTour("next", "main")}
+            >
+              <ChevronRight />
+            </button>
+          </div>
         </Panel>
 
         {isSplitModeOn && (
           <>
-            <PanelResizeHandle className="w-1 bg-blue-500 transition-all cursor-col-resize" />
+            <PanelResizeHandle className="relative w-1 bg-blue-500 transition-all">
+              <button
+                onClick={() => setLocked(!locked)}
+                className={`absolute z-50 top-1/2 left-[-14px] cursor-pointer p-2 rounded-md border border-blue-500 ${
+                  locked ? "bg-blue-500 text-white" : "bg-white text-blue-500"
+                } transform -translate-y-1/2`}
+              >
+                {locked ? (
+                  <LockKeyholeOpen size={15} />
+                ) : (
+                  <LockKeyhole size={15} />
+                )}
+              </button>
+            </PanelResizeHandle>
+
             <Panel
               defaultSize={50}
-              minSize={0}
+              minSize={30}
               maxSize={80}
-              className="flex bg-blue-300"
+              className="flex bg-blue-300 relative"
               onClick={() => {
-                if (!topPanelVT) {
+                if (!rightPanelVT) {
                   setIsOpenVtSelectionDialog(true);
                   setClickedPanel("right");
                 }
               }}
             >
-              {topPanelVT ? (
+              {rightPanelVT ? (
                 <div className="relative w-full h-full">
                   <div
                     ref={rightContainerRef}
@@ -625,6 +828,23 @@ const ShowVirtualTour = ({ virtualTour }) => {
                       touchAction: "none",
                     }}
                   />
+                  <div className="absolute bottom-2 left-0 px-2 flex items-center justify-center gap-2">
+                    <button
+                      className="bg-white p-1 rounded-md shadow-md"
+                      onClick={() => navigateVirtualTour("prev", "right")}
+                    >
+                      <ChevronLeft />
+                    </button>
+                    <div className="bg-white px-6 py-1 rounded-md shadow-md line-clamp-1">
+                      {formatTimestamp(rightPanelVT?.createdAt)}
+                    </div>
+                    <button
+                      className="bg-white p-1 rounded-md shadow-md"
+                      onClick={() => navigateVirtualTour("next", "right")}
+                    >
+                      <ChevronRight />
+                    </button>
+                  </div>
                   <button
                     className="absolute top-2 right-2 z-10 bg-white hover:bg-gray-100 text-gray-800 rounded-full p-1.5 shadow-md transition-all duration-200 hover:scale-110"
                     onClick={(e) => {
@@ -632,7 +852,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
                       if (rightViewerRef.current) {
                         rightViewerRef.current.dispose();
                       }
-                      setTopPanelVT(null);
+                      setRightPanelVT(null);
                     }}
                   >
                     <X size={20} />
@@ -670,7 +890,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
           {virtualTours
             ?.filter(
               (tour) =>
-                tour._id !== virtualTour._id && tour._id !== topPanelVT?._id
+                tour._id !== virtualTour._id && tour._id !== rightPanelVT?._id
             )
             ?.map((tour) => (
               <VTCard
@@ -679,7 +899,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
                 isSelectionDialog={true}
                 buttonOnClick={() => {
                   if (clickedPanel === "right") {
-                    setTopPanelVT(tour);
+                    setRightPanelVT(tour);
                   }
                   setIsOpenVtSelectionDialog(false);
                 }}
@@ -833,7 +1053,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
         isLoading={loadingInfospots}
         onRefresh={() => {
           loadInfospots(virtualTour?._id, setMainVtInfospots);
-          loadInfospots(topPanelVT?._id, setRightPanelVtInfospots);
+          loadInfospots(rightPanelVT?._id, setRightPanelVtInfospots);
         }}
       >
         <div className="space-y-2">
@@ -847,8 +1067,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
               id: 2,
               title: "Right Panel Infospots",
               data: rightPanelVtInfospots,
-              isVisible: isSplitModeOn && topPanelVT,
-              emptyMessage: !topPanelVT
+              isVisible: isSplitModeOn && rightPanelVT,
+              emptyMessage: !rightPanelVT
                 ? "Please open virtual tour first"
                 : "No infospots",
             },
