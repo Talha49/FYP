@@ -94,6 +94,12 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const [mainPanelVtIndex, setMainPanelVtIndex] = useState(0);
   const [rightPanelVtIndex, setRightPanelVtIndex] = useState(0);
   const [mainPanelVT, setMainPanelVT] = useState(virtualTour);
+  const [newRFI, setNewRFI] = useState(null);
+  const [clickedPosition, setClickedPosition] = useState(null);
+  const [vt_id, setVt_id] = useState(null);
+  const [frame_id, setFrame_id] = useState(null);
+
+  console.log("New RFI =>", newRFI);
 
   const navigateVirtualTour = (direction, panel) => {
     const isMainPanel = panel === "main";
@@ -376,6 +382,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
         const frameId = Object.keys(panoramasRef.current).find(
           (key) => panoramasRef.current[key] === currentPanorama
         );
+        setFrame_id(frameId);
+        setVt_id(vt_id);
         const rect = container.getBoundingClientRect();
         const x = ((event.clientX - rect.left) / container.clientWidth) * 2 - 1;
         const y =
@@ -394,7 +402,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
           );
           // setIsOpenCreateInfospotDialog(true);
           setIsOpenActionSelectionDialog(true);
-          console.log(localPosition);
+          setClickedPosition(localPosition);
           // Update new infospot data
           setNewInfospotData((prev) => ({
             ...prev,
@@ -660,8 +668,11 @@ const ShowVirtualTour = ({ virtualTour }) => {
       spot.position.z += 50; // Move forward for better visibility
       spot.scale.set(2, 2, 2); // Increase size
       spot.lookAt(camera.position); // Face camera
-      spot.addHoverText(newInfospot.title);
-
+      // spot.addHoverText(newInfospot.title);
+      spot.addHoverElement(
+        createInfospotElement(newInfospot.title, newInfospot.description, 50),
+        50
+      );
       currentPanorama.add(spot);
       activeViewerRef.current.update(); // Refresh scene
       loadInfospots(virtualTour._id, setMainVtInfospots);
@@ -1242,7 +1253,14 @@ const ShowVirtualTour = ({ virtualTour }) => {
         title={"Create Task"}
         className="max-w-4xl max-h-96 overflow-y-auto"
       >
-        <TaskCreationForm />
+        <TaskCreationForm
+          sendNewCreatedTaskToParent={(data) => {
+            setNewRFI(data);
+          }}
+          position={clickedPosition}
+          vt_id={vt_id}
+          frame_id={frame_id}
+        />
       </Dialog>
       {/* Infospot Details Dialog */}
       <Dialog

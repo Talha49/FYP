@@ -10,7 +10,12 @@ import { createTask } from "@/lib/Features/TaskSlice";
 import { useToast } from "@/app/_components/CustomToast/Toast";
 import { usePathname, useRouter } from "next/navigation";
 
-const TaskCreationForm = () => {
+const TaskCreationForm = ({
+  sendNewCreatedTaskToParent,
+  position,
+  vt_id,
+  frame_id,
+}) => {
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.TaskSlice);
   const [authuserdata, setAuthuserData] = useState(null);
@@ -26,7 +31,6 @@ const TaskCreationForm = () => {
     emailAlerts: [],
     watchers: [],
   });
-
   const [groundFloorImages, setGroundFloorImages] = useState([]);
   const [lastFloorImage, setLastFloorImage] = useState([]);
   const [attachments, setAttachments] = useState([]);
@@ -37,8 +41,7 @@ const TaskCreationForm = () => {
   const pathName = usePathname();
   const mainPath = "/" + pathName.split("/")[1];
 
-  console.log("Menu permissions: ", menuPermissionsForPage);
-  console.log(mainPath);
+  console.log({ position, vt_id, frame_id });
 
   useEffect(() => {
     setAuthuserData(session?.user?.userData);
@@ -153,12 +156,15 @@ const TaskCreationForm = () => {
     };
 
     try {
-      await dispatch(createTask(taskData)).unwrap();
+      const res = await dispatch(createTask(taskData)).unwrap();
       showToast(
         "Task created successfully! Your request has been processed.",
         "success"
       );
       resetForm();
+      if (sendNewCreatedTaskToParent && res.task) {
+        sendNewCreatedTaskToParent(res.task);
+      }
     } catch (error) {
       console.error("Error submitting form:", error);
       showToast(
