@@ -820,9 +820,9 @@ const ShowVirtualTour = ({ virtualTour }) => {
                 } transform -translate-y-1/2`}
               >
                 {locked ? (
-                  <LockKeyholeOpen size={15} />
-                ) : (
                   <LockKeyhole size={15} />
+                ) : (
+                  <LockKeyholeOpen size={15} />
                 )}
               </button>
             </PanelResizeHandle>
