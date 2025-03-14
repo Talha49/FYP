@@ -318,7 +318,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const createInfospotElement = (title, description) => {
     const element = document.createElement("div");
     element.innerHTML = `
-      <div class="bg-white w-64 p-4 mb-14 shadow-xl rounded-lg border border-neutral-100 transform transition-all duration-300 hover:scale-105">
+      <div class="bg-white/70 w-64 p-4 mb-14 shadow-xl rounded-lg border border-neutral-100 transform transition-all duration-300 hover:scale-105">
         <h3 class="text-xl font-bold mb-2 text-blue-500">${title}</h3>
         <div class="h-px bg-gradient-to-r from-indigo-200 to-purple-200 my-2"></div>
         <p class="text-sm text-neutral-700 mt-3 leading-relaxed">${description}</p>
@@ -394,7 +394,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
           );
           // setIsOpenCreateInfospotDialog(true);
           setIsOpenActionSelectionDialog(true);
-
+          console.log(localPosition);
           // Update new infospot data
           setNewInfospotData((prev) => ({
             ...prev,
