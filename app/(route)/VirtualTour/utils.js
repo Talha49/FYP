@@ -72,6 +72,19 @@ export async function updateInfospot(id, data) {
   }
 }
 
+export const fetchRFIs = async (id) => {
+  try {
+    const res = await fetch(`/api/New/GetVtTasks/${id}`);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch RFIs: ${res.statusText}`);
+    }
+    const data = await res.json();
+    return data.rfis;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 export const driverObj = driver({
   animate: true,
   showProgress: true,

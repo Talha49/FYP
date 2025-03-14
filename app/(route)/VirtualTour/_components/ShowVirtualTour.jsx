@@ -30,6 +30,7 @@ import {
   deleteInfospot,
   driverObj,
   fetchInfospots,
+  fetchRFIs,
   formatTimestamp,
   updateInfospot,
 } from "../utils";
@@ -98,8 +99,148 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const [clickedPosition, setClickedPosition] = useState(null);
   const [vt_id, setVt_id] = useState(null);
   const [frame_id, setFrame_id] = useState(null);
+  const [mainPanelRFIs, setMainPanelRFIs] = useState([]);
+  const [rightPanelRFIs, setRightPanelRFIs] = useState([]);
 
-  console.log("New RFI =>", newRFI);
+  useEffect(() => {
+    const fetchMainPanelRFIs = async () => {
+      if (mainPanelVT) {
+        const rfis = await fetchRFIs(mainPanelVT?._id);
+        return rfis;
+      }
+    };
+    const fethcRightPanelRFIs = async () => {
+      if (rightPanelVT) {
+        const rfis = await fetchRFIs(rightPanelVT?._id);
+        return rfis;
+      }
+    };
+    fetchMainPanelRFIs().then((rfis) => {
+      setMainPanelRFIs(rfis);
+    });
+    fethcRightPanelRFIs().then((rfis) => {
+      setRightPanelRFIs(rfis);
+    });
+  }, [mainPanelVT, rightPanelVT]);
+
+  useEffect(() => {
+    // Only run when newRFI is available and contains valid data
+    if (newRFI && newRFI._id && newRFI.position && activeViewerRef.current) {
+      try {
+        // Determine which viewer and panorama is active
+        const currentViewer = activeViewerRef.current;
+        const currentPanorama = currentViewer.panorama;
+
+        if (!currentPanorama) {
+          console.error("No active panorama found");
+          return;
+        }
+
+        // Create infospot element with RFI details
+        const rfiElement = document.createElement("div");
+        rfiElement.innerHTML = `
+          <div class="bg-white/90 w-64 p-4 mb-14 shadow-xl rounded-lg border ${
+            newRFI.priority === "High"
+              ? "border-red-300"
+              : newRFI.priority === "Medium"
+              ? "border-blue-300"
+              : "border-yellow-300"
+          } transform transition-all duration-300 hover:scale-105">
+            <div class="flex justify-between items-center">
+              <h3 class="text-xl font-bold mb-2 ${
+                newRFI.priority === "High"
+                  ? "text-red-500"
+                  : newRFI.priority === "Medium"
+                  ? "text-blue-500"
+                  : "text-yellow-500"
+              }">RFI #${newRFI._id.slice(-4)}</h3>
+              <span class="px-2 py-1 text-xs rounded-full ${
+                newRFI.priority === "High"
+                  ? "bg-red-100 text-red-600"
+                  : newRFI.priority === "Medium"
+                  ? "bg-blue-100 text-blue-600"
+                  : "bg-yellow-100 text-yellow-600"
+              }">${newRFI.priority}</span>
+            </div>
+            <div class="h-px bg-gradient-to-r ${
+              newRFI.priority === "High"
+                ? "from-red-200 to-red-100"
+                : newRFI.priority === "Medium"
+                ? "from-blue-200 to-blue-100"
+                : "from-yellow-200 to-yellow-100"
+            } my-2"></div>
+            <p class="text-sm text-neutral-700 mt-3 leading-relaxed">${
+              newRFI.description
+            }</p>
+            <div class="mt-3 flex flex-col gap-1">
+              <div class="flex justify-between text-xs">
+                <span>Status: <strong>${newRFI.status}</strong></span>
+                <span>Room: ${newRFI.room}, Floor: ${newRFI.floor}</span>
+              </div>
+              <div class="flex justify-between text-xs">
+                <span>Created: ${new Date(
+                  newRFI.createdAt
+                ).toLocaleDateString()}</span>
+                <span>Due: ${new Date(
+                  newRFI.dueDate
+                ).toLocaleDateString()}</span>
+              </div>
+            </div>
+          </div>`;
+
+        // Create infospot with different colors based on priority
+        const infospot = new PANOLENS.Infospot(300, PANOLENS.DataImage.Info);
+
+        // Set color based on priority
+        if (newRFI.priority === "High") {
+          infospot.material.color.set(0xff0000); // Red for high priority
+        } else if (newRFI.priority === "Medium") {
+          infospot.material.color.set(0x0066ff); // Blue for medium priority
+        } else {
+          infospot.material.color.set(0xffcc00); // Yellow for low priority
+        }
+
+        // Set infospot position from RFI data
+        infospot.position.set(
+          newRFI.position.x,
+          newRFI.position.y,
+          newRFI.position.z
+        );
+
+        // Add custom element to infospot
+        infospot.addHoverElement(rfiElement, 50);
+
+        // Add click event to show more details
+        infospot.addEventListener("click", () => {
+          setClickedInfospot({
+            title: `RFI #${newRFI._id.slice(-4)} - ${newRFI.priority} Priority`,
+            description: newRFI.description,
+            priority: newRFI.priority,
+            status: newRFI.status,
+            room: newRFI.room,
+            floor: newRFI.floor,
+            dueDate: new Date(newRFI.dueDate).toLocaleDateString(),
+            createdBy: newRFI.username,
+          });
+        });
+
+        // Add the infospot to the current panorama
+        currentPanorama.add(infospot);
+
+        // Update the viewer to reflect changes
+        currentViewer.update();
+
+        console.log(
+          `RFI infospot created successfully with ${newRFI.priority} priority`
+        );
+
+        // Reset isOpenCreateTaskDialog state
+        setIsOpenCreateTaskDialog(false);
+      } catch (error) {
+        console.error("Error creating RFI infospot:", error);
+      }
+    }
+  }, [newRFI]);
 
   const navigateVirtualTour = (direction, panel) => {
     const isMainPanel = panel === "main";

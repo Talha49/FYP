@@ -153,6 +153,9 @@ const TaskCreationForm = ({
       lastFloorImages: lastFloorImageBase64,
       attachments: attachmentsBase64,
       dueDate: new Date(formData.dueDate).toISOString(),
+      position,
+      vt_id,
+      frame_id,
     };
 
     try {
