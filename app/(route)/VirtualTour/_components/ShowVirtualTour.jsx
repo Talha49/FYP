@@ -37,6 +37,7 @@ import {
 import "driver.js/dist/driver.css";
 import { GoQuestion } from "react-icons/go";
 import TaskCreationForm from "../../Upload/UploadForm/UploadForm";
+import FieldNoteModalCardsModal from "@/app/_components/FieldNoteModalCardsModal/FieldNoteModalCardsModal";
 
 const ShowVirtualTour = ({ virtualTour }) => {
   const mainContainerRef = useRef(null);
@@ -99,19 +100,27 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const [clickedPosition, setClickedPosition] = useState(null);
   const [vt_id, setVt_id] = useState(null);
   const [frame_id, setFrame_id] = useState(null);
-  const [mainPanelRFIs, setMainPanelRFIs] = useState([]);
-  const [rightPanelRFIs, setRightPanelRFIs] = useState([]);
+  const [mainPanelRFIs, setMainPanelRFIs] = useState(null);
+  const [rightPanelRFIs, setRightPanelRFIs] = useState(null);
+  const [loadingRFIs, setLoadingRFIs] = useState(false);
+  const [clickedRfi, setClickedRfi] = useState(null);
+
+  console.log(clickedRfi);
 
   useEffect(() => {
     const fetchMainPanelRFIs = async () => {
+      setLoadingRFIs(true);
       if (mainPanelVT) {
         const rfis = await fetchRFIs(mainPanelVT?._id);
+        setLoadingRFIs(false);
         return rfis;
       }
     };
     const fethcRightPanelRFIs = async () => {
+      setLoadingRFIs(true);
       if (rightPanelVT) {
         const rfis = await fetchRFIs(rightPanelVT?._id);
+        setLoadingRFIs(false);
         return rfis;
       }
     };
@@ -122,6 +131,58 @@ const ShowVirtualTour = ({ virtualTour }) => {
       setRightPanelRFIs(rfis);
     });
   }, [mainPanelVT, rightPanelVT]);
+
+  const createRFIElement = (rfi) => {
+    const element = document.createElement("div");
+    element.innerHTML = `
+      <div class="bg-white/90 w-64 p-4 mb-14 shadow-xl rounded-lg border ${
+        rfi.priority === "High"
+          ? "border-red-300"
+          : rfi.priority === "Medium"
+          ? "border-blue-300"
+          : "border-yellow-300"
+      } transform transition-all duration-300 hover:scale-105">
+        <div class="flex justify-between items-center">
+          <h3 class="text-xl font-bold mb-2 ${
+            rfi.priority === "High"
+              ? "text-red-500"
+              : rfi.priority === "Medium"
+              ? "text-blue-500"
+              : "text-yellow-500"
+          }">RFI #${rfi._id.slice(-4)}</h3>
+          <span class="px-2 py-1 text-xs rounded-full ${
+            rfi.priority === "High"
+              ? "bg-red-100 text-red-600"
+              : rfi.priority === "Medium"
+              ? "bg-blue-100 text-blue-600"
+              : "bg-yellow-100 text-yellow-600"
+          }">${rfi.priority}</span>
+        </div>
+        <div class="h-px bg-gradient-to-r ${
+          rfi.priority === "High"
+            ? "from-red-200 to-red-100"
+            : rfi.priority === "Medium"
+            ? "from-blue-200 to-blue-100"
+            : "from-yellow-200 to-yellow-100"
+        } my-2"></div>
+        <p class="text-sm text-neutral-700 mt-3 leading-relaxed">${
+          rfi.description
+        }</p>
+        <div class="mt-3 flex flex-col gap-1">
+          <div class="flex justify-between text-xs">
+            <span>Status: <strong>${rfi.status}</strong></span>
+            <span>Room: ${rfi.room}, Floor: ${rfi.floor}</span>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span>Created: ${new Date(
+              rfi.createdAt
+            ).toLocaleDateString()}</span>
+            <span>Due: ${new Date(rfi.dueDate).toLocaleDateString()}</span>
+          </div>
+        </div>
+      </div>`;
+    return element;
+  };
 
   useEffect(() => {
     // Only run when newRFI is available and contains valid data
@@ -483,7 +544,8 @@ const ShowVirtualTour = ({ virtualTour }) => {
     panoramasRef,
     vt_id,
     setInfospots,
-    infospots
+    infospots,
+    rfis = [] // Add the rfis parameter with default empty array
   ) => {
     if (!container || !frames?.length) return;
 
@@ -596,6 +658,45 @@ const ShowVirtualTour = ({ virtualTour }) => {
           panorama.add(infoSpot);
         });
 
+        // RFI Implementation - Add RFIs to the respective panorama
+        const frameRFIs = rfis.filter((rfi) => rfi.frame_id === frame._id);
+        frameRFIs.forEach((rfi) => {
+          // Create infospot with different colors based on priority
+          const infospot = new PANOLENS.Infospot(300, PANOLENS.DataImage.Info);
+
+          // Set color based on priority
+          if (rfi.priority === "High") {
+            infospot.material.color.set(0xff0000); // Red for high priority
+          } else if (rfi.priority === "Medium") {
+            infospot.material.color.set(0x0066ff); // Blue for medium priority
+          } else {
+            infospot.material.color.set(0xffcc00); // Yellow for low priority
+          }
+
+          // Set infospot position from RFI data
+          infospot.position.set(rfi.position.x, rfi.position.y, rfi.position.z);
+
+          // Add custom element to infospot
+          // infospot.addHoverElement(createRFIElement(rfi), 50);
+
+          // Add click event to show more details
+          infospot.addEventListener("click", () => {
+            setClickedRfi(rfi);
+            // setClickedInfospot({
+            //   title: `RFI #${rfi._id.slice(-4)} - ${rfi.priority} Priority`,
+            //   description: rfi.description,
+            //   priority: rfi.priority,
+            //   status: rfi.status,
+            //   room: rfi.room,
+            //   floor: rfi.floor,
+            //   dueDate: new Date(rfi.dueDate).toLocaleDateString(),
+            //   createdBy: rfi.username,
+            // });
+          });
+
+          panorama.add(infospot);
+        });
+
         // Add navigation hotspots
         if (index > 0) {
           addHotspot(
@@ -653,38 +754,60 @@ const ShowVirtualTour = ({ virtualTour }) => {
 
   // Initialize main viewer
   useEffect(() => {
-    if (!virtualTour?.frames?.length) return;
-    const activeInfospots = virtualTour.infospots.filter(
-      (infospot) => !deletedInfospots.includes(infospot._id)
-    );
-    const finalInfospots = activeInfospots.map((infospot) => {
-      const updatedInfospot = updatedInfospots.find(
-        (updated) => updated._id === infospot._id
-      );
-      return updatedInfospot ? updatedInfospot : infospot;
-    });
+    const initializeWithRFIs = async () => {
+      if (!virtualTour?.frames?.length) return;
 
-    initializeViewer(
-      mainContainerRef.current,
-      virtualTour.frames,
-      mainViewerRef,
-      mainPanoramasRef,
-      virtualTour._id,
-      setMainVtInfospots,
-      finalInfospots
-    );
+      // Set loading state
+      setLoadingRFIs(true);
 
-    // Setup ResizeObserver
-    resizeObserverRef.current = new ResizeObserver((entries) => {
-      entries.forEach(() => {
-        if (mainViewerRef.current) mainViewerRef.current.onWindowResize();
-        if (rightViewerRef.current) rightViewerRef.current.onWindowResize();
-      });
-    });
+      try {
+        // First load all RFIs for main panel
+        const mainRFIs = await fetchRFIs(virtualTour._id);
+        setMainPanelRFIs(mainRFIs);
 
-    if (mainContainerRef.current) {
-      resizeObserverRef.current.observe(mainContainerRef.current);
-    }
+        // Process infospots
+        const activeInfospots = virtualTour.infospots.filter(
+          (infospot) => !deletedInfospots.includes(infospot._id)
+        );
+
+        const finalInfospots = activeInfospots.map((infospot) => {
+          const updatedInfospot = updatedInfospots.find(
+            (updated) => updated._id === infospot._id
+          );
+          return updatedInfospot ? updatedInfospot : infospot;
+        });
+
+        // Now initialize viewer with all data available
+        initializeViewer(
+          mainContainerRef.current,
+          virtualTour.frames,
+          mainViewerRef,
+          mainPanoramasRef,
+          virtualTour._id,
+          setMainVtInfospots,
+          finalInfospots,
+          mainRFIs // Pass the loaded RFIs
+        );
+
+        // Setup ResizeObserver
+        resizeObserverRef.current = new ResizeObserver((entries) => {
+          entries.forEach(() => {
+            if (mainViewerRef.current) mainViewerRef.current.onWindowResize();
+            if (rightViewerRef.current) rightViewerRef.current.onWindowResize();
+          });
+        });
+
+        if (mainContainerRef.current) {
+          resizeObserverRef.current.observe(mainContainerRef.current);
+        }
+      } catch (error) {
+        console.error("Error loading RFIs or initializing viewer:", error);
+      } finally {
+        setLoadingRFIs(false);
+      }
+    };
+
+    initializeWithRFIs();
 
     return () => {
       if (resizeObserverRef.current) {
@@ -698,32 +821,57 @@ const ShowVirtualTour = ({ virtualTour }) => {
     };
   }, [virtualTour, deletedInfospots, updatedInfospots]);
 
-  // Initialize top panel viewer
+  // Initialize right panel viewer
   useEffect(() => {
-    if (isSplitModeOn && rightPanelVT?.frames?.length) {
-      const activeInfospots = rightPanelVT.infospots.filter(
-        (infospot) => !deletedInfospots.includes(infospot._id)
-      );
-      const finalInfospots = activeInfospots.map((infospot) => {
-        const updatedInfospot = updatedInfospots.find(
-          (updated) => updated._id === infospot._id
+    const initializeRightPanel = async () => {
+      if (!isSplitModeOn || !rightPanelVT?.frames?.length) return;
+
+      setLoadingRFIs(true);
+
+      try {
+        // Load RFIs for right panel first
+        const rightRFIs = await fetchRFIs(rightPanelVT._id);
+        setRightPanelRFIs(rightRFIs);
+
+        // Process infospots
+        const activeInfospots = rightPanelVT.infospots.filter(
+          (infospot) => !deletedInfospots.includes(infospot._id)
         );
-        return updatedInfospot ? updatedInfospot : infospot;
-      });
-      initializeViewer(
-        rightContainerRef.current,
-        rightPanelVT.frames,
-        rightViewerRef,
-        rightPanoramasRef,
-        rightPanelVT._id,
-        setRightPanelVtInfospots,
-        finalInfospots
-      );
-      if (resizeObserverRef.current && rightContainerRef.current) {
-        resizeObserverRef.current.observe(rightContainerRef.current);
+
+        const finalInfospots = activeInfospots.map((infospot) => {
+          const updatedInfospot = updatedInfospots.find(
+            (updated) => updated._id === infospot._id
+          );
+          return updatedInfospot ? updatedInfospot : infospot;
+        });
+
+        // Initialize right panel with all data
+        initializeViewer(
+          rightContainerRef.current,
+          rightPanelVT.frames,
+          rightViewerRef,
+          rightPanoramasRef,
+          rightPanelVT._id,
+          setRightPanelVtInfospots,
+          finalInfospots,
+          rightRFIs
+        );
+
+        if (resizeObserverRef.current && rightContainerRef.current) {
+          resizeObserverRef.current.observe(rightContainerRef.current);
+        }
+      } catch (error) {
+        console.error(
+          "Error loading RFIs or initializing right viewer:",
+          error
+        );
+      } finally {
+        setLoadingRFIs(false);
       }
-    }
-  }, [rightPanelVT, deletedInfospots, updatedInfospots]);
+    };
+
+    initializeRightPanel();
+  }, [rightPanelVT, deletedInfospots, updatedInfospots, isSplitModeOn]);
 
   const handleResize = () => {
     [mainViewerRef, rightViewerRef].forEach((ref) => {
@@ -1414,6 +1562,21 @@ const ShowVirtualTour = ({ virtualTour }) => {
       >
         <p>{clickedInfospot?.description}</p>
       </Dialog>
+      {/* RFI Information */}
+      {clickedRfi && (
+        <Dialog
+          title={clickedRfi?.name}
+          isOpen={clickedRfi}
+          onClose={() => setClickedRfi(null)}
+          header={false}
+          className="max-w-5xl max-h-[80vh] overflow-y-auto"
+        >
+          <FieldNoteModalCardsModal
+            note={clickedRfi}
+            onClose={() => setClickedRfi(null)}
+          />
+        </Dialog>
+      )}
     </div>
   );
 };
