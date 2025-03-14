@@ -126,6 +126,16 @@ export const driverObj = driver({
       },
     },
     {
+      element: "#vt-date",
+      popover: {
+        title: "Navigate Dates",
+        description:
+          "You can navigate between virtual tours of different dates",
+        side: "top",
+        align: "left",
+      },
+    },
+    {
       element: "#learn",
       popover: {
         title: "Learn How to operate",

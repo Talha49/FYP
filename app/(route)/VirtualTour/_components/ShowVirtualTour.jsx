@@ -4,6 +4,7 @@ import * as PANOLENS from "panolens";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import SwitchButton from "./SwitchButton";
 import {
+  Album,
   Bug,
   ChevronDown,
   ChevronLeft,
@@ -314,6 +315,20 @@ const ShowVirtualTour = ({ virtualTour }) => {
     }
   };
 
+  const createInfospotElement = (title, description) => {
+    const element = document.createElement("div");
+    element.innerHTML = `
+      <div class="bg-white w-64 p-4 mb-14 shadow-xl rounded-lg border border-neutral-100 transform transition-all duration-300 hover:scale-105">
+        <h3 class="text-xl font-bold mb-2 text-blue-500">${title}</h3>
+        <div class="h-px bg-gradient-to-r from-indigo-200 to-purple-200 my-2"></div>
+        <p class="text-sm text-neutral-700 mt-3 leading-relaxed">${description}</p>
+        <div class="mt-3 flex justify-end">
+          <div class="h-1 w-16 bg-gradient-to-r from-indigo-400 to-purple-500 rounded-full"></div>
+        </div>
+      </div>`;
+    return element;
+  };
+
   const initializeViewer = (
     container,
     frames,
@@ -416,7 +431,11 @@ const ShowVirtualTour = ({ virtualTour }) => {
             spot.position.y,
             spot.position.z
           );
-          infoSpot.addHoverText(spot.title, 30);
+          // infoSpot.addHoverText(spot.title, 30);
+          infoSpot.addHoverElement(
+            createInfospotElement(spot.title, spot.description, 50),
+            50
+          );
 
           infoSpot.addEventListener("click", () => {
             setClickedInfospot({
@@ -769,7 +788,10 @@ const ShowVirtualTour = ({ virtualTour }) => {
               touchAction: "none",
             }}
           />
-          <div className="absolute bottom-2 left-0 px-2 flex items-center justify-center gap-2">
+          <div
+            id="vt-date"
+            className="absolute bottom-2 left-0 px-2 flex items-center justify-center gap-2"
+          >
             <button
               className="bg-white p-1 rounded-md shadow-md"
               onClick={() => navigateVirtualTour("prev", "main")}
@@ -931,7 +953,7 @@ const ShowVirtualTour = ({ virtualTour }) => {
             }}
             className="w-full p-4 flex flex-col items-center justify-center rounded-lg cursor-pointer border border-blue-500 bg-blue-50 hover:bg-blue-100 text-blue-600"
           >
-            <Bug size={30} /> Create Task
+            <Album size={30} /> Create RFI
           </button>
         </div>
       </Dialog>
