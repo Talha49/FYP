@@ -15,7 +15,6 @@ const TaskCreationForm = () => {
   const { loading, error } = useSelector((state) => state.TaskSlice);
   const [authuserdata, setAuthuserData] = useState(null);
   const [formData, setFormData] = useState({
- 
     description: "",
     priority: "",
     room: "",
@@ -34,9 +33,8 @@ const TaskCreationForm = () => {
   const { showToast } = useToast();
   const { data: session } = useSession();
   const [menuPermissionsForPage, setMenuPermissions] = useState(null);
+  const [fieldsPermissions, setFieldsPermissions] = useState(null);
   const pathName = usePathname();
-
-  console.log("Menu Permissions: ", menuPermissionsForPage)
 
   useEffect(() => {
     setAuthuserData(session?.user?.userData);
@@ -48,7 +46,14 @@ const TaskCreationForm = () => {
         authuserdata?.role?.permissions?.menuPermissions?.basicMenu?.find(
           (menu) => menu.path === pathName
         );
+      const formPerm = Object.values(
+        authuserdata?.role?.permissions?.formPermissions
+      );
+      const rfiForm = formPerm.find(
+        (form) => form.name === "RFI Creation Form"
+      );
       setMenuPermissions(menuPerm?.permission || null);
+      setFieldsPermissions(rfiForm?.tabs[0]?.sections[0]?.fields);
     }
   }, [authuserdata, pathName]);
 
@@ -60,6 +65,21 @@ const TaskCreationForm = () => {
   const handleArrayInputChange = (e, field) => {
     const values = e.target.value.split(",").map((item) => item.trim());
     setFormData((prev) => ({ ...prev, [field]: values }));
+  };
+
+  const hasEditPermission = (name) => {
+    const field = fieldsPermissions?.find((field) => field.name === name);
+    return field ? field.permission === "edit" : false;
+  };
+
+  const hasReadOnlyPermission = (name) => {
+    const field = fieldsPermissions?.find((field) => field.name === name);
+    return field ? field.permission === "readonly" : false;
+  };
+
+  const hasHoddenPermission = (name) => {
+    const field = fieldsPermissions?.find((field) => field.name === name);
+    return field ? field.permission === "hidden" : false;
   };
 
   const resetForm = () => {
@@ -82,27 +102,28 @@ const TaskCreationForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (!menuPermissionsForPage?.includes("create")) {
       showToast("You don't have permission to create task", "error");
       return;
     }
-  
+
     if (!groundFloorImages.length || !lastFloorImage.length) {
       showToast("Please upload all required images", "warning");
       return;
     }
-  
+
     // Convert files to base64
     const convertToBase64 = async (file) => {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
-        reader.onload = () => resolve({ base64: reader.result, name: file.name });
+        reader.onload = () =>
+          resolve({ base64: reader.result, name: file.name });
         reader.onerror = (error) => reject(error);
       });
     };
-  
+
     // Convert images & attachments
     const groundFloorImageBase64 = await Promise.all(
       groundFloorImages.map((img) => convertToBase64(img.file))
@@ -113,21 +134,20 @@ const TaskCreationForm = () => {
     const attachmentsBase64 = await Promise.all(
       attachments.map((file) => convertToBase64(file))
     );
-  
+
     // Construct JSON payload
     const taskData = {
       ...formData,
       assignedBy: authuserdata?._id || "",
       userId: authuserdata?._id || "",
-      creatorId: authuserdata?._id || "",  // <-- Ensure creatorId is included
+      creatorId: authuserdata?._id || "", // <-- Ensure creatorId is included
       username: authuserdata?.fullName || "",
       groundFloorImages: groundFloorImageBase64,
       lastFloorImages: lastFloorImageBase64,
       attachments: attachmentsBase64,
       dueDate: new Date(formData.dueDate).toISOString(),
     };
-    
-  
+
     try {
       await dispatch(createTask(taskData)).unwrap();
       showToast(
@@ -137,10 +157,12 @@ const TaskCreationForm = () => {
       resetForm();
     } catch (error) {
       console.error("Error submitting form:", error);
-      showToast(error.message || "Failed to create task. Please try again.", "error");
+      showToast(
+        error.message || "Failed to create task. Please try again.",
+        "error"
+      );
     }
   };
-  
 
   const priorityOptions = [
     { value: "No data", label: "No data" },
@@ -183,6 +205,7 @@ const TaskCreationForm = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-4">
+          {/* System fields - always disabled */}
           <FormInput
             label="User ID"
             id="userId"
@@ -190,42 +213,89 @@ const TaskCreationForm = () => {
             value={authuserdata?._id || ""}
             disabled
           />
-           <FormInput
+          <FormInput
             label="Creator ID"
             id="creatorId"
             name="creatorId"
             value={authuserdata?._id || ""}
             disabled
           />
-          <FormInput
-            label="Description"
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            as="textarea"
-            rows="3"
-            disabled={!menuPermissionsForPage?.includes("create")}
-          />
-          <FormInput
-            label="Room"
-            id="room"
-            name="room"
-            value={formData.room}
-            onChange={handleInputChange}
-            disabled={!menuPermissionsForPage?.includes("create")}
-          />
-          <FormInput
-            label="Floor"
-            id="floor"
-            name="floor"
-            value={formData.floor}
-            onChange={handleInputChange}
-            disabled={!menuPermissionsForPage?.includes("create")}
-          />
+
+          {/* Dynamic permission fields */}
+          {!hasHoddenPermission("Description") && (
+            <FormInput
+              label="Description"
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={
+                hasEditPermission("Description") ? handleInputChange : undefined
+              }
+              as="textarea"
+              rows="3"
+              disabled={!hasEditPermission("Description")}
+              readOnly={hasReadOnlyPermission("Description")}
+              style={
+                hasReadOnlyPermission("Description")
+                  ? {
+                      backgroundColor: "#f9f9f9",
+                      color: "#555",
+                      cursor: "not-allowed",
+                    }
+                  : {}
+              }
+            />
+          )}
+
+          {!hasHoddenPermission("Room") && (
+            <FormInput
+              label="Room"
+              id="room"
+              name="room"
+              value={formData.room}
+              onChange={
+                hasEditPermission("Room") ? handleInputChange : undefined
+              }
+              disabled={!hasEditPermission("Room")}
+              readOnly={hasReadOnlyPermission("Room")}
+              style={
+                hasReadOnlyPermission("Room")
+                  ? {
+                      backgroundColor: "#f9f9f9",
+                      color: "#555",
+                      cursor: "not-allowed",
+                    }
+                  : {}
+              }
+            />
+          )}
+
+          {!hasHoddenPermission("Floor") && (
+            <FormInput
+              label="Floor"
+              id="floor"
+              name="floor"
+              value={formData.floor}
+              onChange={
+                hasEditPermission("Floor") ? handleInputChange : undefined
+              }
+              disabled={!hasEditPermission("Floor")}
+              readOnly={hasReadOnlyPermission("Floor")}
+              style={
+                hasReadOnlyPermission("Floor")
+                  ? {
+                      backgroundColor: "#f9f9f9",
+                      color: "#555",
+                      cursor: "not-allowed",
+                    }
+                  : {}
+              }
+            />
+          )}
         </div>
 
         <div className="space-y-4">
+          {/* System fields - always disabled */}
           <FormInput
             label="Full Name"
             id="username"
@@ -234,22 +304,58 @@ const TaskCreationForm = () => {
             disabled
           />
 
-          <FormSelect
-            label="Priority"
-            id="priority"
-            name="priority"
-            value={formData.priority}
-            onChange={handleInputChange}
-            options={priorityOptions}
-          />
-          <FormSelect
-            label="Status"
-            id="status"
-            name="status"
-            value={formData.status}
-            onChange={handleInputChange}
-            options={statusOptions}
-          />
+          {/* Dynamic permission fields */}
+          {!hasHoddenPermission("Priority") && (
+            <FormSelect
+              label="Priority"
+              id="priority"
+              name="priority"
+              value={formData.priority}
+              onChange={
+                hasEditPermission("Priority") ? handleInputChange : undefined
+              }
+              options={priorityOptions}
+              disabled={
+                !hasEditPermission("Priority") ||
+                hasReadOnlyPermission("Priority")
+              }
+              style={
+                hasReadOnlyPermission("Priority")
+                  ? {
+                      backgroundColor: "#f9f9f9",
+                      color: "#555",
+                      cursor: "not-allowed",
+                    }
+                  : {}
+              }
+            />
+          )}
+
+          {!hasHoddenPermission("Status") && (
+            <FormSelect
+              label="Status"
+              id="status"
+              name="status"
+              value={formData.status}
+              onChange={
+                hasEditPermission("Status") ? handleInputChange : undefined
+              }
+              options={statusOptions}
+              disabled={
+                !hasEditPermission("Status") || hasReadOnlyPermission("Status")
+              }
+              style={
+                hasReadOnlyPermission("Status")
+                  ? {
+                      backgroundColor: "#f9f9f9",
+                      color: "#555",
+                      cursor: "not-allowed",
+                    }
+                  : {}
+              }
+            />
+          )}
+
           <FormInput
             label="Assignee"
             id="assignee"
@@ -272,7 +378,7 @@ const TaskCreationForm = () => {
           name="tags"
           value={formData.tags.join(", ")}
           onChange={(e) => handleArrayInputChange(e, "tags")}
-          disabled={!menuPermissionsForPage?.includes("create")}
+          disabled={hasReadOnlyPermission("Tags")}
         />
         <FormInput
           label="Due Date"
@@ -281,7 +387,7 @@ const TaskCreationForm = () => {
           type="date"
           value={formData.dueDate}
           onChange={handleInputChange}
-          disabled={!menuPermissionsForPage?.includes("create")}
+          disabled={hasReadOnlyPermission("Due Date")}
         />
       </div>
 
