@@ -65,8 +65,17 @@ const SideNav = () => {
       setMenus(includedMenus);
       setIsVisible(includedMenus.length > 0);
 
+      const getFirstPath = (path) => {
+        const parts = path.split("/").filter(Boolean); // Split and remove empty segments
+        return parts.length > 0 ? `/${parts[0]}` : "/";
+      };
+
       // Redirect if the current path is not in the list of allowed paths
-      if (!allowedPaths.includes(pathName) && !publicPaths.includes(pathName)) {
+      if (
+        !allowedPaths.includes(pathName) &&
+        !publicPaths.includes(pathName) &&
+        !allowedPaths.includes(getFirstPath(pathName)) // ✅ FIXED: Call the function with pathName
+      ) {
         router.push("/Access-Denied");
       }
     }

@@ -7,10 +7,10 @@ import { middleware } from '@/app/middleware';
 export async function GET(request) {
   try {
     // Pass the request object to the middleware function
-    const middlewareResponse = await middleware(request);
-    if (middlewareResponse instanceof NextResponse) {
-      return middlewareResponse;
-    }
+    // const middlewareResponse = await middleware(request);
+    // if (middlewareResponse instanceof NextResponse) {
+    //   return middlewareResponse;
+    // }
 
     // Connect to the database
     await connectToDatabase();

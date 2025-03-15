@@ -78,7 +78,6 @@
 //     }
 // }
 
-
 // import { NextResponse } from 'next/server';
 // import NewTask from '../../../../lib/models/New';
 // import ChatRoom from '../../../../lib/models/chatRoom';
@@ -104,14 +103,14 @@
 //             }
 //         };
 
-//         const groundFloorImagesUrls = body.groundFloorImages ? 
+//         const groundFloorImagesUrls = body.groundFloorImages ?
 //             await Promise.all(body.groundFloorImages.map(uploadFile)) : [];
 
-//         const lastFloorImageUrl = body.lastFloorImages && body.lastFloorImages.length 
-//             ? await uploadFile(body.lastFloorImages[0]) 
+//         const lastFloorImageUrl = body.lastFloorImages && body.lastFloorImages.length
+//             ? await uploadFile(body.lastFloorImages[0])
 //             : '';
 
-//         const attachmentUrls = body.attachments ? 
+//         const attachmentUrls = body.attachments ?
 //             await Promise.all(body.attachments.map(uploadFile)) : [];
 
 //         const taskData = {
@@ -119,8 +118,8 @@
 //             groundFloorImages: groundFloorImagesUrls
 //                 .filter(Boolean)
 //                 .map(url => ({ url })),
-//             lastFloorImages: lastFloorImageUrl 
-//                 ? [{ url: lastFloorImageUrl }] 
+//             lastFloorImages: lastFloorImageUrl
+//                 ? [{ url: lastFloorImageUrl }]
 //                 : [],
 //             attachments: attachmentUrls
 //                 .filter(Boolean)
@@ -144,41 +143,38 @@
 //         }, { status: 201 });
 //     } catch (error) {
 //         console.error("Detailed error:", error);
-//         return NextResponse.json({ 
-//             success: false, 
-//             error: error.message 
+//         return NextResponse.json({
+//             success: false,
+//             error: error.message
 //         }, { status: 400 });
 //     }
 // }
 
-
-
-
-import { NextResponse } from 'next/server';
-import NewTask from '../../../../lib/models/New';
-import ChatRoom from '../../../../lib/models/chatRoom';
+import { NextResponse } from "next/server";
+import NewTask from "../../../../lib/models/New";
+import ChatRoom from "../../../../lib/models/chatRoom";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import dbConnect from '@/lib/connectdb/connection';
-import { storage } from '@/lib/firebase/firebaseConfig';
+import dbConnect from "@/lib/connectdb/connection";
+import { storage } from "@/lib/firebase/firebaseConfig";
 
 // Helper function to upload file from base64
 const uploadBase64File = async (base64Data, filename) => {
   try {
     // Remove data URL prefix if exists
-    const base64Image = base64Data.replace(/^data:image\/\w+;base64,/, '');
-    
+    const base64Image = base64Data.replace(/^data:image\/\w+;base64,/, "");
+
     // Convert base64 to buffer
-    const imageBuffer = Buffer.from(base64Image, 'base64');
-    
+    const imageBuffer = Buffer.from(base64Image, "base64");
+
     // Generate unique filename
     const uniqueFilename = `${Date.now()}_${filename}`;
-    
+
     // Create storage reference
     const storageRef = ref(storage, `uploads/${uniqueFilename}`);
-    
+
     // Upload to Firebase
     const snapshot = await uploadBytes(storageRef, imageBuffer);
-    
+
     // Get download URL
     return await getDownloadURL(snapshot.ref);
   } catch (error) {
@@ -191,16 +187,16 @@ export async function POST(req) {
   try {
     // Connect to database
     await dbConnect();
-    
+
     // Parse JSON body
     const body = await req.json();
-    
+
     // Process ground floor images
     const groundFloorImageUrls = await Promise.all(
       (body.groundFloorImages || []).map(async (image) => {
         if (image.base64) {
           const uploadedUrl = await uploadBase64File(
-            image.base64, 
+            image.base64,
             image.name || `ground_floor_${Date.now()}.jpg`
           );
           return { url: uploadedUrl };
@@ -214,7 +210,7 @@ export async function POST(req) {
       (body.lastFloorImages || []).map(async (image) => {
         if (image.base64) {
           const uploadedUrl = await uploadBase64File(
-            image.base64, 
+            image.base64,
             image.name || `last_floor_${Date.now()}.jpg`
           );
           return { url: uploadedUrl };
@@ -228,7 +224,7 @@ export async function POST(req) {
       (body.attachments || []).map(async (attachment) => {
         if (attachment.base64) {
           const uploadedUrl = await uploadBase64File(
-            attachment.base64, 
+            attachment.base64,
             attachment.name || `attachment_${Date.now()}`
           );
           return { url: uploadedUrl };
@@ -243,7 +239,7 @@ export async function POST(req) {
       groundFloorImages: groundFloorImageUrls.filter(Boolean),
       lastFloorImages: lastFloorImageUrls.filter(Boolean),
       attachments: attachmentUrls.filter(Boolean),
-      dueDate: new Date(body.dueDate)
+      dueDate: new Date(body.dueDate),
     };
 
     // Create task
@@ -258,18 +254,23 @@ export async function POST(req) {
     };
     const chatRoom = await ChatRoom.create(chatRoomData);
 
-    return NextResponse.json({
-      success: true,
-      task,
-      chatRoom
-    }, { status: 201 });
-
+    return NextResponse.json(
+      {
+        success: true,
+        task,
+        chatRoom,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Detailed error:", error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message,
-      stack: error.stack
-    }, { status: 400 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+        stack: error.stack,
+      },
+      { status: 400 }
+    );
   }
 }

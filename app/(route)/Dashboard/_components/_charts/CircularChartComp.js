@@ -25,10 +25,10 @@ const CircularChartComp = () => {
 
   // Fetch tasks on component mount
   useEffect(() => {
-    if (session?.user?.userData?.id) {
-      dispatch(getTasks(session.user.userData.id));
+    if (session?.user?.userData?._id) {
+      dispatch(getTasks(session.user.userData?._id));
     }
-  }, [dispatch, session?.user?.userData?.id]);
+  }, [dispatch, session?.user?.userData?._id]);
 
   // Categorize tasks based on due dates
   const categorizeTasks = () => {

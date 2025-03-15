@@ -83,7 +83,7 @@ function ProfileComp() {
       const canvas = editor.getImageScaledToCanvas();
       canvas.toBlob(async (blob) => {
         try {
-          const userId = session?.user?.userData?.id; // Unique identifier for user
+          const userId = session?.user?.userData?._id; // Unique identifier for user
           const fileRef = ref(
             storage,
             `profileImages/${userId}_${Date.now()}.png`
