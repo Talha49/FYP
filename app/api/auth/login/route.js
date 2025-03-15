@@ -7,6 +7,7 @@ import User from "@/lib/models/User";
 
 const JWT_SECRET = process.env.JWT_SECRET_KEY;
 
+
 export async function POST(req) {
   try {
     const { email, password } = await req.json();
@@ -39,9 +40,9 @@ export async function POST(req) {
     const token = jwt.sign(
       { userId: user._id, email: user.email },
       JWT_SECRET,
-      { expiresIn: "7d" } // Token valid for 7 days
+      { expiresIn: "1d" } // Token valid for 1 days
     );
-
+  
     return NextResponse.json({
       message: "Login successful",
       token,
@@ -51,11 +52,16 @@ export async function POST(req) {
         fullName: user.fullName,
         contact: user.contact,
         isSocialLogin: user.isSocialLogin,
+        image: user.image,
+       
       },
     }, { status: 200 });
 
+
+  
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
   }
 }
+
