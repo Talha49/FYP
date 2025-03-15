@@ -21,19 +21,36 @@ export function formatTimestamp(timestamp) {
   return `${formattedDate} at ${formattedTime}`;
 }
 
+const infospotCache = new Map();
+const CACHE_DURATION_MS = 10 * 60 * 1000; // 10 minutes
+
 export async function fetchInfospots(id) {
   try {
+    const cacheEntry = infospotCache.get(id);
+
+    // Check if data exists and is not expired
+    if (cacheEntry && Date.now() - cacheEntry.timestamp < CACHE_DURATION_MS) {
+      console.log("Returning cached infospots:", cacheEntry.data);
+      return cacheEntry.data;
+    }
+
+    // Fetch from API if not in cache or expired
     const response = await fetch(`/api/infospot/get/${id}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch infospots: ${response.statusText}`);
     }
-    const data = await response.json();
-    console.log(data);
 
-    return data.infospots || []; // Ensure it returns an array
+    const data = await response.json();
+    const infospots = data.infospots || [];
+
+    // Store in cache with a timestamp
+    infospotCache.set(id, { data: infospots, timestamp: Date.now() });
+
+    console.log("Fetched from API:", infospots);
+    return infospots;
   } catch (error) {
     console.error("Error fetching infospots:", error);
-    return []; // Return an empty array instead of undefined
+    return [];
   }
 }
 
@@ -72,16 +89,35 @@ export async function updateInfospot(id, data) {
   }
 }
 
+const rfiCache = new Map();
+
 export const fetchRFIs = async (id) => {
   try {
+    const cacheEntry = rfiCache.get(id);
+
+    // Check if cached data is valid
+    if (cacheEntry && Date.now() - cacheEntry.timestamp < CACHE_DURATION_MS) {
+      console.log("Returning cached RFIs:", cacheEntry.data);
+      return cacheEntry.data;
+    }
+
+    // Fetch from API if cache is empty/expired
     const res = await fetch(`/api/New/GetVtTasks/${id}`);
     if (!res.ok) {
       throw new Error(`Failed to fetch RFIs: ${res.statusText}`);
     }
+
     const data = await res.json();
-    return data.rfis;
+    const rfis = data.rfis || [];
+
+    // Store response in cache
+    rfiCache.set(id, { data: rfis, timestamp: Date.now() });
+
+    console.log("Fetched from API:", rfis);
+    return rfis;
   } catch (error) {
-    console.log(error);
+    console.error("Error fetching RFIs:", error);
+    return []; // Return an empty array on failure
   }
 };
 
