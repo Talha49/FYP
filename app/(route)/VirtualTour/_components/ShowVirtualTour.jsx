@@ -105,33 +105,6 @@ const ShowVirtualTour = ({ virtualTour }) => {
   const [loadingRFIs, setLoadingRFIs] = useState(false);
   const [clickedRfi, setClickedRfi] = useState(null);
 
-  console.log(clickedRfi);
-
-  useEffect(() => {
-    const fetchMainPanelRFIs = async () => {
-      setLoadingRFIs(true);
-      if (mainPanelVT) {
-        const rfis = await fetchRFIs(mainPanelVT?._id);
-        setLoadingRFIs(false);
-        return rfis;
-      }
-    };
-    const fethcRightPanelRFIs = async () => {
-      setLoadingRFIs(true);
-      if (rightPanelVT) {
-        const rfis = await fetchRFIs(rightPanelVT?._id);
-        setLoadingRFIs(false);
-        return rfis;
-      }
-    };
-    fetchMainPanelRFIs().then((rfis) => {
-      setMainPanelRFIs(rfis);
-    });
-    fethcRightPanelRFIs().then((rfis) => {
-      setRightPanelRFIs(rfis);
-    });
-  }, [mainPanelVT, rightPanelVT]);
-
   const createRFIElement = (rfi) => {
     const element = document.createElement("div");
     element.innerHTML = `
@@ -319,43 +292,14 @@ const ShowVirtualTour = ({ virtualTour }) => {
     setIndex(newIndex);
 
     // Update the appropriate panel with the new virtual tour
+    const newVirtualTour = virtualTours[newIndex];
+
     if (isMainPanel) {
-      // We need to reinitialize the main viewer with the new virtual tour
-      const newVirtualTour = virtualTours[newIndex];
-      // Reset any existing viewer
-      if (mainViewerRef.current) {
-        mainViewerRef.current.dispose();
-      }
-      if (mainContainerRef.current) {
-        mainContainerRef.current.innerHTML = "";
-      }
-
-      // Initialize with the new tour (similar logic to your existing useEffect)
-      const activeInfospots = newVirtualTour.infospots.filter(
-        (infospot) => !deletedInfospots.includes(infospot._id)
-      );
-      const finalInfospots = activeInfospots.map((infospot) => {
-        const updatedInfospot = updatedInfospots.find(
-          (updated) => updated._id === infospot._id
-        );
-        return updatedInfospot ? updatedInfospot : infospot;
-      });
-
       // Update the main panel virtual tour state
       setMainPanelVT(newVirtualTour);
-
-      initializeViewer(
-        mainContainerRef.current,
-        newVirtualTour.frames,
-        mainViewerRef,
-        mainPanoramasRef,
-        newVirtualTour._id,
-        setMainVtInfospots,
-        finalInfospots
-      );
     } else {
       // Update only the right panel with the new tour
-      setRightPanelVT(virtualTours[newIndex]);
+      setRightPanelVT(newVirtualTour);
     }
   };
 
@@ -755,18 +699,18 @@ const ShowVirtualTour = ({ virtualTour }) => {
   // Initialize main viewer
   useEffect(() => {
     const initializeWithRFIs = async () => {
-      if (!virtualTour?.frames?.length) return;
+      if (!mainPanelVT?.frames?.length) return;
 
       // Set loading state
       setLoadingRFIs(true);
 
       try {
         // First load all RFIs for main panel
-        const mainRFIs = await fetchRFIs(virtualTour._id);
+        const mainRFIs = await fetchRFIs(mainPanelVT._id);
         setMainPanelRFIs(mainRFIs);
 
         // Process infospots
-        const activeInfospots = virtualTour.infospots.filter(
+        const activeInfospots = mainPanelVT.infospots.filter(
           (infospot) => !deletedInfospots.includes(infospot._id)
         );
 
@@ -780,25 +724,28 @@ const ShowVirtualTour = ({ virtualTour }) => {
         // Now initialize viewer with all data available
         initializeViewer(
           mainContainerRef.current,
-          virtualTour.frames,
+          mainPanelVT.frames,
           mainViewerRef,
           mainPanoramasRef,
-          virtualTour._id,
+          mainPanelVT._id,
           setMainVtInfospots,
           finalInfospots,
           mainRFIs // Pass the loaded RFIs
         );
 
-        // Setup ResizeObserver
-        resizeObserverRef.current = new ResizeObserver((entries) => {
-          entries.forEach(() => {
-            if (mainViewerRef.current) mainViewerRef.current.onWindowResize();
-            if (rightViewerRef.current) rightViewerRef.current.onWindowResize();
+        // Setup ResizeObserver only once (not every time mainPanelVT changes)
+        if (!resizeObserverRef.current) {
+          resizeObserverRef.current = new ResizeObserver((entries) => {
+            entries.forEach(() => {
+              if (mainViewerRef.current) mainViewerRef.current.onWindowResize();
+              if (rightViewerRef.current)
+                rightViewerRef.current.onWindowResize();
+            });
           });
-        });
 
-        if (mainContainerRef.current) {
-          resizeObserverRef.current.observe(mainContainerRef.current);
+          if (mainContainerRef.current) {
+            resizeObserverRef.current.observe(mainContainerRef.current);
+          }
         }
       } catch (error) {
         console.error("Error loading RFIs or initializing viewer:", error);
@@ -808,24 +755,14 @@ const ShowVirtualTour = ({ virtualTour }) => {
     };
 
     initializeWithRFIs();
-
-    return () => {
-      if (resizeObserverRef.current) {
-        resizeObserverRef.current.disconnect();
-      }
-      [mainViewerRef, rightViewerRef].forEach((ref) => {
-        if (ref.current) {
-          ref.current.dispose();
-        }
-      });
-    };
-  }, [virtualTour, deletedInfospots, updatedInfospots]);
+  }, [mainPanelVT, deletedInfospots, updatedInfospots]);
 
   // Initialize right panel viewer
   useEffect(() => {
-    const initializeRightPanel = async () => {
-      if (!isSplitModeOn || !rightPanelVT?.frames?.length) return;
+    // Only run this when rightPanelVT changes AND split mode is on
+    if (!isSplitModeOn || !rightPanelVT?.frames?.length) return;
 
+    const initializeRightPanel = async () => {
       setLoadingRFIs(true);
 
       try {
@@ -871,7 +808,29 @@ const ShowVirtualTour = ({ virtualTour }) => {
     };
 
     initializeRightPanel();
-  }, [rightPanelVT, deletedInfospots, updatedInfospots, isSplitModeOn]);
+  }, [rightPanelVT, deletedInfospots, updatedInfospots]);
+
+  useEffect(() => {
+    if (isSplitModeOn) {
+      // If turning on split mode and we have a rightPanelVT, observe the container
+      if (
+        rightContainerRef.current &&
+        resizeObserverRef.current &&
+        rightPanelVT
+      ) {
+        resizeObserverRef.current.observe(rightContainerRef.current);
+      }
+    } else {
+      // If turning off split mode, unobserve and dispose right viewer
+      if (resizeObserverRef.current && rightContainerRef.current) {
+        resizeObserverRef.current.unobserve(rightContainerRef.current);
+      }
+      if (rightViewerRef.current) {
+        rightViewerRef.current.dispose();
+      }
+      setRightPanelVT(null);
+    }
+  }, [isSplitModeOn]);
 
   const handleResize = () => {
     [mainViewerRef, rightViewerRef].forEach((ref) => {
