@@ -24,9 +24,27 @@ function Header() {
   const { data: session, status } = useSession();
   // console.log("Session =>", session);
 
+ 
   useEffect(() => {
-    setAuthenticatedUser(session?.user?.userData);
+    if (session?.user?.userData?._id) {
+      setAuthenticatedUser(session.user.userData);
+      fetchNotificationsCount(session.user.userData._id);
+    }
   }, [session, pathname]);
+
+  const fetchNotificationsCount = async (userId) => {
+    try {
+      const response = await fetch(`/api/getNotifications?userId=${userId}&count=true`);
+      const data = await response.json();
+      if (response.ok) {
+        setNotificationsCount(data.count || 0);
+      } else {
+        console.error("Failed to fetch notifications count:", data.error);
+      }
+    } catch (error) {
+      console.error("Error fetching notifications count:", error);
+    }
+  };
 
   const handleSignOut = () => {
     signOut({ callbackUrl: "/" });
@@ -40,6 +58,7 @@ function Header() {
   };
   const handleCloseModal = () => {
     setShowNotifications(false); // Close the notifications modal
+   
   };
   // console.log("Session =>", session);
   // console.log("Authenticated User =>", authenticatedUser);
@@ -175,6 +194,7 @@ function Header() {
       <NotificationsModal
         isOpen={showNotifications}
         onClose={handleCloseModal}
+        
       />
 
     </div>

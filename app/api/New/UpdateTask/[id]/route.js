@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from '@/lib/firebase/firebaseConfig';
 import dbConnect from '@/lib/connectdb/connection';
-import NewTask from '../../../../../lib/models/New'
-
+import NewTask from '../../../../../lib/models/New';
+import nodemailer from 'nodemailer';
 
 export async function PUT(req, { params }) {
     try {
@@ -11,8 +11,19 @@ export async function PUT(req, { params }) {
         const taskId = params.id;
         const body = await req.json();
 
-        console.log("Received data for update:", body);
+        console.log("🔹 Received data for update:", body);
 
+        // Fetch existing task from the database
+        const existingTask = await NewTask.findById(taskId);
+        if (!existingTask) {
+            return NextResponse.json({ success: false, error: 'Task not found' }, { status: 404 });
+        }
+
+        // Identify new assignees (users that were not assigned before)
+        const previousAssignees = new Set(existingTask.assignees.map(a => a.id.toString())); // Convert IDs to strings
+        const newAssignees = body.assignees.filter(a => !previousAssignees.has(a.id.toString()));
+
+        // Prepare update data (keeping all fields from your original code)
         const updateData = {
             userId: body.userId,
             username: body.username,
@@ -31,18 +42,57 @@ export async function PUT(req, { params }) {
             attachments: body.attachments,
         };
 
+        // Update task in the database
         const updatedTask = await NewTask.findByIdAndUpdate(taskId, updateData, { new: true });
 
         if (!updatedTask) {
-            return NextResponse.json({ success: false, error: 'Task not found' }, { status: 404 });
+            return NextResponse.json({ success: false, error: 'Task update failed' }, { status: 500 });
+        }
+
+        const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+
+        // 🔔 Send notifications & emails only to new assignees
+        for (const assignee of newAssignees) {
+            const notificationPayload = {
+                userId: assignee.id,
+                title: `New Task Assigned: ${updatedTask.description}`,
+                message: `📌${updatedTask.username} assigned you a new task.
+                    \n📂 Task: ${updatedTask.description}
+                    \n*🔥 Priority: ${updatedTask.priority}
+                    \n*📌 Status: ${updatedTask.status}
+                    \n*📅 Due Date: ${new Date(updatedTask.dueDate).toLocaleDateString()}
+                    
+                `,
+                link: `/tasks/${updatedTask._id}`,
+                templateName: "taskcreated",
+                priority: "high", // 🔥 Always set to high
+                type: "success", // 🔄 Always set to general
+                category:"general",
+
+            };
+
+            // Send notification
+            await fetch(`${BASE_URL}/api/notifyApi`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(notificationPayload),
+            }).catch(err => console.error("❌ Notification Error:", err));
+
+            // 📧 Send email to new assignee
+          
         }
 
         return NextResponse.json({ success: true, data: updatedTask }, { status: 200 });
+
     } catch (error) {
-        console.error("Error in PUT /api/New/UpdateTask/[id]:", error);
+        console.error("❌ Error in PUT /api/New/UpdateTask/[id]:", error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
+
+// 📧 Function to Send Email using Nodemailer
+
+
 
 
 
