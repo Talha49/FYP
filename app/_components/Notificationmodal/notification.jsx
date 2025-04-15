@@ -27,7 +27,7 @@ const NotificationsModal = ({ isOpen, onClose }) => {
   const [error, setError] = useState(null)
   // Optimistic UI updates for read status
   const [localReadStatus, setLocalReadStatus] = useState(new Set())
-const { data: session, status } = useSession(); // ✅ Get session data
+  const { data: session, status } = useSession(); // ✅ Get session data
 
   // ✅ Ensure userId is extracted correctly
   const userId = session?.user?.userData?._id || session?.user?.id;
@@ -50,20 +50,20 @@ const { data: session, status } = useSession(); // ✅ Get session data
   // Fetch notifications when modal opens or userId changes
   useEffect(() => {
     console.log("🔍 Checking useEffect conditions: isOpen =", isOpen, "userId =", userId);
-  
+
     if (!userId) {
       console.log("⏳ Waiting for session to load...");
       return;
     }
-  
+
     if (isOpen) {
-      console.log("✅ useEffect triggered! Fetching notifications...");
+      console.log("✅ useEffect is triggered! Fetching notifications...");
       fetchNotifications();
     } else {
       console.log("🚫 useEffect skipped: Either modal is closed or userId is missing");
     }
   }, [isOpen, userId]);
-  
+
 
   // Handle animation on open/close
   useEffect(() => {
@@ -80,25 +80,25 @@ const { data: session, status } = useSession(); // ✅ Get session data
       console.error("User ID is missing, cannot fetch notifications");
       return;
     }
-  
+
     console.log("Starting to fetch notifications");
     setIsLoading(true);
     setError(null);
-  
+
     try {
       console.log("Making API request to:", `/api/getNotifications?userId=${userId}`);
       const response = await fetch(`/api/getNotifications?userId=${userId}`);
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         console.error("API error:", errorData);
         throw new Error(errorData.error || "Failed to fetch notifications");
       }
-  
+
       const data = await response.json();
       console.log(`Successfully fetched ${data.length} notifications`);
       setNotifications(data);
-  
+
       // Initialize local read status from fetched data
       const readIds = new Set();
       data.forEach((notif) => {
@@ -114,7 +114,7 @@ const { data: session, status } = useSession(); // ✅ Get session data
       setIsLoading(false);
     }
   };
-  
+
 
   // Handle modal close with animation
   const handleClose = () => {
@@ -316,26 +316,24 @@ const { data: session, status } = useSession(); // ✅ Get session data
     <div
       key={notif._id}
       onClick={() => viewNotification(notif)}
-      className={`bg-white rounded-lg shadow-sm hover:shadow transition-all duration-200 cursor-pointer relative overflow-hidden group ${
-        isNotificationRead(notif)
+      className={`bg-white rounded-lg shadow-sm hover:shadow transition-all duration-200 cursor-pointer relative overflow-hidden group ${isNotificationRead(notif)
           ? "border border-gray-100"
           : notif.category === "alert"
             ? "border-l-4 border-l-red-500 border border-gray-100"
             : "border-l-4 border-l-blue-500 border border-gray-100"
-      }`}
+        }`}
     >
       <div className="p-3">
         <div className="flex justify-between items-start mb-1">
           <div className="flex items-start gap-2">
             {notif.category === "alert" && (
               <span
-                className={`mt-0.5 ${
-                  notif.priority === "high"
+                className={`mt-0.5 ${notif.priority === "high"
                     ? "text-red-500"
                     : notif.priority === "medium"
                       ? "text-amber-500"
                       : "text-yellow-500"
-                }`}
+                  }`}
               >
                 <FaExclamationTriangle size={14} />
               </span>
@@ -347,11 +345,10 @@ const { data: session, status } = useSession(); // ✅ Get session data
           {!isNotificationRead(notif) && (
             <button
               onClick={(e) => handleMarkAsRead(notif._id, e)}
-              className={`ml-2 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${
-                notif.category === "alert"
+              className={`ml-2 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${notif.category === "alert"
                   ? "text-red-500 hover:text-red-700 hover:bg-red-50"
                   : "text-blue-500 hover:text-blue-700 hover:bg-blue-50"
-              }`}
+                }`}
               aria-label="Mark as read"
             >
               <FaCheckCircle size={14} />
@@ -370,9 +367,8 @@ const { data: session, status } = useSession(); // ✅ Get session data
               </span>
             ) : (
               <span
-                className={`text-xs flex items-center gap-0.5 ${
-                  notif.category === "alert" ? "text-red-500" : "text-blue-500"
-                }`}
+                className={`text-xs flex items-center gap-0.5 ${notif.category === "alert" ? "text-red-500" : "text-blue-500"
+                  }`}
               >
                 • <FaRegDotCircle size={8} /> New
               </span>
@@ -390,9 +386,8 @@ const { data: session, status } = useSession(); // ✅ Get session data
 
   return (
     <div
-      className={`fixed inset-y-0 right-0 z-50 h-full w-full sm:w-[380px] bg-white shadow-xl flex flex-col transition-all duration-300 ease-in-out ${
-        isAnimating ? "translate-x-0" : "translate-x-full"
-      }`}
+      className={`fixed inset-y-0 right-0 z-50 h-full w-full sm:w-[380px] bg-white shadow-xl flex flex-col transition-all duration-300 ease-in-out ${isAnimating ? "translate-x-0" : "translate-x-full"
+        }`}
       aria-modal="true"
       role="dialog"
     >
@@ -443,9 +438,8 @@ const { data: session, status } = useSession(); // ✅ Get session data
         <div className="flex border-b bg-white">
           <button
             onClick={() => setActiveTab("all")}
-            className={`flex-1 py-2 text-sm font-medium transition-colors relative ${
-              activeTab === "all" ? "text-blue-600" : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={`flex-1 py-2 text-sm font-medium transition-colors relative ${activeTab === "all" ? "text-blue-600" : "text-gray-500 hover:text-gray-700"
+              }`}
           >
             All
             {unreadCount > 0 && (
@@ -455,9 +449,8 @@ const { data: session, status } = useSession(); // ✅ Get session data
           </button>
           <button
             onClick={() => setActiveTab("alert")}
-            className={`flex-1 py-2 text-sm font-medium transition-colors relative ${
-              activeTab === "alert" ? "text-red-600" : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={`flex-1 py-2 text-sm font-medium transition-colors relative ${activeTab === "alert" ? "text-red-600" : "text-gray-500 hover:text-gray-700"
+              }`}
           >
             Alerts
             {unreadAlertCount > 0 && (
@@ -467,9 +460,8 @@ const { data: session, status } = useSession(); // ✅ Get session data
           </button>
           <button
             onClick={() => setActiveTab("general")}
-            className={`flex-1 py-2 text-sm font-medium transition-colors relative ${
-              activeTab === "general" ? "text-blue-600" : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={`flex-1 py-2 text-sm font-medium transition-colors relative ${activeTab === "general" ? "text-blue-600" : "text-gray-500 hover:text-gray-700"
+              }`}
           >
             General
             {unreadGeneralCount > 0 && (
@@ -485,21 +477,19 @@ const { data: session, status } = useSession(); // ✅ Get session data
         // Notification Detail View
         <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
           <div
-            className={`bg-white rounded-lg shadow-sm border p-4 mb-3 animate-fadeIn ${
-              viewingNotification.category === "alert" ? "border-l-4 border-l-red-500" : "border-gray-100"
-            }`}
+            className={`bg-white rounded-lg shadow-sm border p-4 mb-3 animate-fadeIn ${viewingNotification.category === "alert" ? "border-l-4 border-l-red-500" : "border-gray-100"
+              }`}
           >
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-start gap-2">
                 {viewingNotification.category === "alert" && (
                   <span
-                    className={`mt-1 ${
-                      viewingNotification.priority === "high"
+                    className={`mt-1 ${viewingNotification.priority === "high"
                         ? "text-red-500"
                         : viewingNotification.priority === "medium"
                           ? "text-amber-500"
                           : "text-yellow-500"
-                    }`}
+                      }`}
                   >
                     <FaExclamationTriangle size={16} />
                   </span>
@@ -623,15 +613,13 @@ const { data: session, status } = useSession(); // ✅ Get session data
             ? "No unread alerts"
             : activeTab === "general" && generalNotifications.every((n) => isNotificationRead(n))
               ? "No unread notifications"
-              : `You have ${
-                  activeTab === "all" ? unreadCount : activeTab === "alert" ? unreadAlertCount : unreadGeneralCount
-                } unread ${activeTab === "alert" ? "alert" : "notification"}${
-                  (activeTab === "all" && unreadCount !== 1) ||
-                  (activeTab === "alert" && unreadAlertCount !== 1) ||
-                  (activeTab === "general" && unreadGeneralCount !== 1)
-                    ? "s"
-                    : ""
-                }`}
+              : `You have ${activeTab === "all" ? unreadCount : activeTab === "alert" ? unreadAlertCount : unreadGeneralCount
+              } unread ${activeTab === "alert" ? "alert" : "notification"}${(activeTab === "all" && unreadCount !== 1) ||
+                (activeTab === "alert" && unreadAlertCount !== 1) ||
+                (activeTab === "general" && unreadGeneralCount !== 1)
+                ? "s"
+                : ""
+              }`}
       </div>
     </div>
   )
