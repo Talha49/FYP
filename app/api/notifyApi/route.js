@@ -7,7 +7,6 @@ import axios from "axios";
 import { NextResponse } from "next/server";
 
 const WHATSAPP_API_URL = "https://graph.facebook.com/v22.0/595245460339458/messages";
-
 const WHATSAPP_ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
 
 const transporter = nodemailer.createTransport({
@@ -22,15 +21,13 @@ const transporter = nodemailer.createTransport({
 export async function POST(req) {
   console.log("Received POST request");
 
-  const { userId, title, message, templateName } = await req.json(); // Use req.json() to parse the body
-  console.log("Request body:", { userId, title, message, templateName });
+  const { userId, title, message, templateName, category, priority, type } = await req.json();
+  console.log("Request body:", { userId, title, message, templateName, category, priority, type });
 
-  if (!userId || !title || !message || !templateName) {
+  // Validate required fields
+  if (!userId || !title || !message || !templateName || !category || !priority || !type) {
     console.log("Missing required fields");
-    return NextResponse.json(
-      { message: "Missing required fields" },
-      { status: 400 }
-    );
+    return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
   }
 
   try {
@@ -41,15 +38,11 @@ export async function POST(req) {
 
     // Fetch the user data using the userId
     console.log("Fetching user data for userId:", userId);
-    const user = await User.findOne({ _id: userId });
-
+    const user = await User.findById(userId);
 
     if (!user) {
       console.log("User not found for userId:", userId);
-      return NextResponse.json(
-        { message: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
     console.log("User found:", user);
@@ -60,8 +53,14 @@ export async function POST(req) {
       userId,
       title,
       message,
+      category,
+      priority,
+      type,
     });
+
     console.log("Notification created:", notification);
+
+    let updateFields = {};
 
     // Send Email Notification
     if (user.email) {
@@ -73,78 +72,60 @@ export async function POST(req) {
         text: message,
       });
 
-      // Update notification status to indicate email was sent
-      console.log("Email sent, updating notification status...");
-      await Notification.updateOne(
-        { _id: notification._id },
-        { sentEmail: true }
-      );
+      console.log("Email sent successfully");
+      updateFields.sentEmail = true;
     } else {
       console.log("User has no email, skipping email notification");
     }
 
-// Send WhatsApp Notification
-if (user.contact) {
-  console.log(`Sending WhatsApp message to: ${user.contact}`);
+    // Send WhatsApp Notification
+    if (user.contact) {
+      console.log(`Sending WhatsApp message to: ${user.contact}`);
 
-  try {
-    const whatsappResponse = await axios.post(
-      WHATSAPP_API_URL,
-      {
-        messaging_product: "whatsapp",
-        to: user.contact.replace("+", ""), // Remove + sign if present
-        type: "template",
-        template: {
-            name: templateName, // ✅ Use the template name from frontend
-          language: { code: "en" }
+      try {
+        const whatsappResponse = await axios.post(
+          WHATSAPP_API_URL,
+          {
+            messaging_product: "whatsapp",
+            to: user.contact.replace("+", ""), // Remove + sign if present
+            type: "template",
+            template: {
+              name: templateName, // ✅ Use the template name from frontend
+              language: { code: "en" },
+            },
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        console.log("WhatsApp API Response:", whatsappResponse.data);
+
+        if (whatsappResponse.data.error) {
+          console.log("WhatsApp message failed:", whatsappResponse.data.error);
+        } else {
+          console.log("WhatsApp message sent successfully!");
+          updateFields.sentWhatsApp = true;
         }
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
-          "Content-Type": "application/json",
-        },
+      } catch (error) {
+        console.error("Error sending WhatsApp message:", error.response?.data || error.message);
       }
-    );
-
-  
-      // Log the response from WhatsApp API
-      console.log("WhatsApp API Response:", whatsappResponse.data);
-  
-      // Check if the API response contains errors
-      if (whatsappResponse.data.error) {
-        console.log("WhatsApp message failed:", whatsappResponse.data.error);
-      } else {
-        console.log("WhatsApp message sent successfully!");
-      }
-  
-    } catch (error) {
-      // Log any error during the API call
-      console.error("Error sending WhatsApp message:", error.response?.data || error.message);
-    }
-
-
-      // Update notification status to indicate WhatsApp message was sent
-      console.log("WhatsApp message sent, updating notification status...");
-      await Notification.updateOne(
-        { _id: notification._id },
-        { sentWhatsApp: true }
-      );
     } else {
       console.log("User has no contact number, skipping WhatsApp notification");
     }
 
-    // Return response indicating success
+    // Update notification status if needed
+    if (Object.keys(updateFields).length > 0) {
+      await Notification.updateOne({ _id: notification._id }, updateFields);
+    }
+
     console.log("Notification sent successfully, returning response...");
-    return NextResponse.json(
-      { message: "Notification sent!", notification },
-      { status: 200 }
-    );
+    return NextResponse.json({ message: "Notification sent!", notification }, { status: 200 });
   } catch (error) {
     console.error("Error sending notification:", error);
-    return NextResponse.json(
-      { message: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
   }
 }

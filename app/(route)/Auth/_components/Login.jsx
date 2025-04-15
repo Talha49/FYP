@@ -131,7 +131,10 @@ function Login () {
               userId,
               title: "Login Activity",
               message: `🔐 *Login Activity*\n✅ Login successfully at *${new Date().toLocaleString()}*`,
-              templateName: "open", // Pass the template name here
+              templateName: "notify", // Pass the template name here
+              priority: "high", // 🔥 Always set to high
+              type: "success", // 🔄 Always set to general
+              category:"general",
             }),
           }).catch((err) => console.error("Failed to send notification", err));
         })

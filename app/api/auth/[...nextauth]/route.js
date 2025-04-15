@@ -434,7 +434,10 @@ export const authOptions = {
               userId,
               title: "Login Activity",
               message: `🔐 *Login Activity*\n✅ Login successfully at *${new Date().toLocaleString()}*`,
-              templateName: "open",
+              templateName: "notify",
+              priority: "high", // 🔥 Always set to high
+              type: "welcome", // 🔄 Always set to general
+              category:"general",
             }),
           }).catch((err) => console.error("Failed to send notification", err));
         }

@@ -4,7 +4,7 @@ import { FaFacebook } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { IoClose } from "react-icons/io5";
 import axios from "axios";
-import { signIn, useSession } from "next-auth/react";
+import { signIn, useSession,getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 const TwoFactorAuthDialog = ({ children, isOpen, onClose }) => {
@@ -172,6 +172,7 @@ function Register() {
     }
   };
 
+
   useEffect(() => {
     const registerUser = async () => {
       setIsOpenTwoFactorDialog(false);
@@ -180,9 +181,10 @@ function Register() {
       setForgotSuccess("");
       setEnteredOTP("");
       setVarified(false);
+  
       if (varified) {
-        setIsSubmitting(true); // Start form submission
-        // Proceed with API request if no errors
+        setIsSubmitting(true);
+  
         try {
           const result = await signIn("register", {
             callbackUrl: "/",
@@ -192,25 +194,70 @@ function Register() {
             password: formData.password,
             contact: formData.contact,
           });
-
+  
           if (result.error) {
-            setErrors({ form: result.error }); // Display the specific error message
+            setErrors({ form: result.error });
             setIsSubmitting(false);
-          } else {
-            router.push(result.url); // Redirect to the callback URL if successful
-            setIsSubmitting(false);
+            return;
           }
+  
+          console.log("User registered successfully:", result);
+  
+          // ✅ Redirect user **immediately**
+          router.push("/");
+  
+          // ✅ Fetch the user session after redirecting
+          setTimeout(async () => {
+            const session = await getSession();
+            console.log("Session after signup:", session);
+  
+            if (!session?.user?.id) {
+              console.error("User ID not found in session");
+              return;
+            }
+  
+            const userId = session.user.id;
+  
+            // ✅ Call notification API **after redirect**
+            try {
+              const notifyResponse = await fetch("/api/notifyApi", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  userId, // ✅ Use extracted userId
+                  title: "Welcome to SJIM!",
+                  message: " 🔐 *Account Created*\n✅ Dear User, your account has been created.Thank you for signing up!*",
+                  templateName: "sjim",
+                  priority: "high", // 🔥 Always set to high
+                  type: "welcome", // 🔄 Always set to general
+                  category:"general",
+                }),
+              });
+  
+              const notifyData = await notifyResponse.json();
+  
+              if (!notifyResponse.ok) {
+                throw new Error(notifyData.message || "Notification failed");
+              }
+  
+              console.log("Notification sent successfully:", notifyData);
+            } catch (notifyError) {
+              console.error("Error sending notification:", notifyError.message);
+            }
+          }, 2000); // Small delay to ensure session is updated
         } catch (error) {
-          console.log(error);
           console.error("Error in registration:", error.message);
           setErrors({ form: "Registration failed. Please try again later." });
         } finally {
-          setIsSubmitting(false); // End form submission
+          setIsSubmitting(false);
         }
       }
     };
+  
     registerUser();
   }, [varified]);
+  
+  
 
   return (
     <div className="flex flex-col items-center justify-center w-full p-2">
