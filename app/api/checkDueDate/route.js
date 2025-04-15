@@ -54,7 +54,7 @@ export async function GET() {
             userId: assignee.id,
             title: "⏳ Task Due in 3 Days! ⏳",
             message: `🚀 Your task "**${task.description}**" is due in **3 days**! Please take action. 🔥`,
-            templateName: "task_due_reminder",
+            templateName: "deadline",
             priority: "high",
             type: "welcome",
             category:"alert",
@@ -79,7 +79,7 @@ export async function GET() {
             **Task:** ${task.description}\n
             **Due Date:** ${task.dueDate.toDateString()}\n
             📞 Please follow up as soon as possible!`,
-            templateName: "task_due_creator_reminder",
+            templateName: "deadline",
           
             priority: "high",
             type: "welcome",
