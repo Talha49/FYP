@@ -38,6 +38,28 @@ function FieldNotesModal({ onClose }) {
     }
   }, [dispatch, authenticatedUser?._id]);
 
+  // Fetch notes when "Creator" filter is selected
+  useEffect(() => {
+    const fetchCreatorNotes = async () => {
+      if (authenticatedUser?._id && activeFilters.includes("Creator")) {
+        setIsFetching(true);
+        try {
+          const response = await fetch("/api/New/GetTask");
+          const data = await response.json();
+          if (data.success) {
+            setForMeData(data.data); // Reusing forMeData to hold creator data
+          }
+        } catch (error) {
+          console.error("Error fetching creator tasks:", error);
+        } finally {
+          setIsFetching(false);
+        }
+      }
+    };
+
+    fetchCreatorNotes();
+  }, [activeFilters, authenticatedUser?._id]);
+
   // Update previous count when notes change
   useEffect(() => {
     if (!loading && notes?.length > 0) {
