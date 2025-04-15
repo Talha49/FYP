@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { GiSpaceShuttle } from "react-icons/gi";
-import { FaQuestion } from "react-icons/fa";
+import { FaBell, FaQuestion } from "react-icons/fa";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
@@ -10,10 +10,14 @@ import { useRouter } from "next/navigation";
 import { GoLinkExternal } from "react-icons/go";
 import { CiLogout } from "react-icons/ci";
 import { ImSpinner8 } from "react-icons/im";
+import NotificationsModal from "../Notificationmodal/notification";
+import { IoNotificationsCircleOutline } from "react-icons/io5";
 
 function Header() {
   const [showDialog, setShowDialog] = useState(false);
   const [authenticatedUser, setAuthenticatedUser] = useState(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationsCount, setNotificationsCount] = useState(3); // Example notifications count
   const pathname = usePathname();
   const router = useRouter();
 
@@ -28,6 +32,15 @@ function Header() {
     signOut({ callbackUrl: "/" });
   };
 
+  const handleBellClick = (e) => {
+    e.stopPropagation();
+    // Close the notification modal if it's open
+    setShowNotifications(true); // Open the notifications modal
+    setShowDialog(false); // Close the dialog when the bell is clicked
+  };
+  const handleCloseModal = () => {
+    setShowNotifications(false); // Close the notifications modal
+  };
   // console.log("Session =>", session);
   // console.log("Authenticated User =>", authenticatedUser);
 
@@ -40,6 +53,7 @@ function Header() {
         <div className="md:text-[16px] sm:text-[12px]">SIJM - Home</div>
       </div>
       {session ? (
+
         <div
           className="flex items-center gap-2 relative"
           onClick={() => setShowDialog(!showDialog)}
@@ -48,15 +62,34 @@ function Header() {
             {authenticatedUser?.fullName || "Guest"}
           </span>
 
-          <div className="bg-blue-500 rounded-full shadow-md overflow-hidden w-fit h-fit">
-            <Image
-              src={profileImage}
-              width={40}
-              height={40}
-              alt="Profile"
-              className="rounded-full object-cover"
-            />
+          <div className="flex items-center gap-1"> {/* Increased gap for spacing */}
+            <div className="bg-blue-500 rounded-full shadow-md overflow-hidden w-fit h-fit">
+              <Image
+                src={profileImage}
+                width={40}
+                height={40}
+                alt="Profile"
+                className="rounded-full object-cover"
+              />
+            </div>
+
+            <div className="relative ml-1">
+              <div className="border border-gray-300 p-1 rounded-full bg-white shadow-md flex items-center justify-center w-9 h-9">
+                <IoNotificationsCircleOutline
+                  className="text-black text-3xl cursor-pointer hover:text-blue-600 transition"
+                  onClick={handleBellClick}
+                />
+                {notificationsCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {notificationsCount}
+                  </span>
+                )}
+              </div>
+            </div>
+
+
           </div>
+
           {showDialog && (
             <div className="animate-fade-in absolute top-14 right-0 w-[350px] bg-white shadow-lg border border-gray-200 rounded-xl p-4 transform transition-transform duration-300 ease-in-out">
               {authenticatedUser ? (
@@ -138,6 +171,12 @@ function Header() {
           </button>
         </Link>
       )}
+      {/* Notifications Modal */}
+      <NotificationsModal
+        isOpen={showNotifications}
+        onClose={handleCloseModal}
+      />
+
     </div>
   );
 }

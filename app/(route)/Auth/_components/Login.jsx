@@ -80,43 +80,69 @@ function Login () {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrors({}); // Reset errors
-    setIsSubmitting(true); // Start form submission
-
-    // Basic form validation
+    setErrors({});
+    setIsSubmitting(true);
+  
     const newErrors = {};
-
     if (!formData.email) newErrors.email = "Email is required.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
       newErrors.email = "Invalid email address.";
-
     if (!formData.password) newErrors.password = "Password is required.";
-
+  
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      setIsSubmitting(false); // End form submission
+      setIsSubmitting(false);
       return;
     }
-
-    // Proceed with API request if no errors
+  
     try {
       const result = await signIn("login", {
         callbackUrl: "/",
-        redirect: false, // Ensure no redirect, handle in your app
+        redirect: false,
         email: formData.email,
         password: formData.password,
       });
-
+  
       if (result.error) {
         setErrors({ form: result.error });
-        setIsSubmitting(false)
-      } else {
-        router.push(result.url); // Redirect to the callback URL if successful
-        setIsSubmitting(false)
+        setIsSubmitting(false);
+        return;
       }
+  
+      // ✅ Immediately redirect to the dashboard
+      router.push(result.url); 
+  
+      // ✅ Fetch session **after** redirect (to avoid blocking login)
+      fetch("/api/auth/session")
+        .then((res) => res.json())
+        .then(async (session) => {
+          if (!session?.user?.id) {
+            console.error("User session not found");
+            return;
+          }
+  
+          const userId = session.user.id;
+  
+          // ✅ Send notification in the background
+          fetch("/api/notifyApi", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId,
+              title: "Login Activity",
+              message: `🔐 *Login Activity*\n✅ Login successfully at *${new Date().toLocaleString()}*`,
+              templateName: "open", // Pass the template name here
+            }),
+          }).catch((err) => console.error("Failed to send notification", err));
+        })
+        .catch((err) => console.error("Failed to fetch session", err));
     } catch (error) {
-      console.log(error);
+      console.log("Login error:", error);
+    } finally {
+      setIsSubmitting(false);
     }
+  
+  
     // try {
     //   const response = await axios.post("/api/auth/login", formData, {
     //     headers: {

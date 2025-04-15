@@ -1,4 +1,3 @@
-
 // import CredentialsProvider from "next-auth/providers/credentials";
 // import GoogleProvider from "next-auth/providers/google";
 // import FacebookProvider from "next-auth/providers/facebook";
@@ -32,26 +31,25 @@
 //         try {
 //           const { email, password } = credentials;
 //           const user = await User.findOne({ email });
-      
+
 //           if (!user) {
 //             console.log("User not found");
 //             throw new Error("User not found");
 //           }
-      
+
 //           const isPasswordValid = await bcrypt.compare(password, user.password);
 //           if (!isPasswordValid) {
 //             console.log("Invalid password");
 //             throw new Error("Invalid password");
 //           }
-      
+
 //           return user; // Successfully authenticated
 //         } catch (error) {
 //           console.error("Authentication error:", error.message);
 //           throw new Error("Authentication failed");
 //         }
 //       }
-      
-      
+
 //     }),
 //     CredentialsProvider({
 //       id: "register",
@@ -226,8 +224,6 @@
 // const handler = NextAuth(authOptions);
 
 // export { handler as GET, handler as POST };
-
-
 
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -424,6 +420,24 @@ export const authOptions = {
 
         // Pass some data to the client-side via the token
         user.userData = userData;
+
+        // Only send notification for social logins (Google)
+        if (isSocialLogin && account.provider === "google") {
+          // Get the user ID from the appropriate source
+          const userId = userData?._id || existingUser?._id || newUser?._id;
+
+          // Send notification in the background without awaiting
+          fetch(`${process.env.NEXTAUTH_URL}/api/notifyApi`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId,
+              title: "Login Activity",
+              message: `🔐 *Login Activity*\n✅ Login successfully at *${new Date().toLocaleString()}*`,
+              templateName: "open",
+            }),
+          }).catch((err) => console.error("Failed to send notification", err));
+        }
 
         return true;
       } catch (error) {
