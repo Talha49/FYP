@@ -54,7 +54,7 @@ function Auth() {
           )}
           {activeTab === "login" && (
             <p className="text-sm text-center text-gray-600 mt-6">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <span
                 className="text-blue-500 cursor-pointer hover:underline"
                 onClick={() => {

@@ -106,8 +106,11 @@ const VirtualTour = () => {
       ) : null}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {!loading &&
-          filteredInspections?.map((inspection) => (
-            <div className="group relative overflow-hidden bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300">
+          filteredInspections?.map((inspection, i) => (
+            <div
+              key={i}
+              className="group relative overflow-hidden bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300"
+            >
               {/* Decorative gradient background */}
               <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 

@@ -51,9 +51,7 @@
 const nextConfig = {
   reactStrictMode: true, // Enable React strict mode
   swcMinify: true, // Enable SWC for faster builds
-  experimental: {
-    appDir: true, // Example: Enable the app directory feature
-  },
+  
   images: {
     remotePatterns: [
       {

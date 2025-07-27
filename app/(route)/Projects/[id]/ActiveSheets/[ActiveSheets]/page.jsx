@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import React from 'react'
 import NestedActiveComp from '../_components/NestedActiveComp';
 
-const page = () => {
+const Page = () => {
 
     const param = useParams() 
     const {ActiveSheets} = param
@@ -16,4 +16,4 @@ const page = () => {
   )
 }
 
-export default page
+export default Page

@@ -3,7 +3,7 @@ import ActiveSheetsComp from '../_components/ActiveSheetsComp'
 import LatestCaptureComp from '../_components/LatestCaptureComp'
 import FieldNotesComp from '../_components/FieldNotesComp'
 
-const page = ({params}) => {
+const Page = ({params}) => {
   return (
     <div className='w-full h-full py-10 md:pl-3 pl-8 '>
          
@@ -26,4 +26,4 @@ const page = ({params}) => {
   )
 }
 
-export default page
+export default Page

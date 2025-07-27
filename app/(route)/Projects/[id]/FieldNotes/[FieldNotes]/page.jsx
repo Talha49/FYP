@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation';
 import React from 'react'
 
-const page = () => {
+const Page = () => {
 
     const param = useParams() 
     const {FieldNotes} = param
@@ -12,4 +12,4 @@ const page = () => {
   )
 }
 
-export default page
+export default Page

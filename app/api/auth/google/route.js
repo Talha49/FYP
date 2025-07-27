@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../[...nextauth]";
+import { authOptions } from "../[...nextauth]/route";
 import dbConnect from "@/lib/connectdb/connection";
 import User from "@/lib/models/User";
 import jwt from "jsonwebtoken";

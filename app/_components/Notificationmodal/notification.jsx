@@ -631,7 +631,7 @@ const NotificationsModal = ({ isOpen, onClose }) => {
                 notifications
               </p>
               <p className="text-sm text-gray-400 mt-1">
-                We'll notify you when something arrives
+                We&apos;ll notify you when something arrives
               </p>
             </div>
           )}
