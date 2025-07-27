@@ -26,10 +26,11 @@ const TaskCreationForm = ({
     floor: "",
     status: "",
     tags: [],
-    assignees: [], // Default value
+    assignees: [],
     dueDate: "",
     emailAlerts: [],
     watchers: [],
+    estimatedTime: { hours: 0, minutes: 0 },
   });
   const [groundFloorImages, setGroundFloorImages] = useState([]);
   const [lastFloorImage, setLastFloorImage] = useState([]);
@@ -66,7 +67,15 @@ const TaskCreationForm = ({
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name.includes("estimatedTime.")) {
+      const [_, key] = name.split(".");
+      setFormData((prev) => ({
+        ...prev,
+        estimatedTime: { ...prev.estimatedTime, [key]: parseInt(value) || 0 },
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleArrayInputChange = (e, field) => {
@@ -76,7 +85,7 @@ const TaskCreationForm = ({
 
   const hasEditPermission = (name) => {
     const field = fieldsPermissions?.find((field) => field.name === name);
-    return field ? field.permission === "edit" : false;
+    return field ? field.permission === "edit" : true; // Default to editable if no permission defined
   };
 
   const hasReadOnlyPermission = (name) => {
@@ -97,10 +106,11 @@ const TaskCreationForm = ({
       floor: "",
       status: "",
       tags: [],
-      assignees: [], // Reset default value
+      assignees: [],
       dueDate: "",
       emailAlerts: [],
       watchers: [],
+      estimatedTime: { hours: 0, minutes: 0 },
     });
     setGroundFloorImages([]);
     setLastFloorImage([]);
@@ -120,7 +130,6 @@ const TaskCreationForm = ({
       return;
     }
 
-    // Convert files to base64
     const convertToBase64 = async (file) => {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -131,7 +140,6 @@ const TaskCreationForm = ({
       });
     };
 
-    // Convert images & attachments
     const groundFloorImageBase64 = await Promise.all(
       groundFloorImages.map((img) => convertToBase64(img.file))
     );
@@ -142,12 +150,11 @@ const TaskCreationForm = ({
       attachments.map((file) => convertToBase64(file))
     );
 
-    // Construct JSON payload
     const taskData = {
       ...formData,
       assignedBy: authuserdata?._id || "",
       userId: authuserdata?._id || "",
-      creatorId: authuserdata?._id || "", // <-- Ensure creatorId is included
+      creatorId: authuserdata?._id || "",
       username: authuserdata?.fullName || "",
       groundFloorImages: groundFloorImageBase64,
       lastFloorImages: lastFloorImageBase64,
@@ -156,6 +163,7 @@ const TaskCreationForm = ({
       position,
       vt_id,
       frame_id,
+      estimatedTime: formData.estimatedTime,
     };
 
     try {
@@ -218,7 +226,6 @@ const TaskCreationForm = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-4">
-          {/* System fields - always disabled */}
           <FormInput
             label="User ID"
             id="userId"
@@ -234,7 +241,6 @@ const TaskCreationForm = ({
             disabled
           />
 
-          {/* Dynamic permission fields */}
           {!hasHoddenPermission("Description") && (
             <FormInput
               label="Description"
@@ -293,7 +299,7 @@ const TaskCreationForm = ({
                 hasEditPermission("Floor") ? handleInputChange : undefined
               }
               disabled={!hasEditPermission("Floor")}
-              readOnly={hasReadOnlyPermission("Floor")}
+              readOnly ={hasReadOnlyPermission("Floor")}
               style={
                 hasReadOnlyPermission("Floor")
                   ? {
@@ -308,7 +314,6 @@ const TaskCreationForm = ({
         </div>
 
         <div className="space-y-4">
-          {/* System fields - always disabled */}
           <FormInput
             label="Full Name"
             id="username"
@@ -317,7 +322,6 @@ const TaskCreationForm = ({
             disabled
           />
 
-          {/* Dynamic permission fields */}
           {!hasHoddenPermission("Priority") && (
             <FormSelect
               label="Priority"
@@ -381,6 +385,48 @@ const TaskCreationForm = ({
               cursor: "not-allowed",
             }}
           />
+
+          {!hasHoddenPermission("Estimated Time Hours") && (
+            <FormInput
+              label="Estimated Time (Hours)"
+              id="estimatedTimeHours"
+              name="estimatedTime.hours"
+              type="number"
+              value={formData.estimatedTime.hours}
+              onChange={handleInputChange}
+              readOnly={hasReadOnlyPermission("Estimated Time Hours")}
+              style={
+                hasReadOnlyPermission("Estimated Time Hours")
+                  ? {
+                      backgroundColor: "#f9f9f9",
+                      color: "#555",
+                      cursor: "not-allowed",
+                    }
+                  : {}
+              }
+            />
+          )}
+
+          {!hasHoddenPermission("Estimated Time Minutes") && (
+            <FormInput
+              label="Estimated Time (Minutes)"
+              id="estimatedTimeMinutes"
+              name="estimatedTime.minutes"
+              type="number"
+              value={formData.estimatedTime.minutes}
+              onChange={handleInputChange}
+              readOnly={hasReadOnlyPermission("Estimated Time Minutes")}
+              style={
+                hasReadOnlyPermission("Estimated Time Minutes")
+                  ? {
+                      backgroundColor: "#f9f9f9",
+                      color: "#555",
+                      cursor: "not-allowed",
+                    }
+                  : {}
+              }
+            />
+          )}
         </div>
       </div>
 

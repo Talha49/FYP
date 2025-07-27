@@ -162,6 +162,12 @@ const CardsComponent = ({
           <p className="text-sm text-gray-600">
             <b>Due:</b> {formatDate(card?.dueDate)}
           </p>
+          <p className="text-sm text-gray-600">
+            <b>Est Hours:</b> {card?.estimatedTime.hours}
+          </p>
+          <p className="text-sm text-gray-600">
+            <b>Est Min:</b> {card?.estimatedTime.minutes}
+          </p>
 
           {renderCustomContent && renderCustomContent(card)}
         </div>

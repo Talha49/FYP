@@ -35,8 +35,12 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
   const [localNote, setLocalNote] = useState({
     ...note,
     assignees: note.assignees || [],
+    estimatedTime: note.estimatedTime || { hours: 0, minutes: 0 },
   });
-  const [originalNote, setOriginalNote] = useState({ ...note });
+  const [originalNote, setOriginalNote] = useState({
+    ...note,
+    estimatedTime: note.estimatedTime || { hours: 0, minutes: 0 },
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -63,8 +67,8 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
   const pathName = usePathname();
 
   console.log("Menu Permissions =>", menuPermissionsForPage);
+  console.log('Token', token);
 
-  console.log('Token', token)
   useEffect(() => {
     if (session) {
       setAuthenticatedUser(session?.user?.userData);
@@ -96,13 +100,27 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
 
   // Update local note when prop changes
   useEffect(() => {
-    setLocalNote({ ...note, assignees: note.assignees || [] });
-    setOriginalNote({ ...note });
+    setLocalNote({
+      ...note,
+      assignees: note.assignees || [],
+      estimatedTime: note.estimatedTime || { hours: 0, minutes: 0 },
+    });
+    setOriginalNote({
+      ...note,
+      estimatedTime: note.estimatedTime || { hours: 0, minutes: 0 },
+    });
   }, [note]);
 
   // Utility Functions
   const updateField = (field, value) => {
-    setLocalNote((prev) => ({ ...prev, [field]: value }));
+    if (field === "estimatedTime") {
+      setLocalNote((prev) => ({
+        ...prev,
+        estimatedTime: { ...prev.estimatedTime, ...value },
+      }));
+    } else {
+      setLocalNote((prev) => ({ ...prev, [field]: value }));
+    }
   };
 
   const hasFieldChanged = (field) => {
@@ -121,6 +139,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
       description: "Description",
       tags: "Tags",
       watchers: "Watchers",
+      estimatedTime: "Estimated Time",
     };
 
     for (const [field, label] of Object.entries(fieldsToCheck)) {
@@ -152,7 +171,6 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
     }
 
     setIsSaving(true);
-    console.log("LC", localNote);
     const updateData = {
       userId: localNote.userId,
       username: localNote.username,
@@ -169,6 +187,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
       groundFloorImages: localNote.groundFloorImages,
       lastFloorImages: localNote.lastFloorImages,
       attachments: localNote.attachments,
+      estimatedTime: localNote.estimatedTime,
     };
 
     try {
@@ -198,6 +217,12 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
               "info"
             );
             break;
+          case "estimatedTime":
+            showToast(
+              `Estimated time updated to ${newValue.hours}h ${newValue.minutes}m`,
+              "info"
+            );
+            break;
           default:
             showToast(`${label} has been updated`, "info");
         }
@@ -206,12 +231,10 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
       setIsEditing(false);
       if (localNote.assignees.length > 0) {
         if (!chatRoomCreated) {
-          // Create the chat room once
           createChatRoom(localNote._id, localNote.assignees);
           setChatRoomCreated(true);
           console.log("Chat room created for task");
         } else {
-          // If the room already exists, just update the participants
           updateChatRoomParticipants(localNote._id, localNote.assignees);
           console.log("Assignees updated in existing chat room");
         }
@@ -233,11 +256,11 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
 
   // Function to create chat room once
   const createChatRoom = (taskId, assignees) => {
-    const chatRoomId = taskId; // Use task ID as chat room ID
+    const chatRoomId = taskId;
     const participants = [
-      ...assignees.map((a) => assignees.id),
+      ...assignees.map((a) => a.id),
       localNote.userId,
-    ]; // Assignees and assigner
+    ];
 
     console.log(`Creating chat room with ID: ${chatRoomId}`);
     console.log(`Participants: ${participants.join(", ")}`);
@@ -245,15 +268,15 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
 
   // Function to update chat room participants
   const updateChatRoomParticipants = (taskId, newAssignees) => {
-    const chatRoomId = taskId; // Using the same chat room ID
-    const participants = [...newAssignees.map((assignee) => assignee.name)]; // Updated assignees and assigner
+    const chatRoomId = taskId;
+    const participants = [...newAssignees.map((assignee) => assignee.name)];
 
     console.log(`Updating chat room with ID: ${chatRoomId}`);
     console.log(`New participants: ${participants.join(", ")}`);
   };
 
   const toggleEditMode = () => {
-    if (menuPermissionsForPage.includes("edit")) {
+    if (menuPermissionsForPage?.includes("edit")) {
       if (isEditing) {
         setLocalNote({ ...originalNote });
       }
@@ -274,7 +297,6 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
     setUploadProgress(0);
 
     try {
-      // Optimistically update UI
       const optimisticAttachments = newFiles.map((file) => ({
         url: URL.createObjectURL(file),
         name: file.name,
@@ -286,7 +308,6 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
         attachments: [...prevNote.attachments, ...optimisticAttachments],
       }));
 
-      // Simulate upload progress
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => Math.min(prev + 10, 90));
       }, 200);
@@ -298,7 +319,6 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
       clearInterval(progressInterval);
       setUploadProgress(100);
 
-      // Update with actual server response
       setLocalNote((prevNote) => ({
         ...prevNote,
         attachments: [
@@ -310,7 +330,6 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
       showToast("Files uploaded successfully", "success");
     } catch (error) {
       console.error("Error adding attachments:", error);
-      // Revert optimistic update
       setLocalNote((prevNote) => ({
         ...prevNote,
         attachments: prevNote.attachments.filter((a) => !a.temporary),
@@ -328,7 +347,6 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
     try {
       const attachmentToDelete = localNote.attachments[index];
 
-      // Optimistically update UI
       const updatedAttachments = localNote.attachments.filter(
         (_, i) => i !== index
       );
@@ -337,7 +355,6 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
         attachments: updatedAttachments,
       }));
 
-      // Call Redux action to delete from backend
       await dispatch(
         deleteAttachment({
           taskId: localNote._id,
@@ -347,7 +364,6 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
 
       showToast("Attachment deleted successfully", "success");
     } catch (error) {
-      // Revert optimistic update on error
       setLocalNote((prev) => ({
         ...prev,
         attachments: originalNote.attachments,
@@ -512,7 +528,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
             {/* Description Input */}
             <div>
               <label className="block text-gray-600">Description</label>
-              {isEditing && menuPermissionsForPage.includes("edit") ? (
+              {isEditing && menuPermissionsForPage?.includes("edit") ? (
                 <input
                   type="text"
                   className="w-full p-2 border border-gray-300 rounded outline-none"
@@ -530,7 +546,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
             <ChatApp
               chatRoomId={localNote._id}
               chatRoomName={localNote.username}
-              assignedUsers={[ ...localNote.assignees.map(assignee => assignee.name)]}
+              assignedUsers={[...localNote.assignees.map(assignee => assignee.name)]}
             />
           </div>
 
@@ -554,7 +570,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
             {/* Priority Section */}
             <div>
               <label className="block text-gray-600">Priority</label>
-              {isEditing && menuPermissionsForPage.includes("edit") ? (
+              {isEditing && menuPermissionsForPage?.includes("edit") ? (
                 <select
                   className="w-full p-2 border border-gray-300 rounded outline-none"
                   value={localNote.priority}
@@ -574,7 +590,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
             {/* Assignee Section */}
             <div className="relative">
               <label className="block text-gray-600">Assignees</label>
-              {isEditing && menuPermissionsForPage.includes("edit") ? (
+              {isEditing && menuPermissionsForPage?.includes("edit") ? (
                 <>
                   <div
                     className="w-full p-2 border border-gray-300 rounded cursor-pointer flex flex-wrap"
@@ -639,10 +655,11 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
                 </p>
               )}
             </div>
+
             {/* Status Section */}
             <div>
               <label className="block text-gray-600">Status</label>
-              {isEditing && menuPermissionsForPage.includes("edit") ? (
+              {isEditing && menuPermissionsForPage?.includes("edit") ? (
                 <select
                   className="w-full p-2 border border-gray-300 rounded outline-none"
                   value={localNote.status}
@@ -663,7 +680,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
             <div>
               <label className="block text-gray-600">Email alerts</label>
               <div className="flex items-center mt-1">
-                {isEditing && menuPermissionsForPage.includes("edit") ? (
+                {isEditing && menuPermissionsForPage?.includes("edit") ? (
                   <select
                     className="w-full p-2 border border-gray-300 rounded outline-none"
                     value={localNote.watchers.length}
@@ -692,7 +709,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
             <div>
               <label className="block text-gray-600">Tags</label>
               <div className="flex items-center mt-1">
-                {isEditing && menuPermissionsForPage.includes("edit") ? (
+                {isEditing && menuPermissionsForPage?.includes("edit") ? (
                   <input
                     type="text"
                     value={localNote.tags.join(", ")}
@@ -716,7 +733,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
             {/* Due Date */}
             <div>
               <label className="block text-gray-600">Due date</label>
-              {isEditing && menuPermissionsForPage.includes("edit") ? (
+              {isEditing && menuPermissionsForPage?.includes("edit") ? (
                 <input
                   type="date"
                   className="w-full p-2 border border-gray-300 rounded"
@@ -728,6 +745,45 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
               ) : (
                 <p className="w-full p-2 border border-gray-300 rounded bg-gray-100">
                   {new Date(localNote.dueDate).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+
+            {/* Estimated Time */}
+            <div>
+              <label className="block text-gray-600">Estimated Time</label>
+              {isEditing && menuPermissionsForPage?.includes("edit") ? (
+                <div className="flex space-x-2">
+                  <input
+                    type="number"
+                    className="w-1/2 p-2 border border-gray-300 rounded outline-none"
+                    placeholder="Hours"
+                    value={localNote.estimatedTime.hours}
+                    onChange={(e) =>
+                      updateField("estimatedTime", {
+                        hours: parseInt(e.target.value) || 0,
+                        minutes: localNote.estimatedTime.minutes,
+                      })
+                    }
+                    min="0"
+                  />
+                  <input
+                    type="number"
+                    className="w-1/2 p-2 border border-gray-300 rounded outline-none"
+                    placeholder="Minutes"
+                    value={localNote.estimatedTime.minutes}
+                    onChange={(e) =>
+                      updateField("estimatedTime", {
+                        hours: localNote.estimatedTime.hours,
+                        minutes: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    min="0"
+                  />
+                </div>
+              ) : (
+                <p className="w-full p-2 border border-gray-300 rounded bg-gray-100">
+                  {localNote.estimatedTime.hours}h {localNote.estimatedTime.minutes}m
                 </p>
               )}
             </div>
@@ -744,7 +800,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
                     </p>
                     {isEditing &&
                       !isUploadingFiles &&
-                      menuPermissionsForPage.includes("edit") && (
+                      menuPermissionsForPage?.includes("edit") && (
                         <button
                           onClick={() => fileInputRef.current?.click()}
                           className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -790,7 +846,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
                     ))}
                     {isEditing &&
                       !isUploadingFiles &&
-                      menuPermissionsForPage.includes("edit") && (
+                      menuPermissionsForPage?.includes("edit") && (
                         <button
                           onClick={() => {
                             fileInputRef.current?.click();
@@ -863,7 +919,7 @@ function FieldNoteModalCardsModal({ onClose, note, token }) {
                     Saving...
                   </div>
                 ) : isEditing ? (
-                  "Save "
+                  "Save"
                 ) : (
                   "Edit"
                 )}
