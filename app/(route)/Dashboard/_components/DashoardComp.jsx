@@ -12,7 +12,7 @@ import DualLines from "./_charts/DualLines";
 import CircularChartComp from "./_charts/CircularChartComp";
 import DualAreaChart from "./_charts/AreaChart";
 import BarChartComp from "./_charts/BarChart";
-import Taskdata from "./_datatable/taskdata";
+import Taskdata from "./_datatable/Taskdata";
 import { getTasks } from "@/lib/Features/TaskSlice";
 import { useSession } from "next-auth/react";
 import { useDispatch, useSelector } from "react-redux";
